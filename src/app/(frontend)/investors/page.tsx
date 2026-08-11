@@ -1,8 +1,17 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
+import { buildTenantMetadata } from '@/lib/seo'
 import { requirePublishedTenant } from '@/lib/tenant'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildTenantMetadata(
+    'Investors',
+    'Investor accounts and CRM features are out of scope for Sprint 1.',
+  )
+}
 
 export default async function InvestorsPlaceholderPage() {
   const company = await requirePublishedTenant()

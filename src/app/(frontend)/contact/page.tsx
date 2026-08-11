@@ -1,8 +1,14 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
+import { buildTenantMetadata } from '@/lib/seo'
 import { requirePublishedTenant } from '@/lib/tenant'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildTenantMetadata('Contact', 'Contact investor relations for this company.')
+}
 
 export default async function ContactPlaceholderPage() {
   const company = await requirePublishedTenant()

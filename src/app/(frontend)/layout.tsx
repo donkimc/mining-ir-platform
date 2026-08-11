@@ -17,10 +17,10 @@ const body = Figtree({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Mining IR Platform',
-    template: '%s · Mining IR',
+    default: 'Investor Relations',
+    template: '%s',
   },
-  description: 'Investor relations websites for junior mining companies.',
+  description: 'Published investor relations content for this mining company.',
 }
 
 export default function FrontendLayout({ children }: { children: React.ReactNode }) {
