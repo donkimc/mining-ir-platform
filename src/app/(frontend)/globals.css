@@ -58,6 +58,24 @@ a {
   outline-offset: 3px;
 }
 
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  z-index: 100;
+  transform: translateY(-120%);
+  padding: 0.65rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0.75rem);
+}
+
 .display {
   font-family: var(--font-display), Georgia, serif;
   font-weight: 500;

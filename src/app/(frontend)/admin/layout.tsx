@@ -30,7 +30,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </header>
-      <div className="section-shell py-10">{children}</div>
+      <div id="main-content" tabIndex={-1} className="section-shell py-10">
+        {children}
+      </div>
     </div>
   )
 }

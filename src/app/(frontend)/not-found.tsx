@@ -23,7 +23,7 @@ export default async function NotFound() {
   return (
     <main className="min-h-screen bg-[var(--paper)]">
       <SiteHeader companyName={companyName} />
-      <div className="section-shell py-24">
+      <div id="main-content" tabIndex={-1} className="section-shell py-24">
         <h1 className="display text-5xl">Page not found</h1>
         <p className="mt-4 max-w-xl text-[var(--ink-soft)]">
           The page may not exist, or the content is not published for public investors.

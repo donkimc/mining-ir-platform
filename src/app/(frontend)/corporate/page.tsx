@@ -18,7 +18,7 @@ export default async function CorporatePlaceholderPage() {
   return (
     <main className="min-h-screen bg-[var(--paper)]">
       <SiteHeader companyName={company.displayName} />
-      <div className="section-shell py-20">
+      <div id="main-content" tabIndex={-1} className="section-shell py-20">
         <h1 className="display text-5xl">Corporate</h1>
         <p className="mt-4 max-w-2xl text-lg text-[var(--ink-soft)]">
           Corporate content workflows are planned for later sprints.

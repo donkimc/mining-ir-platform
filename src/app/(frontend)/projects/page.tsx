@@ -21,7 +21,7 @@ export default async function ProjectsPage() {
   return (
     <main className="min-h-screen bg-[var(--paper)]">
       <SiteHeader companyName={company.displayName} />
-      <div className="section-shell py-16">
+      <div id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">Projects</p>
         <h1 className="display mt-3 text-5xl md:text-6xl">Exploration portfolio</h1>
         <p className="mt-4 max-w-2xl text-lg text-[var(--ink-soft)]">

@@ -33,7 +33,7 @@ export default async function ProjectDetailPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-[var(--paper)]">
       <SiteHeader companyName={company.displayName} />
-      <article className="section-shell py-16">
+      <article id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">
           <Link href="/projects">Projects</Link> / {project.slug}
         </p>

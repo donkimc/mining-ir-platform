@@ -31,7 +31,11 @@ export default async function HomePage() {
     <main>
       <div className="hero-plane">
         <SiteHeader companyName={company.displayName} tone="dark" />
-        <div className="section-shell relative flex min-h-[calc(100svh-5.5rem)] flex-col justify-end pb-16 pt-20">
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="section-shell relative flex min-h-[calc(100svh-5.5rem)] flex-col justify-end pb-16 pt-20"
+        >
           <p className="fade-up text-sm uppercase tracking-[0.22em] text-[var(--mineral-soft)]">
             {ticker}
           </p>

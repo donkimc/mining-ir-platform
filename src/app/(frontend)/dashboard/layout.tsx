@@ -42,7 +42,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <span className="text-[var(--ink-soft)]">Settings (placeholder)</span>
         </nav>
       </header>
-      <div className="section-shell py-10">{children}</div>
+      <div id="main-content" tabIndex={-1} className="section-shell py-10">
+        {children}
+      </div>
     </div>
   )
 }

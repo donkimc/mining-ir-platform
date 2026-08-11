@@ -18,7 +18,7 @@ export default async function InvestorsPlaceholderPage() {
   return (
     <main className="min-h-screen bg-[var(--paper)]">
       <SiteHeader companyName={company.displayName} />
-      <div className="section-shell py-20">
+      <div id="main-content" tabIndex={-1} className="section-shell py-20">
         <h1 className="display text-5xl">Investors</h1>
         <p className="mt-4 max-w-2xl text-lg text-[var(--ink-soft)]">
           Investor accounts and CRM features are out of scope for Sprint 1.
