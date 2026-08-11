@@ -129,13 +129,18 @@ export async function updateProjectContentAction(
   const { user, tenantId } = await requireCompanyAdmin()
   const payload = await getPayloadClient()
 
-  const existing = await payload.findByID({
-    collection: 'projects',
-    id: projectId,
-    depth: 0,
-    user,
-    overrideAccess: false,
-  })
+  let existing
+  try {
+    existing = await payload.findByID({
+      collection: 'projects',
+      id: projectId,
+      depth: 0,
+      user,
+      overrideAccess: false,
+    })
+  } catch {
+    return { error: 'Forbidden.' }
+  }
 
   const existingTenant =
     existing.tenant && typeof existing.tenant === 'object'
@@ -208,13 +213,18 @@ export async function updateProjectStatusAction(
   const { user, tenantId } = await requireCompanyAdmin()
   const payload = await getPayloadClient()
 
-  const existing = await payload.findByID({
-    collection: 'projects',
-    id: projectId,
-    depth: 0,
-    user,
-    overrideAccess: false,
-  })
+  let existing
+  try {
+    existing = await payload.findByID({
+      collection: 'projects',
+      id: projectId,
+      depth: 0,
+      user,
+      overrideAccess: false,
+    })
+  } catch {
+    return { error: 'Forbidden.' }
+  }
 
   const existingTenant =
     existing.tenant && typeof existing.tenant === 'object'
