@@ -97,7 +97,7 @@ Reviewer should still walk the manual smoke list in [`TESTING.md`](./TESTING.md)
 
 1. **Schema sync:** Postgres adapter uses `push: true` for Sprint 1 local speed; formal migrations are not yet the primary workflow.
 2. **Tenant resolution:** Local/demo uses `DEFAULT_TENANT_SLUG` (and optional non-production `x-tenant-slug` / subdomain). In production, `x-tenant-slug` is ignored unless `TENANT_PROXY_SECRET` matches `x-tenant-proxy-secret`. Full custom-domain multi-tenant routing remains later scope.
-3. **Review gate scope:** Disclosure-field lock + status transition gate apply to Company (`investmentThesis`, `longDescription`) and Project (`technicalSummary`, `highlights`, `summary`, `ownershipPercent`, `sourceLinks`). Investment highlights / catalysts / share structures can still be created as Published without the same Review transition (Sprint 1 homepage helpers).
+3. **Review gate scope:** Disclosure-field lock + status transition gate apply to Company (`investmentThesis`, `longDescription`), Project (`technicalSummary`, `highlights`, `summary`, `ownershipPercent`, `sourceLinks`), and Share Structures. Investment highlights / catalysts can still be created as Published without the same Review transition (Sprint 1 homepage helpers).
 4. **Placeholders:** News, Investors, Corporate, Contact, and dashboard Settings have no content workflows.
 5. **Email:** No email adapter configured; Payload logs email to console.
 6. **Visual QA:** Responsive CSS is implemented; a full visual pass in a real mobile browser viewport should still be done by the reviewer.

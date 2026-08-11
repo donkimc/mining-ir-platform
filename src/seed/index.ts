@@ -424,7 +424,7 @@ async function seed() {
   })
 
   if (shares.totalDocs === 0) {
-    await payload.create({
+    const shareDraft = await payload.create({
       collection: 'share-structures',
       data: {
         tenant: aurora.id,
@@ -434,9 +434,24 @@ async function seed() {
         warrants: 12_000_000,
         fullyDiluted: 148_600_000,
         marketCapNote: 'Market capitalization varies with share price; figure omitted for Sprint 1.',
-        status: 'published',
+        status: 'draft',
       },
       overrideAccess: true,
+    })
+
+    await payload.update({
+      collection: 'share-structures',
+      id: shareDraft.id,
+      data: { status: 'review' },
+      overrideAccess: true,
+      user: platformAdmin,
+    })
+    await payload.update({
+      collection: 'share-structures',
+      id: shareDraft.id,
+      data: { status: 'published' },
+      overrideAccess: true,
+      user: platformAdmin,
     })
   }
 

@@ -7,6 +7,7 @@ import {
   userHasTenantAccess,
 } from '@/access'
 import { publicationStatusField } from '@/lib/fields'
+import { assertPublicationTransition, guardCreateNotPublished } from '@/lib/publishing'
 
 function relationId(value: unknown): string | number | null {
   if (!value) return null
@@ -40,11 +41,21 @@ export const ShareStructures: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data, req, operation }) => {
+      ({ data, originalDoc, req, operation }) => {
         if (!data) return data
         if (!isPlatformAdmin(req.user) && operation === 'update') {
           delete data.tenant
         }
+
+        const previousStatus = originalDoc?.status ?? null
+        const incomingStatus = data.status ?? previousStatus
+
+        if (operation === 'create') {
+          guardCreateNotPublished(incomingStatus)
+        }
+
+        assertPublicationTransition({ incomingStatus, previousStatus })
+
         return data
       },
     ],
