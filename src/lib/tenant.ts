@@ -52,7 +52,7 @@ export async function resolveTenantSlug(): Promise<string> {
 
   const fallback = process.env.DEFAULT_TENANT_SLUG
   if (!fallback) {
-    throw new Error('DEFAULT_TENANT_SLUG is required for local tenant resolution.')
+    notFound()
   }
   return fallback.toLowerCase()
 }
