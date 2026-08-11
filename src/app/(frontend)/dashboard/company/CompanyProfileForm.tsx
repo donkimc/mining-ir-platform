@@ -179,6 +179,7 @@ function Field({
   required?: boolean
   textarea?: boolean
 }) {
+  const errorId = `${name}-error`
   return (
     <div>
       <label htmlFor={name} className="mb-1 block text-sm font-semibold">
@@ -191,6 +192,8 @@ function Field({
           defaultValue={defaultValue}
           required={required}
           className="textarea"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
         />
       ) : (
         <input
@@ -199,9 +202,15 @@ function Field({
           defaultValue={defaultValue}
           required={required}
           className="input"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
         />
       )}
-      {error ? <p className="mt-1 text-sm text-[var(--danger)]">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="mt-1 text-sm text-[var(--danger)]">
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
