@@ -94,7 +94,7 @@ export async function createProjectAction(
       user,
       overrideAccess: false,
       data: {
-        tenant: Number(tenantId),
+        tenant: tenantId as unknown as number,
         name: parsed.data.name,
         slug: parsed.data.slug,
         commodity: parsed.data.commodity,
