@@ -2,7 +2,7 @@ import { StatusBadge } from '@/components/public/StatusBadge'
 import { getPayloadClient, requirePlatformAdmin } from '@/lib/auth'
 
 export default async function AdminUsersPage() {
-  await requirePlatformAdmin()
+  const user = await requirePlatformAdmin()
   const payload = await getPayloadClient()
 
   const [users, memberships] = await Promise.all([
@@ -10,14 +10,16 @@ export default async function AdminUsersPage() {
       collection: 'users',
       limit: 100,
       depth: 0,
-      overrideAccess: true,
+      user,
+      overrideAccess: false,
       sort: 'email',
     }),
     payload.find({
       collection: 'tenant-memberships',
       limit: 200,
       depth: 1,
-      overrideAccess: true,
+      user,
+      overrideAccess: false,
     }),
   ])
 
@@ -33,15 +35,15 @@ export default async function AdminUsersPage() {
       <section>
         <h2 className="display text-2xl text-white">Users</h2>
         <ul className="mt-4 divide-y divide-white/10 border border-white/10">
-          {users.docs.map((user) => (
-            <li key={user.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+          {users.docs.map((listedUser) => (
+            <li key={listedUser.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p className="font-semibold text-white">{user.name}</p>
-                <p className="text-sm text-[#9db0bc]">{user.email}</p>
+                <p className="font-semibold text-white">{listedUser.name}</p>
+                <p className="text-sm text-[#9db0bc]">{listedUser.email}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <StatusBadge status={user.status} />
-                {user.platformRole ? <StatusBadge status="platform_admin" /> : null}
+                <StatusBadge status={listedUser.status} />
+                {listedUser.platformRole ? <StatusBadge status="platform_admin" /> : null}
               </div>
             </li>
           ))}
@@ -52,7 +54,7 @@ export default async function AdminUsersPage() {
         <h2 className="display text-2xl text-white">Memberships</h2>
         <ul className="mt-4 divide-y divide-white/10 border border-white/10">
           {memberships.docs.map((membership) => {
-            const user =
+            const membershipUser =
               membership.user && typeof membership.user === 'object' ? membership.user : null
             const tenant =
               membership.tenant && typeof membership.tenant === 'object'
@@ -60,7 +62,11 @@ export default async function AdminUsersPage() {
                 : null
             return (
               <li key={membership.id} className="grid gap-2 p-4 md:grid-cols-4">
-                <p>{user && 'email' in user ? String(user.email) : String(membership.user)}</p>
+                <p>
+                  {membershipUser && 'email' in membershipUser
+                    ? String(membershipUser.email)
+                    : String(membership.user)}
+                </p>
                 <p>
                   {tenant && 'displayName' in tenant
                     ? String(tenant.displayName)

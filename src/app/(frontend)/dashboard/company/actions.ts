@@ -65,7 +65,8 @@ export async function updateCompanyContentAction(
     collection: 'companies',
     id: tenantId,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
   })
 
   if (String(existing.id) !== String(tenantId)) {
@@ -77,6 +78,7 @@ export async function updateCompanyContentAction(
       collection: 'companies',
       id: tenantId,
       user,
+      overrideAccess: false,
       data: {
         displayName: parsed.data.displayName,
         tickerSymbol: parsed.data.tickerSymbol,
@@ -124,7 +126,8 @@ export async function updateCompanyStatusAction(
     collection: 'companies',
     id: tenantId,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
   })
 
   if (String(existing.id) !== String(tenantId)) {
@@ -147,6 +150,7 @@ export async function updateCompanyStatusAction(
       collection: 'companies',
       id: tenantId,
       user,
+      overrideAccess: false,
       data: {
         publicationStatus: parsed.data.publicationStatus,
       },

@@ -11,7 +11,7 @@ const links = [
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, tenantId } = await requireCompanyAdmin()
-  const company = await getCompanyById(tenantId)
+  const company = await getCompanyById(tenantId, user)
 
   return (
     <div className="min-h-screen bg-[var(--paper-deep)]">

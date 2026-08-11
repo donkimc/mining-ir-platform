@@ -92,6 +92,7 @@ export async function createProjectAction(
     const created = await payload.create({
       collection: 'projects',
       user,
+      overrideAccess: false,
       data: {
         tenant: Number(tenantId),
         name: parsed.data.name,
@@ -132,7 +133,8 @@ export async function updateProjectContentAction(
     collection: 'projects',
     id: projectId,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
   })
 
   const existingTenant =
@@ -170,6 +172,7 @@ export async function updateProjectContentAction(
       collection: 'projects',
       id: projectId,
       user,
+      overrideAccess: false,
       data: {
         name: parsed.data.name,
         slug: parsed.data.slug,
@@ -209,7 +212,8 @@ export async function updateProjectStatusAction(
     collection: 'projects',
     id: projectId,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
   })
 
   const existingTenant =
@@ -245,6 +249,7 @@ export async function updateProjectStatusAction(
       collection: 'projects',
       id: projectId,
       user,
+      overrideAccess: false,
       data: {
         status: parsed.data.status,
       },

@@ -10,7 +10,7 @@ type Props = {
 
 export default async function EditProjectPage({ params }: Props) {
   const { id } = await params
-  const { tenantId } = await requireCompanyAdmin()
+  const { user, tenantId } = await requireCompanyAdmin()
   const payload = await getPayloadClient()
 
   let project
@@ -19,7 +19,8 @@ export default async function EditProjectPage({ params }: Props) {
       collection: 'projects',
       id,
       depth: 0,
-      overrideAccess: true,
+      user,
+      overrideAccess: false,
     })
   } catch {
     notFound()

@@ -60,8 +60,6 @@ export async function userHasTenantAccess(
   return tenantIds.some((id) => String(id) === String(tenantId))
 }
 
-export const authenticated: Access = ({ req }) => Boolean(req.user)
-
 export const platformAdminOnly: Access = ({ req }) => isPlatformAdmin(req.user)
 
 export const tenantScopedRead: Access = async ({ req }) => {

@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/public/StatusBadge'
 import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 
 export default async function DashboardProjectsPage() {
-  const { tenantId } = await requireCompanyAdmin()
+  const { user, tenantId } = await requireCompanyAdmin()
   const payload = await getPayloadClient()
   const projects = await payload.find({
     collection: 'projects',
@@ -12,7 +12,8 @@ export default async function DashboardProjectsPage() {
     sort: 'displayOrder',
     limit: 100,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
   })
 
   return (

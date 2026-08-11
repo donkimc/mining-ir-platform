@@ -4,8 +4,8 @@ import { getCompanyById } from '@/lib/tenant'
 import { CompanyProfileForm } from './CompanyProfileForm'
 
 export default async function DashboardCompanyPage() {
-  const { tenantId } = await requireCompanyAdmin()
-  const company = await getCompanyById(tenantId)
+  const { user, tenantId } = await requireCompanyAdmin()
+  const company = await getCompanyById(tenantId, user)
 
   return <CompanyProfileForm company={company} />
 }

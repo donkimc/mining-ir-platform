@@ -5,8 +5,8 @@ import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 import { getCompanyById } from '@/lib/tenant'
 
 export default async function DashboardOverviewPage() {
-  const { tenantId } = await requireCompanyAdmin()
-  const company = await getCompanyById(tenantId)
+  const { user, tenantId } = await requireCompanyAdmin()
+  const company = await getCompanyById(tenantId, user)
   const payload = await getPayloadClient()
 
   const projects = await payload.find({
@@ -14,7 +14,8 @@ export default async function DashboardOverviewPage() {
     where: { tenant: { equals: tenantId } },
     limit: 20,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
   })
 
   return (

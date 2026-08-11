@@ -2,13 +2,14 @@ import { StatusBadge } from '@/components/public/StatusBadge'
 import { getPayloadClient, requirePlatformAdmin } from '@/lib/auth'
 
 export default async function AdminTenantsPage() {
-  await requirePlatformAdmin()
+  const user = await requirePlatformAdmin()
   const payload = await getPayloadClient()
   const tenants = await payload.find({
     collection: 'companies',
     limit: 100,
     depth: 0,
-    overrideAccess: true,
+    user,
+    overrideAccess: false,
     sort: 'displayName',
   })
 

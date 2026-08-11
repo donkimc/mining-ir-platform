@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import {
   isPlatformAdmin,
+  preventTenantFieldChange,
   tenantScopedCompanyAdminWrite,
   tenantScopedRead,
   userHasTenantAccess,
@@ -105,7 +106,7 @@ export const Projects: CollectionConfig = {
       required: true,
       index: true,
       access: {
-        update: ({ req }) => isPlatformAdmin(req.user),
+        update: preventTenantFieldChange,
       },
     },
     {

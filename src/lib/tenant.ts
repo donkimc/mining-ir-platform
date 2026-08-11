@@ -83,12 +83,16 @@ export async function requirePublishedTenant(): Promise<Company> {
   return company
 }
 
-export async function getCompanyById(id: string | number) {
+export async function getCompanyById(
+  id: string | number,
+  user?: { id: string | number } | null,
+) {
   const payload = await getPayloadClient()
   return payload.findByID({
     collection: 'companies',
     id,
     depth: 0,
-    overrideAccess: true,
+    user: user ?? undefined,
+    overrideAccess: !user,
   })
 }
