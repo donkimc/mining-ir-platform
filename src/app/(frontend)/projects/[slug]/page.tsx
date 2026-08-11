@@ -81,8 +81,50 @@ export default async function ProjectDetailPage({ params }: Props) {
 
             {project.technicalSummary ? (
               <div className="mt-10">
-                <h2 className="display text-3xl">Technical summary</h2>
+                <h2 className="display text-3xl">
+                  Technical summary{' '}
+                  <a
+                    href="#sources"
+                    className="text-base font-normal text-[var(--accent)] no-underline"
+                  >
+                    (sources)
+                  </a>
+                </h2>
                 <p className="mt-3 text-[var(--ink-soft)]">{project.technicalSummary}</p>
+                <div id="sources" className="mt-6 scroll-mt-24">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                    Source documents
+                  </h3>
+                  <p className="mt-2 text-sm text-[var(--ink-soft)]">
+                    Material technical claims should be read with these source documents.
+                  </p>
+                  {project.sourceLinks && project.sourceLinks.length > 0 ? (
+                    <ul className="mt-3 space-y-2">
+                      {project.sourceLinks.map((link, index) => (
+                        <li key={`${link.url}-${index}`}>
+                          <a href={link.url} target="_blank" rel="noreferrer">
+                            {link.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm text-[var(--ink-soft)]">No source links published.</p>
+                  )}
+                </div>
+              </div>
+            ) : project.sourceLinks && project.sourceLinks.length > 0 ? (
+              <div id="sources" className="mt-10 scroll-mt-24">
+                <h2 className="display text-3xl">Source documents</h2>
+                <ul className="mt-4 space-y-2">
+                  {project.sourceLinks.map((link, index) => (
+                    <li key={`${link.url}-${index}`}>
+                      <a href={link.url} target="_blank" rel="noreferrer">
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ) : null}
           </div>
@@ -103,17 +145,15 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
 
             <div>
-              <h2 className="display text-2xl">Source links</h2>
+              <h2 className="display text-2xl">Source index</h2>
               <p className="mt-2 text-sm text-[var(--ink-soft)]">
-                Material technical claims should be read with source documents.
+                Full source list lives beside the technical summary.
               </p>
               {project.sourceLinks && project.sourceLinks.length > 0 ? (
-                <ul className="mt-4 space-y-2">
+                <ul className="mt-4 space-y-2 text-sm">
                   {project.sourceLinks.map((link, index) => (
-                    <li key={`${link.url}-${index}`}>
-                      <a href={link.url} target="_blank" rel="noreferrer">
-                        {link.label}
-                      </a>
+                    <li key={`index-${link.url}-${index}`}>
+                      <a href="#sources">{link.label}</a>
                     </li>
                   ))}
                 </ul>
