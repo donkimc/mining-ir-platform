@@ -9,8 +9,8 @@ import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 import { getPublishedProjectBySlug, getPublishedProjects } from '@/lib/public-data'
 import { getPublishedCompanyBySlug } from '@/lib/tenant'
-import { companyContentSchema } from '@/app/(frontend)/dashboard/company/actions'
-import { projectContentSchema } from '@/app/(frontend)/dashboard/projects/actions'
+import { companyContentSchema } from '@/lib/schemas/company'
+import { projectContentSchema } from '@/lib/schemas/project'
 
 describe('tenant isolation and published-only reads', () => {
   let payload: Payload

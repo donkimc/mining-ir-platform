@@ -1,29 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
 
 import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 import { assertPublicationTransition } from '@/lib/publishing'
-
-export const companyContentSchema = z.object({
-  displayName: z.string().min(2, 'Display name is required.'),
-  tickerSymbol: z.string().optional(),
-  exchange: z.string().optional(),
-  shortDescription: z.string().min(10, 'Short description is required.'),
-  longDescription: z.string().optional(),
-  investmentThesis: z.string().optional(),
-  irContactName: z.string().optional(),
-  irContactEmail: z.string().email('Enter a valid IR email.').optional().or(z.literal('')),
-  irContactPhone: z.string().optional(),
-  brandPrimary: z.string().optional(),
-  brandSecondary: z.string().optional(),
-  brandAccent: z.string().optional(),
-})
-
-const companyStatusSchema = z.object({
-  publicationStatus: z.enum(['draft', 'review', 'published', 'archived']),
-})
+import { companyContentSchema, companyStatusSchema } from '@/lib/schemas/company'
 
 export type CompanyFormState = {
   success?: string

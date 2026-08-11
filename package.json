@@ -19,7 +19,8 @@
     "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed/index.ts",
     "seed:reset": "cross-env NODE_OPTIONS=--no-deprecation SEED_RESET=true tsx src/seed/index.ts",
     "test": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
-    "test:watch": "cross-env NODE_OPTIONS=--no-deprecation vitest --config ./vitest.config.mts"
+    "test:watch": "cross-env NODE_OPTIONS=--no-deprecation vitest --config ./vitest.config.mts",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.87.1",

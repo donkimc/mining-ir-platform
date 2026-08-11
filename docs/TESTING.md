@@ -2,7 +2,17 @@
 
 ## Automated Checks
 
-The repository must provide documented commands for linting, type checking and tests. Run them before review and record the results in the Sprint 1 Notion page.
+The repository must provide documented commands for linting, type checking, tests and production build. Run them before review and record the results in the Sprint 1 Notion page.
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+# or: npm run verify
+```
+
+`npm test` includes a static guard that every `'use server'` module only exports async functions (plus erased `export type`s). Lint/typecheck/tests alone do not catch production Server Action export failures — always run `npm run build` as well.
 
 ## Minimum Test Matrix
 
