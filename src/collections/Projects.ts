@@ -16,6 +16,7 @@ import {
   PROJECT_DISCLOSURE_FIELDS,
 } from '@/lib/publishing'
 import { PROJECT_STAGES } from '@/lib/constants'
+import { validateHttpUrl } from '@/lib/validate-url'
 
 function relationId(value: unknown): string | number | null {
   if (!value) return null
@@ -165,7 +166,12 @@ export const Projects: CollectionConfig = {
       },
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value: unknown) => validateHttpUrl(value),
+        },
       ],
       admin: {
         description: 'Source links for material technical claims.',

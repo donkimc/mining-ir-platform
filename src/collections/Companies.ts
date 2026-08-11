@@ -15,6 +15,7 @@ import {
   guardCreateNotPublished,
 } from '@/lib/publishing'
 import { PUBLICATION_STATUSES, TENANT_STATUSES } from '@/lib/constants'
+import { validateHttpUrl } from '@/lib/validate-url'
 
 export const Companies: CollectionConfig = {
   slug: 'companies',
@@ -167,7 +168,12 @@ export const Companies: CollectionConfig = {
       type: 'array',
       fields: [
         { name: 'label', type: 'text', required: true },
-        { name: 'url', type: 'text', required: true },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value: unknown) => validateHttpUrl(value),
+        },
       ],
     },
     ...reviewFields,
