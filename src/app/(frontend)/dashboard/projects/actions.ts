@@ -8,7 +8,7 @@ import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 import { assertPublicationTransition, guardCreateNotPublished } from '@/lib/publishing'
 import { PROJECT_STAGES } from '@/lib/constants'
 
-const projectSchema = z.object({
+export const projectContentSchema = z.object({
   name: z.string().min(2, 'Name is required.'),
   slug: z
     .string()
@@ -23,6 +23,9 @@ const projectSchema = z.object({
   technicalSummary: z.string().optional(),
   locationSummary: z.string().optional(),
   isFlagship: z.boolean().optional(),
+})
+
+const projectStatusSchema = z.object({
   status: z.enum(['draft', 'review', 'published', 'archived']),
 })
 
@@ -41,6 +44,14 @@ function parseHighlights(value?: string) {
     .map((item) => ({ item }))
 }
 
+function fieldErrorsFromZod(error: z.ZodError): Record<string, string> {
+  const fieldErrors: Record<string, string> = {}
+  for (const issue of error.issues) {
+    fieldErrors[issue.path.join('.')] = issue.message
+  }
+  return fieldErrors
+}
+
 export async function createProjectAction(
   _prev: ProjectFormState,
   formData: FormData,
@@ -48,7 +59,7 @@ export async function createProjectAction(
   const { user, tenantId } = await requireCompanyAdmin()
   const payload = await getPayloadClient()
 
-  const parsed = projectSchema.safeParse({
+  const parsed = projectContentSchema.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug'),
     commodity: formData.get('commodity') || undefined,
@@ -60,19 +71,18 @@ export async function createProjectAction(
     technicalSummary: formData.get('technicalSummary') || undefined,
     locationSummary: formData.get('locationSummary') || undefined,
     isFlagship: formData.get('isFlagship') === 'on',
-    status: formData.get('status') || 'draft',
   })
 
   if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {}
-    for (const issue of parsed.error.issues) {
-      fieldErrors[issue.path.join('.')] = issue.message
+    return {
+      error: 'Please fix the highlighted fields.',
+      fieldErrors: fieldErrorsFromZod(parsed.error),
     }
-    return { error: 'Please fix the highlighted fields.', fieldErrors }
   }
 
+  const status = 'draft'
   try {
-    guardCreateNotPublished(parsed.data.status)
+    guardCreateNotPublished(status)
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Invalid status.' }
   }
@@ -97,7 +107,7 @@ export async function createProjectAction(
         technicalSummary: parsed.data.technicalSummary,
         locationSummary: parsed.data.locationSummary,
         isFlagship: parsed.data.isFlagship || false,
-        status: parsed.data.status,
+        status,
       },
     })
     createdId = created.id
@@ -110,7 +120,7 @@ export async function createProjectAction(
   redirect(`/dashboard/projects/${createdId}`)
 }
 
-export async function updateProjectAction(
+export async function updateProjectContentAction(
   projectId: string,
   _prev: ProjectFormState,
   formData: FormData,
@@ -134,7 +144,7 @@ export async function updateProjectAction(
     return { error: 'Forbidden.' }
   }
 
-  const parsed = projectSchema.safeParse({
+  const parsed = projectContentSchema.safeParse({
     name: formData.get('name'),
     slug: formData.get('slug'),
     commodity: formData.get('commodity') || undefined,
@@ -146,25 +156,12 @@ export async function updateProjectAction(
     technicalSummary: formData.get('technicalSummary') || undefined,
     locationSummary: formData.get('locationSummary') || undefined,
     isFlagship: formData.get('isFlagship') === 'on',
-    status: formData.get('status'),
   })
 
   if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {}
-    for (const issue of parsed.error.issues) {
-      fieldErrors[issue.path.join('.')] = issue.message
-    }
-    return { error: 'Please fix the highlighted fields.', fieldErrors }
-  }
-
-  try {
-    assertPublicationTransition({
-      incomingStatus: parsed.data.status,
-      previousStatus: existing.status,
-    })
-  } catch (error) {
     return {
-      error: error instanceof Error ? error.message : 'Invalid publication transition.',
+      error: 'Please fix the highlighted fields.',
+      fieldErrors: fieldErrorsFromZod(parsed.error),
     }
   }
 
@@ -187,7 +184,6 @@ export async function updateProjectAction(
         technicalSummary: parsed.data.technicalSummary,
         locationSummary: parsed.data.locationSummary,
         isFlagship: parsed.data.isFlagship || false,
-        status: parsed.data.status,
       },
     })
   } catch (error) {
@@ -199,4 +195,67 @@ export async function updateProjectAction(
   revalidatePath('/projects')
   revalidatePath(`/projects/${parsed.data.slug}`)
   return { success: 'Project saved.' }
+}
+
+export async function updateProjectStatusAction(
+  projectId: string,
+  _prev: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const { user, tenantId } = await requireCompanyAdmin()
+  const payload = await getPayloadClient()
+
+  const existing = await payload.findByID({
+    collection: 'projects',
+    id: projectId,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  const existingTenant =
+    existing.tenant && typeof existing.tenant === 'object'
+      ? existing.tenant.id
+      : existing.tenant
+
+  if (String(existingTenant) !== String(tenantId)) {
+    return { error: 'Forbidden.' }
+  }
+
+  const parsed = projectStatusSchema.safeParse({
+    status: formData.get('status'),
+  })
+
+  if (!parsed.success) {
+    return { error: 'Choose a valid status.' }
+  }
+
+  try {
+    assertPublicationTransition({
+      incomingStatus: parsed.data.status,
+      previousStatus: existing.status,
+    })
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Invalid publication transition.',
+    }
+  }
+
+  try {
+    await payload.update({
+      collection: 'projects',
+      id: projectId,
+      user,
+      data: {
+        status: parsed.data.status,
+      },
+    })
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Unable to update status.' }
+  }
+
+  revalidatePath('/dashboard/projects')
+  revalidatePath(`/dashboard/projects/${projectId}`)
+  revalidatePath('/projects')
+  revalidatePath(`/projects/${existing.slug}`)
+  return { success: 'Publication status updated.' }
 }

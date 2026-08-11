@@ -96,13 +96,38 @@ Reviewer should still walk the manual smoke list in [`TESTING.md`](./TESTING.md)
 ## Known limitations
 
 1. **Schema sync:** Postgres adapter uses `push: true` for Sprint 1 local speed; formal migrations are not yet the primary workflow.
-2. **Tenant resolution:** Local/demo uses `DEFAULT_TENANT_SLUG` (and optional header/subdomain). Production custom-domain multi-tenant routing is later scope.
-3. **Review gate scope:** Hard gate is on Company `publicationStatus` and Project `status`. Investment highlights / catalysts / share structures can be created as Published without the same Review transition (non-technical homepage helpers for Sprint 1).
+2. **Tenant resolution:** Local/demo uses `DEFAULT_TENANT_SLUG` (and optional non-production `x-tenant-slug` / subdomain). In production, `x-tenant-slug` is ignored unless `TENANT_PROXY_SECRET` matches `x-tenant-proxy-secret`. Full custom-domain multi-tenant routing remains later scope.
+3. **Review gate scope:** Disclosure-field lock + status transition gate apply to Company (`investmentThesis`, `longDescription`) and Project (`technicalSummary`, `highlights`, `summary`, `ownershipPercent`, `sourceLinks`). Investment highlights / catalysts / share structures can still be created as Published without the same Review transition (Sprint 1 homepage helpers).
 4. **Placeholders:** News, Investors, Corporate, Contact, and dashboard Settings have no content workflows.
 5. **Email:** No email adapter configured; Payload logs email to console.
 6. **Visual QA:** Responsive CSS is implemented; a full visual pass in a real mobile browser viewport should still be done by the reviewer.
 7. **CMS vs product admin:** Product Platform Admin owns `/admin/*`; Payload admin UI is at `/cms` to avoid route collision.
-8. **npm audit (2026-08-11):** Critical Vitest UI advisory cleared by bumping `vitest` to `3.2.7` (tests still 11/11). Remaining advisories are mostly transitive: Next `15.4.11` (Payload-supported 15.4.x pin — `--force` to `15.5.23` is out of range), `sharp`/`postcss` via Next, `esbuild` via `drizzle-kit`/`@payloadcms/db-postgres` (no upstream fix), `dompurify` via Payload Monaco. Do **not** run `npm audit fix --force` without a Payload compatibility check.
+8. **npm audit (2026-08-11):** Critical Vitest UI advisory cleared by bumping `vitest` to `3.2.7`. Remaining advisories are mostly transitive under the Payload/Next pin. Do **not** run `npm audit fix --force` without a Payload compatibility check.
+9. **Unfixed review findings (see `docs/SPRINT1_REVIEW.md`):** H4, M1–M5, L1–L10 remain open by design for this fix pass.
+
+---
+
+## Review fixes applied (2026-08-11)
+
+Fixed only **C1, M6, H3, H2, H1** from `docs/SPRINT1_REVIEW.md`.
+
+| ID | Fix | Verified |
+| --- | --- | --- |
+| **C1** | Disclosure-sensitive field lock on Published Company/Project; `review → published` must be status-only; dashboard split into Save changes vs Update status | `PATCH` published `technicalSummary` → **400**; public page unchanged. Unit + integration regression tests. |
+| **M6** | Integration tests call `getPublishedProjects` / `getPublishedProjectBySlug` / `getPublishedCompanyBySlug`; anonymous `overrideAccess: false` read; cross-tenant project write; form schema validation; fixture cleanup in `try/finally` + `afterEach`; leaked `test-public-flow-*` cleaned in `beforeAll` | `npm test` **22/22** |
+| **H3** | `Users.beforeLogin` rejects non-active; `requireUser()` redirects when `status !== 'active'` | Disabled login → **403**; existing token → dashboard **307** `/login` |
+| **H2** | Homepage thesis heading uses `Why {company.displayName}` | Dev header `northern-copper` shows Northern Copper with **0** “Aurora Gold”; admin tenants copy left unchanged |
+| **H1** | `x-tenant-slug` accepted only when `NODE_ENV !== 'production'` or trusted proxy secret matches | Production `next start` on `:3002`: header does **not** switch tenant (still Aurora Gold) |
+
+### Commands re-run after fixes
+
+| Command | Result |
+| --- | --- |
+| `npm run lint` | Pass |
+| `npm run typecheck` | Pass |
+| `npm test` | **22/22 pass** |
+| `npm run build` | Pass |
+| Production header curl | Pass (no tenant switch) |
 
 ---
 
@@ -136,4 +161,5 @@ src/seed/index.ts
 src/app/(frontend)/
 tests/
 docs/decisions/ADR-0005-auth-tenant-resolution-cms-path.md
+docs/SPRINT1_REVIEW.md
 ```

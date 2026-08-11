@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 import { assertPublicationTransition } from '@/lib/publishing'
 
-const profileSchema = z.object({
+export const companyContentSchema = z.object({
   displayName: z.string().min(2, 'Display name is required.'),
   tickerSymbol: z.string().optional(),
   exchange: z.string().optional(),
@@ -19,6 +19,9 @@ const profileSchema = z.object({
   brandPrimary: z.string().optional(),
   brandSecondary: z.string().optional(),
   brandAccent: z.string().optional(),
+})
+
+const companyStatusSchema = z.object({
   publicationStatus: z.enum(['draft', 'review', 'published', 'archived']),
 })
 
@@ -28,14 +31,14 @@ export type CompanyFormState = {
   fieldErrors?: Record<string, string>
 }
 
-export async function updateCompanyAction(
+export async function updateCompanyContentAction(
   _prev: CompanyFormState,
   formData: FormData,
 ): Promise<CompanyFormState> {
   const { user, tenantId } = await requireCompanyAdmin()
   const payload = await getPayloadClient()
 
-  const parsed = profileSchema.safeParse({
+  const parsed = companyContentSchema.safeParse({
     displayName: formData.get('displayName'),
     tickerSymbol: formData.get('tickerSymbol') || undefined,
     exchange: formData.get('exchange') || undefined,
@@ -48,7 +51,6 @@ export async function updateCompanyAction(
     brandPrimary: formData.get('brandPrimary') || undefined,
     brandSecondary: formData.get('brandSecondary') || undefined,
     brandAccent: formData.get('brandAccent') || undefined,
-    publicationStatus: formData.get('publicationStatus'),
   })
 
   if (!parsed.success) {
@@ -57,6 +59,65 @@ export async function updateCompanyAction(
       fieldErrors[issue.path.join('.')] = issue.message
     }
     return { error: 'Please fix the highlighted fields.', fieldErrors }
+  }
+
+  const existing = await payload.findByID({
+    collection: 'companies',
+    id: tenantId,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (String(existing.id) !== String(tenantId)) {
+    return { error: 'Forbidden.' }
+  }
+
+  try {
+    await payload.update({
+      collection: 'companies',
+      id: tenantId,
+      user,
+      data: {
+        displayName: parsed.data.displayName,
+        tickerSymbol: parsed.data.tickerSymbol,
+        exchange: parsed.data.exchange,
+        shortDescription: parsed.data.shortDescription,
+        longDescription: parsed.data.longDescription,
+        investmentThesis: parsed.data.investmentThesis,
+        irContactName: parsed.data.irContactName,
+        irContactEmail: parsed.data.irContactEmail || undefined,
+        irContactPhone: parsed.data.irContactPhone,
+        brandColors: {
+          primary: parsed.data.brandPrimary,
+          secondary: parsed.data.brandSecondary,
+          accent: parsed.data.brandAccent,
+        },
+      },
+    })
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'Unable to save company profile.',
+    }
+  }
+
+  revalidatePath('/')
+  revalidatePath('/dashboard/company')
+  return { success: 'Company profile saved.' }
+}
+
+export async function updateCompanyStatusAction(
+  _prev: CompanyFormState,
+  formData: FormData,
+): Promise<CompanyFormState> {
+  const { user, tenantId } = await requireCompanyAdmin()
+  const payload = await getPayloadClient()
+
+  const parsed = companyStatusSchema.safeParse({
+    publicationStatus: formData.get('publicationStatus'),
+  })
+
+  if (!parsed.success) {
+    return { error: 'Choose a valid publication status.' }
   }
 
   const existing = await payload.findByID({
@@ -87,30 +148,16 @@ export async function updateCompanyAction(
       id: tenantId,
       user,
       data: {
-        displayName: parsed.data.displayName,
-        tickerSymbol: parsed.data.tickerSymbol,
-        exchange: parsed.data.exchange,
-        shortDescription: parsed.data.shortDescription,
-        longDescription: parsed.data.longDescription,
-        investmentThesis: parsed.data.investmentThesis,
-        irContactName: parsed.data.irContactName,
-        irContactEmail: parsed.data.irContactEmail || undefined,
-        irContactPhone: parsed.data.irContactPhone,
-        brandColors: {
-          primary: parsed.data.brandPrimary,
-          secondary: parsed.data.brandSecondary,
-          accent: parsed.data.brandAccent,
-        },
         publicationStatus: parsed.data.publicationStatus,
       },
     })
   } catch (error) {
     return {
-      error: error instanceof Error ? error.message : 'Unable to save company profile.',
+      error: error instanceof Error ? error.message : 'Unable to update publication status.',
     }
   }
 
   revalidatePath('/')
   revalidatePath('/dashboard/company')
-  return { success: 'Company profile saved.' }
+  return { success: 'Publication status updated.' }
 }

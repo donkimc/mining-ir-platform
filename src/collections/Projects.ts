@@ -9,8 +9,10 @@ import {
 import { publicationStatusField, reviewFields } from '@/lib/fields'
 import {
   applyReviewMetadata,
+  assertDisclosureWriteAllowed,
   assertPublicationTransition,
   guardCreateNotPublished,
+  PROJECT_DISCLOSURE_FIELDS,
 } from '@/lib/publishing'
 import { PROJECT_STAGES } from '@/lib/constants'
 
@@ -78,6 +80,13 @@ export const Projects: CollectionConfig = {
         }
 
         assertPublicationTransition({ incomingStatus, previousStatus })
+        assertDisclosureWriteAllowed({
+          fields: PROJECT_DISCLOSURE_FIELDS,
+          data: data as Record<string, unknown>,
+          originalDoc: originalDoc as Record<string, unknown> | undefined,
+          previousStatus,
+          incomingStatus,
+        })
 
         return applyReviewMetadata({
           data,

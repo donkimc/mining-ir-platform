@@ -1,4 +1,3 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { SiteFooter } from '@/components/public/SiteFooter'
@@ -27,8 +26,6 @@ async function Placeholder({
     </main>
   )
 }
-
-export const newsMetadata: Metadata = { title: 'News' }
 
 export default async function NewsPlaceholderPage() {
   return (

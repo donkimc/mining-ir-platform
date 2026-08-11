@@ -18,7 +18,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
 export async function requireUser(loginRedirect = '/login'): Promise<AuthUser> {
   const user = await getCurrentUser()
-  if (!user) {
+  if (!user || user.status !== 'active') {
     redirect(loginRedirect)
   }
   return user

@@ -58,7 +58,7 @@ export default async function HomePage() {
             <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">
               Investment thesis
             </p>
-            <h2 className="display mt-3 text-4xl md:text-5xl">Why Aurora Gold</h2>
+            <h2 className="display mt-3 text-4xl md:text-5xl">Why {company.displayName}</h2>
           </div>
           <p className="text-lg leading-relaxed text-[var(--ink-soft)]">
             {company.investmentThesis || company.longDescription || company.shortDescription}

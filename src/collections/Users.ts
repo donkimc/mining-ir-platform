@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 
 import { isPlatformAdmin, platformAdminOnly } from '@/access'
 
@@ -31,6 +32,15 @@ export const Users: CollectionConfig = {
         },
       }
     },
+  },
+  hooks: {
+    beforeLogin: [
+      async ({ user }) => {
+        if (!user || user.status !== 'active') {
+          throw new APIError('This account is disabled or inactive.', 403)
+        }
+      },
+    ],
   },
   fields: [
     {

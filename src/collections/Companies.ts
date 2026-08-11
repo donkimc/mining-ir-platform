@@ -9,7 +9,9 @@ import {
 import { reviewFields } from '@/lib/fields'
 import {
   applyReviewMetadata,
+  assertDisclosureWriteAllowed,
   assertPublicationTransition,
+  COMPANY_DISCLOSURE_FIELDS,
   guardCreateNotPublished,
 } from '@/lib/publishing'
 import { PUBLICATION_STATUSES, TENANT_STATUSES } from '@/lib/constants'
@@ -48,6 +50,13 @@ export const Companies: CollectionConfig = {
         }
 
         assertPublicationTransition({ incomingStatus, previousStatus })
+        assertDisclosureWriteAllowed({
+          fields: COMPANY_DISCLOSURE_FIELDS,
+          data: data as Record<string, unknown>,
+          originalDoc: originalDoc as Record<string, unknown> | undefined,
+          previousStatus,
+          incomingStatus,
+        })
 
         return applyReviewMetadata({
           data,

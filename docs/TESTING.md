@@ -15,10 +15,13 @@ The repository must provide documented commands for linting, type checking and t
 | Company Admin reads own tenant | Allowed |
 | Company Admin reads another tenant | Rejected without data leak |
 | Company Admin writes another tenant | Rejected |
+| Company Admin writes another tenant's project | Rejected without data leak |
 | Platform Admin lists tenants | Allowed |
 | Draft to Published without review | Rejected for disclosure-sensitive content |
 | Approved content becomes Published | Allowed and visible publicly |
 | Invalid profile/project form | Validation errors; no partial mutation |
+| Invalid profile/project form fields | Validation errors; no partial mutation |
+| Published disclosure field edit | Rejected; public read unchanged |
 
 ## Manual Smoke Test
 

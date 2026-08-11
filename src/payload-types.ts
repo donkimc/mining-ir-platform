@@ -340,6 +340,7 @@ export interface ShareStructure {
  */
 export interface Media {
   id: number;
+  tenant: number | Company;
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -621,6 +622,7 @@ export interface ShareStructuresSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  tenant?: T;
   alt?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -1,19 +1,41 @@
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { getPayloadClient } from '@/lib/auth'
 import type { Company } from '@/payload-types'
 
+export function shouldAcceptTenantSlugHeader(args: {
+  nodeEnv: string | undefined
+  hasHeader: boolean
+  trustedProxy: boolean
+}): boolean {
+  return args.hasHeader && (args.nodeEnv !== 'production' || args.trustedProxy)
+}
+
 /**
  * Sprint 1 tenant resolution:
- * 1. Optional `x-tenant-slug` header (proxy / multi-tenant edge)
+ * 1. Optional `x-tenant-slug` header — only in non-production, or when a trusted proxy secret matches
  * 2. Subdomain label when not localhost
  * 3. `DEFAULT_TENANT_SLUG` for local single-hostname development
  */
 export async function resolveTenantSlug(): Promise<string> {
+  const { headers } = await import('next/headers')
   const headerStore = await headers()
   const fromHeader = headerStore.get('x-tenant-slug')
-  if (fromHeader) return fromHeader.trim().toLowerCase()
+  const proxySecret = process.env.TENANT_PROXY_SECRET
+  const providedProxySecret = headerStore.get('x-tenant-proxy-secret')
+  const trustedProxy =
+    Boolean(proxySecret) && Boolean(providedProxySecret) && providedProxySecret === proxySecret
+
+  if (
+    shouldAcceptTenantSlugHeader({
+      nodeEnv: process.env.NODE_ENV,
+      hasHeader: Boolean(fromHeader),
+      trustedProxy,
+    }) &&
+    fromHeader
+  ) {
+    return fromHeader.trim().toLowerCase()
+  }
 
   const host = headerStore.get('host') || ''
   const hostname = host.split(':')[0]
