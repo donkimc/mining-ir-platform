@@ -13,6 +13,7 @@ export function LoginForm() {
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || ''
   const unauthorized = searchParams.get('error') === 'unauthorized'
+  const multiTenant = searchParams.get('error') === 'multi-tenant'
   const [state, formAction, pending] = useActionState(loginAction, initialState)
 
   return (
@@ -20,6 +21,12 @@ export function LoginForm() {
       <input type="hidden" name="next" value={next} />
       {unauthorized ? (
         <FormMessage type="error" message="You are not authorized for that area." />
+      ) : null}
+      {multiTenant ? (
+        <FormMessage
+          type="error"
+          message="This account has Company Admin access to more than one tenant. Contact a Platform Admin to resolve memberships before using the dashboard."
+        />
       ) : null}
       <FormMessage type="error" message={state.error} />
       <div>

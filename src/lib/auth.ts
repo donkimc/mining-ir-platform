@@ -32,7 +32,12 @@ export async function requirePlatformAdmin(): Promise<AuthUser> {
   return user
 }
 
-async function findActiveCompanyAdminTenantId(userId: string | number) {
+type MembershipLookup =
+  | { kind: 'none' }
+  | { kind: 'single'; tenantId: string | number }
+  | { kind: 'multiple' }
+
+async function findActiveCompanyAdminMemberships(userId: string | number): Promise<MembershipLookup> {
   const payload = await getPayloadClient()
   const memberships = await payload.find({
     collection: 'tenant-memberships',
@@ -43,17 +48,22 @@ async function findActiveCompanyAdminTenantId(userId: string | number) {
         { role: { equals: 'company_admin' } },
       ],
     },
-    limit: 1,
+    sort: 'createdAt',
+    limit: 10,
     depth: 0,
     overrideAccess: true,
   })
 
-  const membership = memberships.docs[0]
-  if (!membership) return null
+  if (memberships.docs.length === 0) return { kind: 'none' }
+  if (memberships.totalDocs > 1 || memberships.docs.length > 1) return { kind: 'multiple' }
 
-  const tenant = membership.tenant
-  if (tenant && typeof tenant === 'object' && 'id' in tenant) return tenant.id
-  return (tenant as string | number) ?? null
+  const tenant = memberships.docs[0].tenant
+  const tenantId =
+    tenant && typeof tenant === 'object' && 'id' in tenant
+      ? tenant.id
+      : (tenant as string | number)
+
+  return { kind: 'single', tenantId }
 }
 
 export async function requireCompanyAdmin(): Promise<{
@@ -63,15 +73,19 @@ export async function requireCompanyAdmin(): Promise<{
   const user = await requireUser('/login?next=/dashboard')
 
   if (isPlatformAdmin(user)) {
-    const tenantId = await findActiveCompanyAdminTenantId(user.id)
-    if (tenantId) return { user, tenantId }
+    const membership = await findActiveCompanyAdminMemberships(user.id)
+    if (membership.kind === 'single') return { user, tenantId: membership.tenantId }
+    if (membership.kind === 'multiple') redirect('/login?error=multi-tenant')
     redirect('/admin/tenants')
   }
 
-  const tenantId = await findActiveCompanyAdminTenantId(user.id)
-  if (!tenantId) {
+  const membership = await findActiveCompanyAdminMemberships(user.id)
+  if (membership.kind === 'multiple') {
+    redirect('/login?error=multi-tenant')
+  }
+  if (membership.kind === 'none') {
     redirect('/login?error=unauthorized')
   }
 
-  return { user, tenantId }
+  return { user, tenantId: membership.tenantId }
 }
