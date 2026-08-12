@@ -19,9 +19,8 @@ function optionalString(value?: string) {
   return value?.trim() ? value.trim() : undefined
 }
 
-function projectIdValue(value: string): number {
-  const id = Number(value)
-  return Number.isFinite(id) ? id : (value as unknown as number)
+function projectIdValue(value: string): string {
+  return value.trim()
 }
 
 function revalidateExploration() {

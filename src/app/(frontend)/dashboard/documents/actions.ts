@@ -19,11 +19,8 @@ function optionalString(value?: string) {
   return value?.trim() ? value.trim() : undefined
 }
 
-function optionalProjectId(value?: string): number | undefined {
-  const trimmed = optionalString(value)
-  if (!trimmed) return undefined
-  const id = Number(trimmed)
-  return Number.isFinite(id) ? id : undefined
+function optionalProjectId(value?: string): string | undefined {
+  return optionalString(value)
 }
 
 function revalidateDocuments() {
