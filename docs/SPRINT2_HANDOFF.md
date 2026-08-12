@@ -24,17 +24,16 @@ Sprint 2 mining-content code is implemented on the Sprint 1 baseline:
 | --- | --- |
 | `npm run lint` | Pass |
 | `npm run typecheck` | Pass |
-| `npm test` | **43/43 pass** |
+| `npm test` | **48/48 pass** (observed) |
 | `npm run build` | Pass |
 | `npm run seed:reset` | Pass — Aurora + Northern + Sprint 2 content |
-| `npm run verify` | Pass (2026-08-12 remediations for C1/H2/H3) |
+| `npm run verify` | Pass after each M4/M1/M2/M5/L1 remediation commit |
 
 Local seed logins (dev only): `platform@mining-ir.local` / `ChangeMeLocal1!`, `admin@auroragold.local` / `ChangeMeLocal1!`.
 
 ### Review remediations observed (2026-08-12)
 
-Fixed **only** C1, H2 and H3 from `docs/SPRINT2_REVIEW.md`. Medium/Low findings were not changed.
-
+C1, H2 and H3 were fixed earlier. Medium findings M4, M1, M2, M5 and Low L1+ are remediations in subsequent commits (see git log).
 #### C1 — media access (application side) — **partially remediates; bucket privacy still open**
 
 App changes (observed):
