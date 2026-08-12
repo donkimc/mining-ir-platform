@@ -1,4 +1,9 @@
-import type { CollectionBeforeChangeHook, CollectionConfig, PayloadRequest } from 'payload'
+import type {
+  CollectionAfterReadHook,
+  CollectionBeforeChangeHook,
+  CollectionConfig,
+  PayloadRequest,
+} from 'payload'
 
 import {
   isPlatformAdmin,
@@ -18,6 +23,7 @@ import {
   shouldRequireSource,
   stripForgedReviewMetadata,
 } from '@/lib/publishing'
+import { getPublishedCompanyBySlug, resolveTenantSlug } from '@/lib/tenant'
 
 type RelationCheck = {
   field: string
@@ -51,16 +57,34 @@ export function publishedOnlyOrTenantScopedRead(): CollectionConfig['access'] {
     delete: tenantScopedCompanyAdminWrite,
     read: async ({ req }) => {
       if (!req.user) {
+        const slug = await resolveTenantSlug()
+        const company = await getPublishedCompanyBySlug(slug)
+        if (!company) {
+          return {
+            id: { in: [] },
+          }
+        }
         return {
-          status: {
-            equals: 'published',
-          },
+          and: [
+            { status: { equals: 'published' } },
+            { tenant: { equals: company.id } },
+          ],
         }
       }
       return tenantScopedRead({ req })
     },
     update: tenantScopedCompanyAdminWrite,
   }
+}
+
+/** Strip review audit fields from anonymous API/page reads. Authenticated users keep them. */
+export const stripReviewMetadataAfterRead: CollectionAfterReadHook = ({ doc, req }) => {
+  if (!doc || req.user) return doc
+  const next = { ...(doc as Record<string, unknown>) }
+  delete next.reviewedBy
+  delete next.reviewedAt
+  delete next.publishedAt
+  return next
 }
 
 export function createPublishableBeforeChange(args: {

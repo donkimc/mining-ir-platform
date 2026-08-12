@@ -7,26 +7,28 @@ import {
   tenantField,
 } from '@/lib/collection-hooks'
 import {
+  disclosureLevelField,
   publicationStatusField,
   reviewFields,
   sourceDocumentField,
   sourceUrlField,
 } from '@/lib/fields'
-import { SHARE_DISCLOSURE_FIELDS } from '@/lib/publishing'
+import { NEWS_DISCLOSURE_FIELDS } from '@/lib/publishing'
 
-export const ShareStructures: CollectionConfig = {
-  slug: 'share-structures',
+export const NewsReleases: CollectionConfig = {
+  slug: 'news-releases',
   admin: {
-    useAsTitle: 'asOfDate',
-    defaultColumns: ['asOfDate', 'tenant', 'sharesOutstanding', 'status'],
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'slug', 'tenant', 'status', 'releaseDate'],
   },
   access: publishedOnlyOrTenantScopedRead(),
   hooks: {
     beforeChange: [
       createPublishableBeforeChange({
-        disclosureFields: SHARE_DISCLOSURE_FIELDS,
+        disclosureFields: NEWS_DISCLOSURE_FIELDS,
         requireSource: true,
         relationChecks: [
+          { field: 'project', collection: 'projects', label: 'Related project' },
           { field: 'sourceDocument', collection: 'documents', label: 'Source document' },
         ],
       }),
@@ -35,14 +37,19 @@ export const ShareStructures: CollectionConfig = {
   },
   fields: [
     tenantField(),
-    { name: 'asOfDate', type: 'date', required: true },
-    { name: 'sharesOutstanding', type: 'number' },
-    { name: 'options', type: 'number' },
-    { name: 'warrants', type: 'number' },
-    { name: 'fullyDiluted', type: 'number' },
-    { name: 'marketCapNote', type: 'textarea' },
+    { name: 'title', type: 'text', required: true },
+    { name: 'slug', type: 'text', required: true, index: true },
+    {
+      name: 'project',
+      type: 'relationship',
+      relationTo: 'projects',
+    },
+    { name: 'releaseDate', type: 'date', required: true },
+    { name: 'excerpt', type: 'textarea', required: true },
+    { name: 'body', type: 'textarea', required: true },
     sourceUrlField,
     sourceDocumentField,
+    disclosureLevelField,
     publicationStatusField,
     ...reviewFields,
   ],

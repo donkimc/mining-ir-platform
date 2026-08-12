@@ -11,6 +11,17 @@ export function shouldAcceptTenantSlugHeader(args: {
   return args.hasHeader && (args.nodeEnv !== 'production' || args.trustedProxy)
 }
 
+/** Hosts that serve the platform itself, not a tenant subdomain. */
+export function isPlatformDeploymentHost(hostname: string): boolean {
+  return (
+    !hostname ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.endsWith('.vercel.app') ||
+    hostname.endsWith('.localhost')
+  )
+}
+
 /**
  * Sprint 1 tenant resolution:
  * 1. Optional `x-tenant-slug` header — only in non-production, or when a trusted proxy secret matches
@@ -18,36 +29,37 @@ export function shouldAcceptTenantSlugHeader(args: {
  * 3. `DEFAULT_TENANT_SLUG` for local single-hostname development
  */
 export async function resolveTenantSlug(): Promise<string> {
-  const { headers } = await import('next/headers')
-  const headerStore = await headers()
-  const fromHeader = headerStore.get('x-tenant-slug')
-  const proxySecret = process.env.TENANT_PROXY_SECRET
-  const providedProxySecret = headerStore.get('x-tenant-proxy-secret')
-  const trustedProxy =
-    Boolean(proxySecret) && Boolean(providedProxySecret) && providedProxySecret === proxySecret
+  try {
+    const { headers } = await import('next/headers')
+    const headerStore = await headers()
+    const fromHeader = headerStore.get('x-tenant-slug')
+    const proxySecret = process.env.TENANT_PROXY_SECRET
+    const providedProxySecret = headerStore.get('x-tenant-proxy-secret')
+    const trustedProxy =
+      Boolean(proxySecret) && Boolean(providedProxySecret) && providedProxySecret === proxySecret
 
-  if (
-    shouldAcceptTenantSlugHeader({
-      nodeEnv: process.env.NODE_ENV,
-      hasHeader: Boolean(fromHeader),
-      trustedProxy,
-    }) &&
-    fromHeader
-  ) {
-    return fromHeader.trim().toLowerCase()
-  }
+    if (
+      shouldAcceptTenantSlugHeader({
+        nodeEnv: process.env.NODE_ENV,
+        hasHeader: Boolean(fromHeader),
+        trustedProxy,
+      }) &&
+      fromHeader
+    ) {
+      return fromHeader.trim().toLowerCase()
+    }
 
-  const host = headerStore.get('host') || ''
-  const hostname = host.split(':')[0]
+    const host = headerStore.get('host') || ''
+    const hostname = host.split(':')[0]
 
-  if (
-    hostname &&
-    hostname !== 'localhost' &&
-    hostname !== '127.0.0.1' &&
-    hostname.includes('.')
-  ) {
-    const label = hostname.split('.')[0]
-    if (label && label !== 'www') return label.toLowerCase()
+    // Platform deployment hosts (localhost, Vercel) are not tenant subdomains.
+    // Use DEFAULT_TENANT_SLUG until custom/subdomain tenant routing is configured.
+    if (!isPlatformDeploymentHost(hostname) && hostname.includes('.')) {
+      const label = hostname.split('.')[0]
+      if (label && label !== 'www') return label.toLowerCase()
+    }
+  } catch {
+    // Outside a Next.js request (integration tests / scripts): use DEFAULT_TENANT_SLUG.
   }
 
   const fallback = process.env.DEFAULT_TENANT_SLUG
