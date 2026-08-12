@@ -258,15 +258,20 @@ export async function assertSameTenantRelation(args: {
   const { payload, tenantId, collection, id, label } = args
   if (id == null) return
 
-  const doc = await payload.findByID({
-    collection,
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
+  try {
+    const doc = await payload.findByID({
+      collection,
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })
 
-  const docTenant = relationId((doc as { tenant?: unknown }).tenant)
-  if (String(docTenant) !== String(tenantId)) {
+    const docTenant = relationId((doc as { tenant?: unknown }).tenant)
+    if (String(docTenant) !== String(tenantId)) {
+      throw new APIError(`${label} must belong to the same tenant.`, 400)
+    }
+  } catch (error) {
+    if (error instanceof APIError) throw error
     throw new APIError(`${label} must belong to the same tenant.`, 400)
   }
 }
