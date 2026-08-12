@@ -766,6 +766,39 @@ async function seed() {
   }
 
   // Northern Copper isolation fixtures (no company-admin membership).
+  const northernProjects = await payload.find({
+    collection: 'projects',
+    where: { tenant: { equals: northern.id } },
+    limit: 1,
+    overrideAccess: true,
+  })
+  let northernProjectId = northernProjects.docs[0]?.id
+  if (!northernProjectId) {
+    const northernProject = await payload.create({
+      collection: 'projects',
+      data: {
+        tenant: northern.id,
+        name: 'Copper Ridge Isolation',
+        slug: 'copper-ridge-isolation',
+        status: 'draft',
+        isFlagship: true,
+        commodity: 'Copper',
+        jurisdiction: 'British Columbia, Canada',
+        locationSummary: 'Fictional isolation fixture project for wrong-tenant relation tests.',
+        ownershipPercent: 100,
+        stage: 'early_exploration',
+        summary: 'Northern Copper isolation project used only for cross-tenant assignment checks.',
+        highlights: [{ item: 'Isolation fixture — not for public demo focus.' }],
+        technicalSummary: 'Fictional technical summary for tenant isolation tests only.',
+        displayOrder: 1,
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'projects', northernProject.id, platformAdmin)
+    northernProjectId = northernProject.id
+  }
+  void northernProjectId
+
   const northernNews = await payload.find({
     collection: 'news-releases',
     where: { tenant: { equals: northern.id } },
