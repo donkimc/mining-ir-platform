@@ -84,6 +84,8 @@ a {
 
 .hero-plane {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100svh;
   color: var(--paper);
   background:

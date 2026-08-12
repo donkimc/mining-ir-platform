@@ -34,7 +34,7 @@ export default async function HomePage() {
         <div
           id="main-content"
           tabIndex={-1}
-          className="section-shell relative flex min-h-[calc(100svh-5.5rem)] flex-col justify-end pb-16 pt-20"
+          className="section-shell relative flex flex-1 flex-col justify-end pb-16 pt-10 md:pt-20"
         >
           <p className="fade-up text-sm uppercase tracking-[0.22em] text-[var(--mineral-soft)]">
             {ticker}
@@ -165,17 +165,53 @@ export default async function HomePage() {
           </div>
           <div>
             <h2 className="display text-4xl">Recent news</h2>
-            <p className="mt-4 text-[var(--ink-soft)]">
-              News workflow is out of scope for Sprint 1. This is a placeholder for upcoming
-              releases.
-            </p>
+            {data.recentNews.length === 0 ? (
+              <p className="mt-4 text-[var(--ink-soft)]">No published news releases yet.</p>
+            ) : (
+              <ul className="mt-8 space-y-6">
+                {data.recentNews.map((item) => (
+                  <li
+                    key={item.id}
+                    className="border-t border-[color-mix(in_oklab,var(--ink)_12%,transparent)] pt-4"
+                  >
+                    <h3 className="display text-2xl">
+                      <Link href={`/news/${item.slug}`} className="no-underline hover:underline">
+                        {item.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 text-[var(--ink-soft)]">{item.excerpt}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
             <Link href="/news" className="mt-6 inline-block font-semibold">
-              View news placeholder
+              View all news
             </Link>
             <div className="mt-10 border-t border-[color-mix(in_oklab,var(--ink)_12%,transparent)] pt-8">
-              <h3 className="display text-2xl">Corporate presentation</h3>
-              <p className="mt-3 text-[var(--ink-soft)]">
-                Document library arrives in a later sprint. Presentation link placeholder only.
+              <h3 className="display text-2xl">Documents & capitalization</h3>
+              {data.documents.length === 0 ? (
+                <p className="mt-3 text-[var(--ink-soft)]">
+                  Published documents will appear in the document library.
+                </p>
+              ) : (
+                <ul className="mt-4 space-y-2">
+                  {data.documents.map((doc) => (
+                    <li key={doc.id}>
+                      {doc.externalUrl ? (
+                        <a href={doc.externalUrl} target="_blank" rel="noreferrer">
+                          {doc.title}
+                        </a>
+                      ) : (
+                        <span>{doc.title}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-4 text-[var(--ink-soft)]">
+                Browse the{' '}
+                <Link href="/documents">document library</Link> or{' '}
+                <Link href="/share-structure">share structure</Link>.
               </p>
             </div>
           </div>
