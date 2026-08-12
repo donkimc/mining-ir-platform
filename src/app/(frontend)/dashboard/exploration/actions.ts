@@ -68,7 +68,7 @@ export async function createExplorationAction(
       overrideAccess: false,
       data: {
         tenant: tenantId as unknown as number,
-        project: projectIdValue(parsed.data.projectId),
+        project: projectIdValue(parsed.data.projectId) as unknown as number,
         title: parsed.data.title,
         contentDate: parsed.data.contentDate,
         summary: parsed.data.summary,
@@ -122,7 +122,7 @@ export async function updateExplorationContentAction(
       user,
       overrideAccess: false,
       data: {
-        project: projectIdValue(parsed.data.projectId),
+        project: projectIdValue(parsed.data.projectId) as unknown as number,
         title: parsed.data.title,
         contentDate: parsed.data.contentDate,
         summary: parsed.data.summary,

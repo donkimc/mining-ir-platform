@@ -75,7 +75,7 @@ export async function createDocumentAction(
         publicationDate: parsed.data.publicationDate,
         externalUrl: optionalString(parsed.data.externalUrl),
         sourceUrl: optionalString(parsed.data.sourceUrl),
-        project: projectId,
+        project: projectId as unknown as number | undefined,
         disclosureLevel: parsed.data.disclosureLevel,
         status,
       },
@@ -132,7 +132,7 @@ export async function updateDocumentContentAction(
         publicationDate: parsed.data.publicationDate,
         externalUrl: optionalString(parsed.data.externalUrl),
         sourceUrl: optionalString(parsed.data.sourceUrl),
-        project: projectId,
+        project: projectId as unknown as number | undefined,
         disclosureLevel: parsed.data.disclosureLevel,
       },
     })

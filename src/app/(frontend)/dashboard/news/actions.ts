@@ -73,7 +73,7 @@ export async function createNewsAction(
         tenant: tenantId as unknown as number,
         title: parsed.data.title,
         slug: parsed.data.slug,
-        project: projectId,
+        project: projectId as unknown as number | undefined,
         releaseDate: parsed.data.releaseDate,
         excerpt: parsed.data.excerpt,
         body: parsed.data.body,
@@ -130,7 +130,7 @@ export async function updateNewsContentAction(
       data: {
         title: parsed.data.title,
         slug: parsed.data.slug,
-        project: projectId,
+        project: projectId as unknown as number | undefined,
         releaseDate: parsed.data.releaseDate,
         excerpt: parsed.data.excerpt,
         body: parsed.data.body,
