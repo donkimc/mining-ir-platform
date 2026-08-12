@@ -1,4 +1,4 @@
-import { APIError } from 'payload'
+import { APIError, type Payload } from 'payload'
 
 export const PROJECT_DISCLOSURE_FIELDS = [
   'technicalSummary',
@@ -9,6 +9,61 @@ export const PROJECT_DISCLOSURE_FIELDS = [
 ] as const
 
 export const COMPANY_DISCLOSURE_FIELDS = ['investmentThesis', 'longDescription'] as const
+
+export const NEWS_DISCLOSURE_FIELDS = [
+  'title',
+  'excerpt',
+  'body',
+  'sourceUrl',
+  'sourceDocument',
+  'project',
+  'releaseDate',
+  'disclosureLevel',
+] as const
+
+export const DOCUMENT_DISCLOSURE_FIELDS = [
+  'title',
+  'category',
+  'publicationDate',
+  'externalUrl',
+  'file',
+  'project',
+  'sourceUrl',
+  'sourceDocument',
+  'disclosureLevel',
+] as const
+
+export const PERSON_DISCLOSURE_FIELDS = [
+  'name',
+  'roleTitle',
+  'group',
+  'biography',
+  'headshot',
+  'disclosureLevel',
+] as const
+
+export const SHARE_DISCLOSURE_FIELDS = [
+  'asOfDate',
+  'sharesOutstanding',
+  'options',
+  'warrants',
+  'fullyDiluted',
+  'marketCapNote',
+  'sourceUrl',
+  'sourceDocument',
+  'disclosureLevel',
+] as const
+
+export const EXPLORATION_DISCLOSURE_FIELDS = [
+  'project',
+  'title',
+  'contentDate',
+  'summary',
+  'technicalDetails',
+  'sourceUrl',
+  'sourceDocument',
+  'disclosureLevel',
+] as const
 
 /**
  * Enforces ADR-0004: disclosure-sensitive content cannot skip Review.
@@ -128,6 +183,92 @@ export function applyReviewMetadata<T extends Record<string, unknown>>(args: {
   }
 
   return data
+}
+
+/** Drop client-supplied review audit fields; only server approval may set them. */
+export function stripForgedReviewMetadata<T extends Record<string, unknown>>(data: T): T {
+  const next = { ...data }
+  delete next.reviewedBy
+  delete next.reviewedAt
+  delete next.publishedAt
+  return next
+}
+
+export function relationId(value: unknown): string | number | null {
+  if (!value) return null
+  if (typeof value === 'object' && value !== null && 'id' in value) {
+    return (value as { id: string | number }).id
+  }
+  if (typeof value === 'string' || typeof value === 'number') return value
+  return null
+}
+
+function hasSourceReference(data: Record<string, unknown>, originalDoc?: Record<string, unknown> | null): boolean {
+  const sourceUrl = data.sourceUrl ?? originalDoc?.sourceUrl
+  const externalUrl = data.externalUrl ?? originalDoc?.externalUrl
+  const sourceDocument = relationId(data.sourceDocument ?? originalDoc?.sourceDocument)
+  const file = relationId(data.file ?? originalDoc?.file)
+  return Boolean(
+    (typeof sourceUrl === 'string' && sourceUrl.trim()) ||
+      (typeof externalUrl === 'string' && externalUrl.trim()) ||
+      sourceDocument != null ||
+      file != null,
+  )
+}
+
+/**
+ * Material mining claims require a source URL or source document before Review/Published.
+ * Required when the collection default says so, or when disclosureLevel is technical.
+ */
+export function shouldRequireSource(args: {
+  collectionDefault?: boolean
+  data: Record<string, unknown>
+  originalDoc?: Record<string, unknown> | null
+}): boolean {
+  const level = args.data.disclosureLevel ?? args.originalDoc?.disclosureLevel
+  if (level === 'technical') return true
+  return Boolean(args.collectionDefault)
+}
+
+export function assertSourceReferenceRequired(args: {
+  data: Record<string, unknown>
+  originalDoc?: Record<string, unknown> | null
+  incomingStatus?: string | null
+  required?: boolean
+}): void {
+  const { data, originalDoc, incomingStatus, required = true } = args
+  if (!required) return
+  if (incomingStatus !== 'review' && incomingStatus !== 'published') return
+
+  if (!hasSourceReference(data, originalDoc)) {
+    throw new APIError(
+      'A source URL or source document is required before Review or Published for material content.',
+      400,
+    )
+  }
+}
+
+export async function assertSameTenantRelation(args: {
+  payload: Payload
+  tenantId: string | number
+  collection: 'projects' | 'documents' | 'media'
+  id: string | number | null | undefined
+  label: string
+}): Promise<void> {
+  const { payload, tenantId, collection, id, label } = args
+  if (id == null) return
+
+  const doc = await payload.findByID({
+    collection,
+    id,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  const docTenant = relationId((doc as { tenant?: unknown }).tenant)
+  if (String(docTenant) !== String(tenantId)) {
+    throw new APIError(`${label} must belong to the same tenant.`, 400)
+  }
 }
 
 export function guardCreateNotPublished(status: string | null | undefined): void {
