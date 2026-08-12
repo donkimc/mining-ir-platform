@@ -11,6 +11,10 @@ async function clearCollection(
     | 'investment-highlights'
     | 'catalysts'
     | 'share-structures'
+    | 'news-releases'
+    | 'documents'
+    | 'people'
+    | 'exploration-contents'
     | 'companies'
     | 'users'
     | 'media',
@@ -31,6 +35,34 @@ async function clearCollection(
   }
 }
 
+async function publishViaReview(
+  payload: Awaited<ReturnType<typeof import('payload').getPayload>>,
+  collection:
+    | 'projects'
+    | 'share-structures'
+    | 'news-releases'
+    | 'documents'
+    | 'people'
+    | 'exploration-contents',
+  id: string | number,
+  reviewer: { id: string | number },
+) {
+  await payload.update({
+    collection,
+    id,
+    data: { status: 'review' },
+    overrideAccess: true,
+    user: reviewer,
+  })
+  await payload.update({
+    collection,
+    id,
+    data: { status: 'published' },
+    overrideAccess: true,
+    user: reviewer,
+  })
+}
+
 async function seed() {
   const { getPayload } = await import('payload')
   const { default: config } = await import('../payload.config')
@@ -40,10 +72,15 @@ async function seed() {
   if (reset) {
     console.log('Resetting seed collections...')
     await clearCollection(payload, 'tenant-memberships')
+    await clearCollection(payload, 'exploration-contents')
+    await clearCollection(payload, 'news-releases')
+    await clearCollection(payload, 'documents')
+    await clearCollection(payload, 'people')
     await clearCollection(payload, 'projects')
     await clearCollection(payload, 'investment-highlights')
     await clearCollection(payload, 'catalysts')
     await clearCollection(payload, 'share-structures')
+    await clearCollection(payload, 'media')
     await clearCollection(payload, 'companies')
     await clearCollection(payload, 'users')
   }
@@ -166,8 +203,9 @@ async function seed() {
     overrideAccess: true,
   })
 
-  if (!existingNorthern.docs[0]) {
-    const northern = await payload.create({
+  let northern = existingNorthern.docs[0]
+  if (!northern) {
+    northern = await payload.create({
       collection: 'companies',
       data: {
         legalName: 'Northern Copper Corp.',
@@ -433,26 +471,340 @@ async function seed() {
         options: 8_200_000,
         warrants: 12_000_000,
         fullyDiluted: 148_600_000,
-        marketCapNote: 'Market capitalization varies with share price; figure omitted for Sprint 1.',
+        marketCapNote:
+          'Fictional demo figures only. Market capitalization varies with share price.',
+        sourceUrl: 'https://example.com/aurora-gold-share-structure-2026-06-30',
         status: 'draft',
       },
       overrideAccess: true,
     })
+    await publishViaReview(payload, 'share-structures', shareDraft.id, platformAdmin)
 
-    await payload.update({
+    await payload.create({
       collection: 'share-structures',
-      id: shareDraft.id,
-      data: { status: 'review' },
+      data: {
+        tenant: aurora.id,
+        asOfDate: '2026-03-31',
+        sharesOutstanding: 120_000_000,
+        options: 7_000_000,
+        warrants: 10_000_000,
+        fullyDiluted: 137_000_000,
+        marketCapNote: 'Draft historical share structure — must stay private.',
+        sourceUrl: 'https://example.com/aurora-gold-share-structure-draft',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+  }
+
+  const northRidge = await payload.find({
+    collection: 'projects',
+    where: {
+      and: [{ tenant: { equals: aurora.id } }, { slug: { equals: 'north-ridge' } }],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  const northRidgeId = northRidge.docs[0]?.id
+
+  const docs = await payload.find({
+    collection: 'documents',
+    where: { tenant: { equals: aurora.id } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  let publishedDocId: string | number | undefined
+  if (docs.totalDocs === 0) {
+    const presentation = await payload.create({
+      collection: 'documents',
+      data: {
+        tenant: aurora.id,
+        title: 'Aurora Gold Corporate Presentation',
+        slug: 'corporate-presentation',
+        category: 'presentation',
+        publicationDate: '2026-07-15',
+        externalUrl: 'https://example.com/aurora-gold-corporate-presentation.pdf',
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'documents', presentation.id, platformAdmin)
+    publishedDocId = presentation.id
+
+    await payload.create({
+      collection: 'documents',
+      data: {
+        tenant: aurora.id,
+        title: 'Internal Draft Technical Memo',
+        slug: 'draft-technical-memo',
+        category: 'technical_report',
+        publicationDate: '2026-08-01',
+        externalUrl: 'https://example.com/aurora-gold-draft-memo.pdf',
+        disclosureLevel: 'technical',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+  } else {
+    publishedDocId = docs.docs[0]?.id
+  }
+
+  // M5: ensure at least one Document is backed by a real uploaded media file.
+  const fileBacked = await payload.find({
+    collection: 'documents',
+    where: {
+      and: [{ tenant: { equals: aurora.id } }, { file: { exists: true } }],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (fileBacked.totalDocs === 0) {
+    const publishedBuffer = Buffer.from(
+      '%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\nFictional Aurora Gold corporate presentation fixture.\n',
+    )
+    const publishedMedia = await payload.create({
+      collection: 'media',
+      data: {
+        alt: 'Aurora Gold corporate presentation PDF',
+        tenant: aurora.id,
+        originalFilename: 'aurora-gold-corporate-presentation.pdf',
+      },
+      file: {
+        data: publishedBuffer,
+        mimetype: 'application/pdf',
+        name: 'aurora-gold-corporate-presentation.pdf',
+        size: publishedBuffer.length,
+      },
       overrideAccess: true,
       user: platformAdmin,
     })
-    await payload.update({
-      collection: 'share-structures',
-      id: shareDraft.id,
-      data: { status: 'published' },
+
+    const uploadPresentation = await payload.create({
+      collection: 'documents',
+      data: {
+        tenant: aurora.id,
+        title: 'Aurora Gold Uploaded Corporate Presentation',
+        slug: 'corporate-presentation-upload',
+        category: 'presentation',
+        publicationDate: '2026-07-16',
+        file: publishedMedia.id,
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'documents', uploadPresentation.id, platformAdmin)
+    publishedDocId = uploadPresentation.id
+
+    const draftBuffer = Buffer.from(
+      '%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\nDraft-only technical memo — must stay unpublished.\n',
+    )
+    const draftMedia = await payload.create({
+      collection: 'media',
+      data: {
+        alt: 'Aurora Gold draft technical memo PDF',
+        tenant: aurora.id,
+        originalFilename: 'aurora-gold-draft-memo.pdf',
+      },
+      file: {
+        data: draftBuffer,
+        mimetype: 'application/pdf',
+        name: 'aurora-gold-draft-memo.pdf',
+        size: draftBuffer.length,
+      },
       overrideAccess: true,
       user: platformAdmin,
     })
+
+    await payload.create({
+      collection: 'documents',
+      data: {
+        tenant: aurora.id,
+        title: 'Uploaded Draft Technical Memo',
+        slug: 'draft-technical-memo-upload',
+        category: 'technical_report',
+        publicationDate: '2026-08-01',
+        file: draftMedia.id,
+        disclosureLevel: 'technical',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+  }
+
+  void publishedDocId
+
+  const news = await payload.find({
+    collection: 'news-releases',
+    where: { tenant: { equals: aurora.id } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (news.totalDocs === 0 && northRidgeId) {
+    const release = await payload.create({
+      collection: 'news-releases',
+      data: {
+        tenant: aurora.id,
+        title: 'Aurora Gold Commences North Ridge Drill Program',
+        slug: 'north-ridge-drill-program',
+        project: northRidgeId,
+        releaseDate: '2026-07-20',
+        excerpt:
+          'Fictional demo release: Aurora Gold starts a focused drill campaign at North Ridge.',
+        body: 'This fictional news release describes a demo drill program at the North Ridge project. It is not a real disclosure and must not be treated as investment advice.',
+        sourceUrl: 'https://example.com/aurora-gold-news-north-ridge-drill',
+        disclosureLevel: 'technical',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'news-releases', release.id, platformAdmin)
+
+    await payload.create({
+      collection: 'news-releases',
+      data: {
+        tenant: aurora.id,
+        title: 'Draft Financing Placeholder',
+        slug: 'draft-financing-placeholder',
+        releaseDate: '2026-08-05',
+        excerpt: 'Internal draft financing note — must never appear publicly.',
+        body: 'Draft-only financing commentary for dashboard testing.',
+        sourceUrl: 'https://example.com/aurora-gold-draft-financing',
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+  }
+
+  const people = await payload.find({
+    collection: 'people',
+    where: { tenant: { equals: aurora.id } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (people.totalDocs === 0) {
+    const ceo = await payload.create({
+      collection: 'people',
+      data: {
+        tenant: aurora.id,
+        name: 'Alex Rivera',
+        roleTitle: 'Chief Executive Officer',
+        group: 'management',
+        biography:
+          'Fictional CEO biography for Aurora Gold demo. Exploration-focused operator with prior junior mining experience.',
+        displayOrder: 1,
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'people', ceo.id, platformAdmin)
+
+    await payload.create({
+      collection: 'people',
+      data: {
+        tenant: aurora.id,
+        name: 'Draft Advisor',
+        roleTitle: 'Technical Advisor',
+        group: 'advisors',
+        biography: 'Unpublished advisor profile used for draft/public isolation checks.',
+        displayOrder: 99,
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+  }
+
+  const exploration = await payload.find({
+    collection: 'exploration-contents',
+    where: { tenant: { equals: aurora.id } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (exploration.totalDocs === 0 && northRidgeId) {
+    const result = await payload.create({
+      collection: 'exploration-contents',
+      data: {
+        tenant: aurora.id,
+        project: northRidgeId,
+        title: 'North Ridge Phase 1 Summary',
+        contentDate: '2026-06-01',
+        summary: 'Fictional summary of early drilling and surface work at North Ridge.',
+        technicalDetails:
+          'Demo technical note describing anomalous intervals along the North Ridge corridor. Not a real assay disclosure.',
+        sourceUrl: 'https://example.com/aurora-gold-north-ridge-phase-1',
+        disclosureLevel: 'technical',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'exploration-contents', result.id, platformAdmin)
+
+    await payload.create({
+      collection: 'exploration-contents',
+      data: {
+        tenant: aurora.id,
+        project: northRidgeId,
+        title: 'Draft Hole Log Notes',
+        contentDate: '2026-07-01',
+        summary: 'Internal draft exploration notes.',
+        technicalDetails: 'Must remain unpublished for Sprint 2 isolation checks.',
+        sourceUrl: 'https://example.com/aurora-gold-draft-hole-log',
+        disclosureLevel: 'technical',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+  }
+
+  // Northern Copper isolation fixtures (no company-admin membership).
+  const northernNews = await payload.find({
+    collection: 'news-releases',
+    where: { tenant: { equals: northern.id } },
+    limit: 1,
+    overrideAccess: true,
+  })
+  if (northernNews.totalDocs === 0) {
+    const northernDoc = await payload.create({
+      collection: 'documents',
+      data: {
+        tenant: northern.id,
+        title: 'Northern Copper Isolation Doc',
+        slug: 'northern-isolation-doc',
+        category: 'other',
+        publicationDate: '2026-01-01',
+        externalUrl: 'https://example.com/northern-copper-doc',
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'documents', northernDoc.id, platformAdmin)
+
+    const northernRelease = await payload.create({
+      collection: 'news-releases',
+      data: {
+        tenant: northern.id,
+        title: 'Northern Copper Isolation Release',
+        slug: 'northern-isolation-release',
+        releaseDate: '2026-01-02',
+        excerpt: 'Isolation fixture news for wrong-tenant tests.',
+        body: 'Northern Copper published news used only for tenant isolation tests.',
+        sourceUrl: 'https://example.com/northern-copper-news',
+        disclosureLevel: 'standard',
+        status: 'draft',
+      },
+      overrideAccess: true,
+    })
+    await publishViaReview(payload, 'news-releases', northernRelease.id, platformAdmin)
   }
 
   console.log('Seed complete.')
