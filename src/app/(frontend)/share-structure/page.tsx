@@ -89,7 +89,12 @@ export default async function ShareStructurePage() {
                   Source
                 </h2>
                 <p className="mt-3">
-                  <a href={shareStructure.sourceUrl} target="_blank" rel="noreferrer">
+                  <a
+                    href={shareStructure.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-6 items-center"
+                  >
                     View source document
                   </a>
                 </p>

@@ -26,9 +26,15 @@ export function SiteFooter({
             <p className="mt-2 text-[var(--paper-deep)]">Contact details coming soon.</p>
           )}
           <div className="mt-4 flex flex-wrap gap-4">
-            <Link href="/projects">Projects</Link>
-            <Link href="/contact">Contact</Link>
-            <Link href="/login">Company login</Link>
+            <Link href="/projects" className="inline-flex min-h-6 items-center">
+              Projects
+            </Link>
+            <Link href="/contact" className="inline-flex min-h-6 items-center">
+              Contact
+            </Link>
+            <Link href="/login" className="inline-flex min-h-6 items-center">
+              Company login
+            </Link>
           </div>
         </div>
       </div>
