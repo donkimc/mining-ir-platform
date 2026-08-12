@@ -33,3 +33,36 @@ Seed Aurora Gold with one active Company Admin membership and at least one publi
 - A Project cannot reference a Project or content record belonging to another tenant.
 - A Company Admin cannot change `tenantId` through an update payload.
 - Published technical content requires an approved review transition.
+
+## Sprint 2 Collections (implemented)
+
+Collections `news-releases`, `documents`, `people`, `share-structures`, and `exploration-contents` follow the tenant + publication + review metadata pattern. Material types require `sourceUrl` or `sourceDocument` (or document `externalUrl`/`file`) before Review/Published. Related `project` / `sourceDocument` / `media` must belong to the same tenant.
+
+### News Release
+
+`tenant`, optional `project`, `title`, `slug`, `releaseDate`, `excerpt`, `body`, `sourceUrl` or `sourceDocument`, `disclosureLevel`, `status`, `reviewedBy`, `reviewedAt`, `publishedAt`, timestamps.
+
+### Document / Presentation
+
+`tenant`, `title`, `slug`, `category`, `publicationDate`, `externalUrl` or media reference, optional related project, `disclosureLevel`, `status`, review metadata, timestamps.
+
+### Person / Management
+
+`tenant`, `name`, `roleTitle`, `group`, `biography`, optional headshot/media, `displayOrder`, `status`, review metadata where needed, timestamps.
+
+### Share Structure
+
+`tenant`, `asOfDate`, `sharesOutstanding`, `options`, `warrants`, `fullyDiluted`, `note`, `sourceUrl` or `sourceDocument`, `status`, review metadata, timestamps.
+
+### Exploration Content
+
+`tenant`, `project`, `title`, `date`, `summary`, `technicalDetails`, `sourceUrl` or `sourceDocument`, `disclosureLevel`, `status`, `reviewedBy`, `reviewedAt`, `publishedAt`, timestamps.
+
+## Cross-Collection Rules
+
+- A related project and source document must belong to the same tenant.
+- Slugs are unique within the tenant and collection.
+- Material facts require a source reference before Review or Published.
+- Public serializers omit internal review fields and return only published records.
+- Published records are immutable for disclosure-sensitive fields; edits create a new Review state or are rejected.
+- Every new collection gets a second-tenant isolation fixture and published/draft seed pair in tests.

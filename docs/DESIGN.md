@@ -23,3 +23,19 @@ Use semantic headings, keyboard-accessible controls, visible focus states, label
 ## SEO
 
 Each public page needs a meaningful title, description and canonical slug-based URL. Do not publish draft metadata through page source or server responses.
+
+## Sprint 2 Public Explorer
+
+- News: chronological published release list and detail pages with release date, source link and related project.
+- Documents: published presentation/document list grouped by category and publication date.
+- Management: published team profiles with name, role and biography.
+- Share Structure: published as-of date, counts, explanatory note and source reference.
+- Exploration: published project-specific technical summaries with prominent source links near claims.
+
+Use the existing Explorer visual language and tenant branding. Keep content pages scan-friendly, with clear dates, labels and source context. Do not make technical claims look like investment recommendations.
+
+## Sprint 2 Dashboard
+
+Provide a consistent management pattern for each content type: list view, create/edit form, Save Draft, Submit for Review, and Review/Approve for an authorized reviewer. Published records should be read-only or edited as a new draft.
+
+Show disclosure level and source fields in the editor. Place source links close to material public claims. Do not show internal reviewer identity or draft notes to investors.

@@ -3,10 +3,17 @@ import Link from 'next/link'
 import { requireCompanyAdmin } from '@/lib/auth'
 import { getCompanyById } from '@/lib/tenant'
 
+export const dynamic = 'force-dynamic'
+
 const links = [
   { href: '/dashboard', label: 'Overview' },
   { href: '/dashboard/company', label: 'Company profile' },
   { href: '/dashboard/projects', label: 'Projects' },
+  { href: '/dashboard/news', label: 'News' },
+  { href: '/dashboard/documents', label: 'Documents' },
+  { href: '/dashboard/management', label: 'Management' },
+  { href: '/dashboard/share-structure', label: 'Share structure' },
+  { href: '/dashboard/exploration', label: 'Exploration' },
 ]
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

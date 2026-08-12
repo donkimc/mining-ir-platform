@@ -14,9 +14,10 @@ Recorded in [ADR-0005](decisions/ADR-0005-auth-tenant-resolution-cms-path.md):
 - Auth: Payload Users collection + `payload-token` cookie
 - Platform Admin: `users.platformRole`
 - Company Admin: `tenant-memberships.role = company_admin`
-- Public tenant resolution: header → subdomain → `DEFAULT_TENANT_SLUG`
+- Public tenant resolution: header → tenant subdomain (not `*.vercel.app` / localhost) → `DEFAULT_TENANT_SLUG`
 - Payload CMS UI mounted at `/cms` to leave `/admin/*` for product Platform Admin routes
-- Schema sync: Postgres adapter `push: true` for local Sprint 1 speed
+- Schema sync: Postgres adapter `push: true` for local Sprint 1 speed; Sprint 2 gates push with `PAYLOAD_DATABASE_PUSH` and adds checked-in migrations for staging
+- Media: local filesystem by default; Supabase Storage via `@payloadcms/storage-s3` when `S3_*` env vars are set ([ADR-0007](decisions/ADR-0007-supabase-storage-and-migrations.md))
 
 ## Boundaries
 
@@ -36,3 +37,28 @@ Recorded in [ADR-0005](decisions/ADR-0005-auth-tenant-resolution-cms-path.md):
 ## Failure Behavior
 
 Return not-found for records outside a user's tenant where appropriate, and forbidden for known unauthorized actions. Do not expose another tenant's names, IDs or draft content through errors.
+
+## Sprint 2 Content Architecture
+
+Extend the existing Payload collections and access helpers rather than creating a second content system. Each collection must expose the same concepts: tenant relationship, content fields, status, disclosure level where relevant, source reference and review metadata.
+
+Use shared helpers for tenant authorization, Published-only public queries, status transitions, disclosure-field protection and review metadata. Public Explorer pages must query server-side with tenant and Published filters; do not fetch broad collections and filter in React. Omit reviewer identity, internal notes and draft status from public responses.
+
+## Sprint 2 Request Flow
+
+1. Authenticate and authorize the dashboard request.
+2. Resolve tenant scope from the active server-side membership.
+3. Validate the content payload and source reference.
+4. Save Draft or Review content without publishing it.
+5. Approve through a separate status-only server action.
+6. Revalidate the relevant public route after publication.
+
+Public list pages must use bounded queries and stable ordering. Detail pages should return not-found for non-published or wrong-tenant records. Missing optional content should render an intentional empty state rather than a 500 error.
+
+## Sprint 2 Cloud Deployment
+
+The target staging topology is Vercel Pro for the Next.js/Payload application and Supabase Pro for PostgreSQL. Supabase Storage is the default Sprint 2 media choice unless an ADR selects Vercel Blob or Amazon S3.
+
+Use separate Supabase staging and production projects or otherwise strictly separated databases. Vercel Preview and Production environments must use separate environment variables and must never point at the local database. Runtime connections should use the appropriate Supabase pooler for serverless traffic. Schema changes must use controlled migrations or a documented, repeatable staging procedure; do not rely on `push: true` as the production migration strategy.
+
+Vercel's ephemeral filesystem is not permanent media storage. Payload uploads must use persistent object storage before media or document uploads are considered production-ready.

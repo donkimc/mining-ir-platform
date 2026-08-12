@@ -12,7 +12,7 @@ Sprint 1 needs authenticated Company Admin and Platform Admin surfaces, tenant-s
 
 1. **Authentication:** Payload built-in Users auth (`payload.login` + `payload-token` httpOnly cookie). Documented local seed credentials only.
 2. **Platform role:** `users.platformRole = platform_admin` for cross-tenant access. Tenant roles live on `tenant-memberships`.
-3. **Tenant resolution (public):** `x-tenant-slug` header, else subdomain label, else `DEFAULT_TENANT_SLUG` for local single-hostname development.
+3. **Tenant resolution (public):** `x-tenant-slug` header, else tenant subdomain label (skipped for platform hosts such as localhost and `*.vercel.app`), else `DEFAULT_TENANT_SLUG` for single-hostname local/Preview demos.
 4. **Payload CMS UI path:** `/cms` so product Platform Admin can own `/admin/tenants` and `/admin/users`.
 5. **Database:** PostgreSQL via `@payloadcms/db-postgres` with `push: true` for Sprint 1 local schema sync. Formal migrations can harden later.
 6. **Payload / Next versions:** Payload `3.87.1` with Next.js `15.4.11` (Payload-supported 15.4.x range).

@@ -1,6 +1,7 @@
 import type { Field } from 'payload'
 
-import { PUBLICATION_STATUSES } from '@/lib/constants'
+import { DISCLOSURE_LEVELS, DOCUMENT_CATEGORIES, PUBLICATION_STATUSES } from '@/lib/constants'
+import { validateHttpUrl } from '@/lib/validate-url'
 
 export const publicationStatusField: Field = {
   name: 'status',
@@ -51,3 +52,49 @@ export const reviewFields: Field[] = [
     },
   },
 ]
+
+export const disclosureLevelField: Field = {
+  name: 'disclosureLevel',
+  type: 'select',
+  required: true,
+  defaultValue: 'standard',
+  options: DISCLOSURE_LEVELS.map((value) => ({
+    label: value.charAt(0).toUpperCase() + value.slice(1),
+    value,
+  })),
+  admin: {
+    position: 'sidebar',
+  },
+}
+
+export const sourceUrlField: Field = {
+  name: 'sourceUrl',
+  type: 'text',
+  validate: (value: unknown) => validateHttpUrl(value),
+  admin: {
+    description: 'http(s) source for material claims when no source document is linked.',
+  },
+}
+
+export const sourceDocumentField: Field = {
+  name: 'sourceDocument',
+  type: 'relationship',
+  relationTo: 'documents',
+  admin: {
+    description: 'Optional tenant document used as the source reference.',
+  },
+}
+
+export const documentCategoryField: Field = {
+  name: 'category',
+  type: 'select',
+  required: true,
+  defaultValue: 'other',
+  options: DOCUMENT_CATEGORIES.map((value) => ({
+    label: value
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' '),
+    value,
+  })),
+}

@@ -4,11 +4,19 @@ import { notFound } from 'next/navigation'
 
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
-import { getPublishedProjectBySlug } from '@/lib/public-data'
+import {
+  getPublishedExplorationForProject,
+  getPublishedProjectBySlug,
+} from '@/lib/public-data'
 import { requirePublishedTenant } from '@/lib/tenant'
 
 type Props = {
   params: Promise<{ slug: string }>
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return '—'
+  return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(new Date(value))
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -29,6 +37,8 @@ export default async function ProjectDetailPage({ params }: Props) {
   const company = await requirePublishedTenant()
   const project = await getPublishedProjectBySlug(company.id, slug)
   if (!project) notFound()
+
+  const exploration = await getPublishedExplorationForProject(company.id, project.id)
 
   return (
     <main className="min-h-screen bg-[var(--paper)]">
@@ -127,6 +137,44 @@ export default async function ProjectDetailPage({ params }: Props) {
                 </ul>
               </div>
             ) : null}
+
+            <div className="mt-12">
+              <h2 className="display text-3xl">Exploration</h2>
+              {exploration.length === 0 ? (
+                <p className="mt-4 text-[var(--ink-soft)]">
+                  No published exploration content for this project yet.
+                </p>
+              ) : (
+                <ul className="mt-6 space-y-8">
+                  {exploration.map((item) => (
+                    <li
+                      key={item.id}
+                      className="border-t border-[color-mix(in_oklab,var(--ink)_12%,transparent)] pt-6"
+                    >
+                      <p className="text-sm uppercase tracking-[0.14em] text-[var(--ink-soft)]">
+                        {formatDate(item.contentDate)}
+                      </p>
+                      <h3 className="display mt-2 text-2xl">{item.title}</h3>
+                      <p className="mt-3 text-[var(--ink-soft)]">{item.summary}</p>
+                      <p className="mt-4 whitespace-pre-wrap text-[var(--ink-soft)]">
+                        {item.technicalDetails}
+                      </p>
+                      {item.sourceUrl ? (
+                        <p className="mt-4 text-sm">
+                          <a href={item.sourceUrl} target="_blank" rel="noreferrer">
+                            Source for these claims
+                          </a>
+                        </p>
+                      ) : (
+                        <p className="mt-4 text-sm text-[var(--ink-soft)]">
+                          No source link published for these claims.
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           <aside className="space-y-8">
@@ -164,9 +212,17 @@ export default async function ProjectDetailPage({ params }: Props) {
 
             <div>
               <h2 className="display text-2xl">Related content</h2>
-              <p className="mt-2 text-sm text-[var(--ink-soft)]">
-                Related news and documents arrive in Sprint 2. Placeholder only.
-              </p>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li>
+                  <Link href="/news">News releases</Link>
+                </li>
+                <li>
+                  <Link href="/documents">Documents</Link>
+                </li>
+                <li>
+                  <Link href="/share-structure">Share structure</Link>
+                </li>
+              </ul>
             </div>
           </aside>
         </section>

@@ -36,3 +36,23 @@ Test unauthenticated access, wrong-tenant access, role boundaries, published-onl
 - Company Admin: active `tenant-memberships` row with `role = company_admin`.
 - Local-only seed users are documented in README; do not use them in production.
 
+## Sprint 2 Content Security
+
+- News, Documents, People, Share Structures and Exploration records are tenant-owned.
+- Company Admin actions derive tenant scope from the active membership.
+- Public endpoints and page loaders use tenant plus Published filters at query time.
+- Source URLs are validated and rendered safely; do not trust user-provided HTML or URLs outside the CMS validation path.
+- Reviewer identity and timestamps are server-derived, not accepted from browser input.
+- A Published record's disclosure-sensitive fields cannot be changed without a new review cycle.
+- Approval is status-only and cannot include content edits in the same mutation.
+
+## Sprint 2 Threat Checks
+
+Test wrong-tenant IDs, wrong-tenant related projects/documents, forged reviewer fields, direct Published creates, Published edits, Review-to-Published content edits, public API enumeration and draft content in metadata.
+
+## Media and Storage
+
+- Serve uploads only through Payload (`/api/media/file/<uuid-prefixed-name>`) with `Media.access.read` enforced.
+- Anonymous media reads require a Published Document `file` or Person `headshot` on a published active tenant.
+- Do not emit public Supabase object URLs. Keep the storage bucket private.
+- Object keys are UUID-prefixed; `originalFilename` is for display only.

@@ -73,7 +73,11 @@ export interface Config {
     projects: Project;
     'investment-highlights': InvestmentHighlight;
     catalysts: Catalyst;
+    'news-releases': NewsRelease;
+    documents: Document;
+    people: Person;
     'share-structures': ShareStructure;
+    'exploration-contents': ExplorationContent;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -88,7 +92,11 @@ export interface Config {
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     'investment-highlights': InvestmentHighlightsSelect<false> | InvestmentHighlightsSelect<true>;
     catalysts: CatalystsSelect<false> | CatalystsSelect<true>;
+    'news-releases': NewsReleasesSelect<false> | NewsReleasesSelect<true>;
+    documents: DocumentsSelect<false> | DocumentsSelect<true>;
+    people: PeopleSelect<false> | PeopleSelect<true>;
     'share-structures': ShareStructuresSelect<false> | ShareStructuresSelect<true>;
+    'exploration-contents': ExplorationContentsSelect<false> | ExplorationContentsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -316,6 +324,134 @@ export interface Catalyst {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-releases".
+ */
+export interface NewsRelease {
+  id: number;
+  tenant: number | Company;
+  title: string;
+  slug: string;
+  project?: (number | null) | Project;
+  releaseDate: string;
+  excerpt: string;
+  body: string;
+  /**
+   * http(s) source for material claims when no source document is linked.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Optional tenant document used as the source reference.
+   */
+  sourceDocument?: (number | null) | Document;
+  disclosureLevel: 'none' | 'standard' | 'technical';
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  tenant: number | Company;
+  title: string;
+  slug: string;
+  category: 'presentation' | 'technical_report' | 'financial' | 'other';
+  publicationDate: string;
+  /**
+   * External presentation or document URL.
+   */
+  externalUrl?: string | null;
+  file?: (number | null) | Media;
+  project?: (number | null) | Project;
+  /**
+   * http(s) source for material claims when no source document is linked.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Optional tenant document used as the source reference.
+   */
+  sourceDocument?: (number | null) | Document;
+  disclosureLevel: 'none' | 'standard' | 'technical';
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  tenant: number | Company;
+  alt: string;
+  /**
+   * Original upload name retained for display; stored object key is UUID-prefixed.
+   */
+  originalFilename?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people".
+ */
+export interface Person {
+  id: number;
+  tenant: number | Company;
+  name: string;
+  roleTitle: string;
+  group: 'management' | 'board' | 'advisors' | 'other';
+  /**
+   * Biography is disclosure-sensitive and review-gated when Published.
+   */
+  biography: string;
+  headshot?: (number | null) | Media;
+  displayOrder?: number | null;
+  disclosureLevel: 'none' | 'standard' | 'technical';
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "share-structures".
  */
 export interface ShareStructure {
@@ -328,31 +464,62 @@ export interface ShareStructure {
   fullyDiluted?: number | null;
   marketCapNote?: string | null;
   /**
+   * http(s) source for material claims when no source document is linked.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Optional tenant document used as the source reference.
+   */
+  sourceDocument?: (number | null) | Document;
+  /**
    * Public pages render Published records only.
    */
   status: 'draft' | 'review' | 'published' | 'archived';
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
+ * via the `definition` "exploration-contents".
  */
-export interface Media {
+export interface ExplorationContent {
   id: number;
   tenant: number | Company;
-  alt: string;
+  project: number | Project;
+  title: string;
+  contentDate: string;
+  summary: string;
+  /**
+   * Material technical claims require a source reference and Review before Published.
+   */
+  technicalDetails: string;
+  /**
+   * http(s) source for material claims when no source document is linked.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Optional tenant document used as the source reference.
+   */
+  sourceDocument?: (number | null) | Document;
+  disclosureLevel: 'none' | 'standard' | 'technical';
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -403,8 +570,24 @@ export interface PayloadLockedDocument {
         value: number | Catalyst;
       } | null)
     | ({
+        relationTo: 'news-releases';
+        value: number | NewsRelease;
+      } | null)
+    | ({
+        relationTo: 'documents';
+        value: number | Document;
+      } | null)
+    | ({
+        relationTo: 'people';
+        value: number | Person;
+      } | null)
+    | ({
         relationTo: 'share-structures';
         value: number | ShareStructure;
+      } | null)
+    | ({
+        relationTo: 'exploration-contents';
+        value: number | ExplorationContent;
       } | null)
     | ({
         relationTo: 'media';
@@ -603,6 +786,71 @@ export interface CatalystsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-releases_select".
+ */
+export interface NewsReleasesSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  slug?: T;
+  project?: T;
+  releaseDate?: T;
+  excerpt?: T;
+  body?: T;
+  sourceUrl?: T;
+  sourceDocument?: T;
+  disclosureLevel?: T;
+  status?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents_select".
+ */
+export interface DocumentsSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  slug?: T;
+  category?: T;
+  publicationDate?: T;
+  externalUrl?: T;
+  file?: T;
+  project?: T;
+  sourceUrl?: T;
+  sourceDocument?: T;
+  disclosureLevel?: T;
+  status?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people_select".
+ */
+export interface PeopleSelect<T extends boolean = true> {
+  tenant?: T;
+  name?: T;
+  roleTitle?: T;
+  group?: T;
+  biography?: T;
+  headshot?: T;
+  displayOrder?: T;
+  disclosureLevel?: T;
+  status?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "share-structures_select".
  */
 export interface ShareStructuresSelect<T extends boolean = true> {
@@ -613,7 +861,33 @@ export interface ShareStructuresSelect<T extends boolean = true> {
   warrants?: T;
   fullyDiluted?: T;
   marketCapNote?: T;
+  sourceUrl?: T;
+  sourceDocument?: T;
   status?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exploration-contents_select".
+ */
+export interface ExplorationContentsSelect<T extends boolean = true> {
+  tenant?: T;
+  project?: T;
+  title?: T;
+  contentDate?: T;
+  summary?: T;
+  technicalDetails?: T;
+  sourceUrl?: T;
+  sourceDocument?: T;
+  disclosureLevel?: T;
+  status?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -624,6 +898,7 @@ export interface ShareStructuresSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   tenant?: T;
   alt?: T;
+  originalFilename?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

@@ -14,18 +14,11 @@ import {
   assertPublicationTransition,
   guardCreateNotPublished,
   PROJECT_DISCLOSURE_FIELDS,
+  relationId,
+  stripForgedReviewMetadata,
 } from '@/lib/publishing'
 import { PROJECT_STAGES } from '@/lib/constants'
 import { validateHttpUrl } from '@/lib/validate-url'
-
-function relationId(value: unknown): string | number | null {
-  if (!value) return null
-  if (typeof value === 'object' && value !== null && 'id' in value) {
-    return (value as { id: string | number }).id
-  }
-  if (typeof value === 'string' || typeof value === 'number') return value
-  return null
-}
 
 export const Projects: CollectionConfig = {
   slug: 'projects',
@@ -59,8 +52,10 @@ export const Projects: CollectionConfig = {
       async ({ data, originalDoc, req, operation }) => {
         if (!data) return data
 
+        const next = stripForgedReviewMetadata(data as Record<string, unknown>)
+
         if (req.user && !isPlatformAdmin(req.user)) {
-          const tenantId = relationId(data.tenant ?? originalDoc?.tenant)
+          const tenantId = relationId(next.tenant ?? originalDoc?.tenant)
           if (tenantId) {
             const allowed = await userHasTenantAccess(req, tenantId, ['company_admin'])
             if (!allowed) {
@@ -70,12 +65,12 @@ export const Projects: CollectionConfig = {
 
           // Preserve ownership; Company Admins cannot reassign tenant.
           if (operation === 'update' && originalDoc?.tenant != null) {
-            data.tenant = relationId(originalDoc.tenant) ?? originalDoc.tenant
+            next.tenant = relationId(originalDoc.tenant) ?? originalDoc.tenant
           }
         }
 
         const previousStatus = originalDoc?.status ?? null
-        const incomingStatus = data.status ?? previousStatus
+        const incomingStatus = (next.status as string | undefined) ?? previousStatus
 
         if (operation === 'create') {
           guardCreateNotPublished(incomingStatus)
@@ -84,14 +79,14 @@ export const Projects: CollectionConfig = {
         assertPublicationTransition({ incomingStatus, previousStatus })
         assertDisclosureWriteAllowed({
           fields: PROJECT_DISCLOSURE_FIELDS,
-          data: data as Record<string, unknown>,
+          data: next,
           originalDoc: originalDoc as Record<string, unknown> | undefined,
           previousStatus,
           incomingStatus,
         })
 
         return applyReviewMetadata({
-          data,
+          data: next,
           incomingStatus,
           previousStatus,
           reviewerId: req.user?.id,

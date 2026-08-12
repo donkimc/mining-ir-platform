@@ -27,3 +27,20 @@ export const PROJECT_STAGES = [
 ] as const
 
 export type ProjectStage = (typeof PROJECT_STAGES)[number]
+
+export const DISCLOSURE_LEVELS = ['none', 'standard', 'technical'] as const
+
+export type DisclosureLevel = (typeof DISCLOSURE_LEVELS)[number]
+
+export const DOCUMENT_CATEGORIES = [
+  'presentation',
+  'technical_report',
+  'financial',
+  'other',
+] as const
+
+export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number]
+
+export const PERSON_GROUPS = ['management', 'board', 'advisors', 'other'] as const
+
+export type PersonGroup = (typeof PERSON_GROUPS)[number]
