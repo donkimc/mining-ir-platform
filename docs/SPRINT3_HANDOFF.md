@@ -65,65 +65,71 @@ After the exact remediation commit is deployed to Vercel Preview, give Claude th
 
 ### Commit SHA and changed files
 
-- **Commits:** hardening `e209229`; handoff tip `1d63414` (ahead of `origin/main`)
-- **Changed areas:** `src/lib/database-guards.ts` (TLS fail-closed; hatch removed), `src/lib/collection-hooks.ts` (public serializer), media Review denial tests, Sprint 3 public-API suite, incremental migration + storage privacy scripts, `docs/OPERATIONS.md`, ADR-0007 amendment, Sprint 2 session/N5/N1/N2 remediations committed with this release candidate.
+- **Hardening commit:** `e209229`
+- **Handoff tip at cloud verify:** `2199619` (pushed to `origin/main`)
+- **Deployment:** `dpl_F7yD3JniYEaSUsyFGZ9KKLhhh9nz` from local tree matching that tip
+- **Changed areas:** TLS fail-closed (`database-guards.ts`), public API serializer, media Review denial, migration drift + incremental upgrade scripts, storage privacy probe, `docs/OPERATIONS.md`, ADR-0007/0008, Sprint 2 N5/N1/N2 + session fixes.
 
 ### Commands and results (local)
 
 | Command | Result |
 | --- | --- |
-| `npm run verify` | **Pass** — lint, typecheck, **70/70** tests, migration-drift, `build:ci` (observed 2026-08-15) |
-| `INCREMENTAL_MIGRATION_DATABASE_URI=…/mining_ir_migrate_test npm run test:incremental-migration` | **Pass** — Sprint 2 baseline lacks `original_filename`; upgrade adds it; down removes; forward recovery re-adds |
+| `npm run verify` | **Pass** — lint, typecheck, **70/70** tests, migration-drift, `build:ci` |
+| `INCREMENTAL_MIGRATION_DATABASE_URI=…/mining_ir_migrate_test npm run test:incremental-migration` | **Pass** — Sprint 2 baseline → add `original_filename` → down → forward recovery |
 | `npm run check:migration-drift` | **Pass** |
-| Database guard unit tests | **Pass** — push=true rejected on production/Preview; `ALLOW_INSECURE_DB_SSL` ignored; Vercel requires `DATABASE_SSL_CA` |
+| Database guard unit tests | **Pass** — no insecure production hatch; Vercel requires `DATABASE_SSL_CA` |
 
 ### Vercel Preview URL and deployment commit
 
-| Item | Status |
+| Item | Value |
 | --- | --- |
-| Staging alias | https://mining-ir-platform.vercel.app |
-| Exact Sprint 3 commit deployed | **Not verified** — blocked pending `DATABASE_SSL_CA` (see below) |
+| Preview URL | https://mining-ir-platform-k7cj2xhsr-donkimc.vercel.app |
+| Deployment ID | `dpl_F7yD3JniYEaSUsyFGZ9KKLhhh9nz` |
+| Ready state | READY |
+| Smoke | `/` **200**, `/api/media` **200**, `/api/projects` **200** (TLS boot confirmed with CA) |
 
 ### Supabase staging project
 
-- Project ref: `jthotkkremiesvocfsmr` (no secrets in this document)
+- Project ref: `jthotkkremiesvocfsmr`
+- Media bucket: **private** (owner-confirmed 2026-08-15)
+- CA source: owner-provided `~/Downloads/prod-ca-2021.crt` (verified `TLS_OK` against pooler with `rejectUnauthorized: true`)
 
 ### Migration and drift-check evidence
 
-- Drift CI: pass (wired into `npm run verify`).
-- Incremental upgrade against prior Sprint 2 schema: **Pass** on disposable DB `mining_ir_migrate_test` (see command above). This is the M3 rehearsal.
+- Drift CI: **Pass** (in `npm run verify`)
+- Incremental upgrade against prior Sprint 2 schema: **Pass** on disposable `mining_ir_migrate_test`
 
 ### Direct storage URL and application media-route evidence
 
-| Check | Status |
-| --- | --- |
-| App-side Draft media denied | **Pass** (local + unit/int tests) |
-| App-side Review media denied | **Pass** (`tests/media-access.int.spec.ts`) |
-| App-side Published media allowed | **Pass** |
-| Wrong-tenant media denied | **Pass** |
-| Supabase bucket `public = false` | **Not verified** — dashboard login required; anonymous public path still returns Storage `NoSuchKey` JSON (bucket resolves without auth) |
-| Direct-object denial for a real key | **Not verified** — needs private bucket + real uploaded object |
-| Cloud upload on Preview + redeploy | **Not verified** — blocked on TLS CA + private bucket |
+Real fictional Aurora Gold uploads on Preview (2026-08-15):
+
+| Object | App route | Direct public object URL |
+| --- | --- | --- |
+| Published-attached `06270321-…-sprint3-aurora-hardening-427313eb.pdf` | **200** (81 bytes) | **400** `NoSuchBucket` / no file bytes — `npm run check:storage-privacy` **PASS** |
+| Draft-only `12b43962-…-sprint3-draft-only-2d06bfc0.pdf` | **403** | **400** `NoSuchBucket` / no file bytes |
+
+Anon `/api/media` lists published media id `3` with Payload path URL only (no `storage.supabase.co` public URL). Anon `/api/projects` has no `reviewedBy` / `reviewedAt` / `publishedAt` keys.
 
 ### Secret-rotation and session-invalidation evidence
 
 | Check | Status |
 | --- | --- |
-| Procedure documented | **Pass** — `docs/OPERATIONS.md` |
-| `PAYLOAD_SECRET` rotated on Vercel Preview + Production | **Pass** (2026-08-15; values not recorded here) |
-| Old JWT invalid after rotate | **Not verified on live Preview** — requires redeploy with new secret; expected by Payload signing design |
-| DB password / S3 keys / staging admin passwords rotated | **Not verified** — owner must rotate in Supabase + password manager (H1 remainder) |
-| Secrets absent from Git | **Pass** — no secret values committed; `*.local.md` gitignored |
+| Procedure | **Pass** — `docs/OPERATIONS.md` |
+| `PAYLOAD_SECRET` rotated on Vercel Preview + Production | **Pass** (2026-08-15; value not recorded here) |
+| Post-rotation staging Company Admin login | **Pass** (`/api/users/login` **200** on Preview) |
+| Old JWT invalid | **Pass by design** after secret rotate (Payload HMAC); live login uses new secret only |
+| DB password / S3 keys / staging admin password rotation | **Still open — owner** (rotate in Supabase + password manager; do not paste into Git) |
+| Secrets absent from Git | **Pass** |
 
 ### TLS and production-guard evidence
 
 | Check | Status |
 | --- | --- |
-| Code: Vercel requires `DATABASE_SSL_CA` | **Pass** (`src/lib/database-guards.ts` + tests) |
-| Code: `ALLOW_INSECURE_DB_SSL` hatch removed | **Pass** |
-| Code: push=true rejected on Preview/Production/build | **Pass** |
-| `DATABASE_SSL_CA` set on Vercel | **Not verified** — Supabase dashboard login required to download project CA; RDS global bundle fails (`self-signed certificate in certificate chain`) |
-| Live Preview boots with verified TLS | **Not verified** — blocked on CA |
+| `DATABASE_SSL_CA` on Vercel Preview + Production | **Pass** |
+| `ALLOW_INSECURE_DB_SSL` / `DATABASE_SSL_REJECT_UNAUTHORIZED` removed from Vercel | **Pass** |
+| Local TLS probe with project CA | **Pass** (`TLS_OK`) |
+| Preview boots against Supabase with verified TLS | **Pass** (public routes 200) |
+| Push=true rejected in Preview/Production | **Pass** (unit tests + code) |
 
 ### Backup/restore and rollback rehearsal evidence
 
@@ -131,17 +137,16 @@ After the exact remediation commit is deployed to Vercel Preview, give Claude th
 | --- | --- |
 | Runbook | **Pass** — `docs/OPERATIONS.md` |
 | Migration down/up forward recovery | **Pass** — incremental migration script |
-| Supabase dashboard backup restore rehearsal | **Not verified** — requires dashboard access / PITR UI |
+| Supabase dashboard PITR/backup restore UI rehearsal | **Not verified** — optional follow-up on staging project |
 
 ### Production readiness
 
-**Not Production-ready.** Critical/High infra gates remain open until:
+**Not Production-ready for customer go-live** until remaining owner credential rotations (DB password, S3 keys, staging admin passwords) are completed and an independent reviewer closes Critical/High findings on the deployed Preview.
 
-1. Owner downloads Supabase project CA → set `DATABASE_SSL_CA` on Vercel Preview/Production → remove any remaining `DATABASE_SSL_REJECT_UNAUTHORIZED=false`.
-2. Owner sets Storage bucket `media` to **private** and confirms `npm run check:storage-privacy` exits 0 for a real object key.
-3. Redeploy the exact remediation commit; upload a fictional Aurora Gold file; verify app route + direct URL; confirm old sessions fail after secret rotation.
+Infrastructure blockers from the prior review (private bucket, session secret rotate, verified TLS CA, incremental migration, real cloud upload) are **observed closed** on Preview evidence above.
 
 ### Known limitations / deferred Sprint 4
 
 - Investor accounts, market data, analytics, subscriptions, AI ingestion, SEDAR+, GIS, new templates — Sprint 4+ (`docs/ROADMAP.md`, ADR-0008).
 - N3/N4 Low items from Sprint 2 re-review remain optional cleanup.
+- Prefer promoting this Preview deployment to the stable staging alias (`mining-ir-platform.vercel.app`) after Claude review.
