@@ -65,7 +65,7 @@ After the exact remediation commit is deployed to Vercel Preview, give Claude th
 
 ### Commit SHA and changed files
 
-- **Commit:** `3c3ca30` (tip; hardening payload `e209229`)
+- **Commits:** hardening `e209229`; handoff tip `1d63414` (ahead of `origin/main`)
 - **Changed areas:** `src/lib/database-guards.ts` (TLS fail-closed; hatch removed), `src/lib/collection-hooks.ts` (public serializer), media Review denial tests, Sprint 3 public-API suite, incremental migration + storage privacy scripts, `docs/OPERATIONS.md`, ADR-0007 amendment, Sprint 2 session/N5/N1/N2 remediations committed with this release candidate.
 
 ### Commands and results (local)
