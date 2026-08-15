@@ -48,3 +48,20 @@ Use a Supabase connection suitable for Vercel serverless runtime traffic. Keep s
 ## Production Gate
 
 Only after Preview verification and Claude's fixes are complete should the team configure Production variables, migrate the production database, seed production-safe admin access and connect the final domain.
+
+## Sprint 3 Hardening Gate
+
+The Sprint 2 implementation may be complete while Production remains blocked. Before promotion, verify and record all of the following:
+
+- [ ] Supabase Storage bucket is private; direct object URLs fail for Draft, Review, wrong-tenant and unauthenticated fixtures.
+- [ ] All exposed credentials have been rotated; old sessions are invalidated; no secrets remain in Git, Notion, logs or build output.
+- [ ] `DATABASE_SSL_CA` is configured and certificate verification is enabled in Preview and Production.
+- [ ] `PAYLOAD_DATABASE_PUSH` is disabled outside local development and no undocumented override bypasses the guard.
+- [ ] A controlled migration upgrades a copy of the prior Sprint 2 schema.
+- [ ] A real fictional Aurora Gold file is uploaded to Supabase Storage and remains correctly protected after redeploy.
+- [ ] Public API responses are explicitly minimized and do not reveal reviewer or tenant-internal metadata.
+- [ ] Backup restore and release rollback are rehearsed against non-production resources.
+- [ ] The remediation changes are committed and the exact commit passes `npm run verify` plus migration-drift CI.
+- [ ] An independent reviewer has inspected the deployed Preview and all Critical/High findings are closed or explicitly accepted.
+
+Do not connect a production domain or invite real customers while any checkbox is incomplete.

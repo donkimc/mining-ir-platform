@@ -7,6 +7,7 @@ import {
   platformAdminOnly,
 } from '@/access'
 import { reviewFields } from '@/lib/fields'
+import { stripReviewMetadataAfterRead } from '@/lib/collection-hooks'
 import {
   applyReviewMetadata,
   assertDisclosureWriteAllowed,
@@ -67,6 +68,7 @@ export const Companies: CollectionConfig = {
         })
       },
     ],
+    afterRead: [stripReviewMetadataAfterRead],
   },
   fields: [
     {

@@ -31,7 +31,9 @@ Test unauthenticated access, wrong-tenant access, role boundaries, published-onl
 ## Selected Auth Integration (Sprint 1)
 
 - Provider: Payload CMS built-in authentication on the `users` collection.
-- Session: httpOnly `payload-token` cookie set by the `/login` server action.
+- Session: httpOnly `payload-token` cookie set by `/api/users/login` (and the `/login` server action fallback).
+- Cookie `Secure` follows the request protocol (`x-forwarded-proto` / `NEXT_PUBLIC_SERVER_URL`), not merely `NODE_ENV`.
+- Dashboard/admin auth reads the token via Next `cookies()` and authenticates with `Authorization: JWT …` so App Router soft navigations do not drop the session.
 - Platform Admin: `users.platformRole = platform_admin` checked server-side.
 - Company Admin: active `tenant-memberships` row with `role = company_admin`.
 - Local-only seed users are documented in README; do not use them in production.
@@ -56,3 +58,14 @@ Test wrong-tenant IDs, wrong-tenant related projects/documents, forged reviewer 
 - Anonymous media reads require a Published Document `file` or Person `headshot` on a published active tenant.
 - Do not emit public Supabase object URLs. Keep the storage bucket private.
 - Object keys are UUID-prefixed; `originalFilename` is for display only.
+
+## Sprint 3 Release Hardening
+
+- The Supabase Storage bucket used by Payload media must be private. A correct application route is not sufficient if the underlying object URL remains public.
+- Verify both paths for every sensitive fixture: the authorized application route and the direct object URL. Draft, Review, wrong-tenant and unauthenticated requests must not return bytes.
+- Rotate any secret that has appeared in review output, commits, logs or shared documents. Invalidate existing sessions after rotating the session secret and verify the old secret no longer authenticates.
+- Preview and Production database connections must use certificate verification with a configured CA (`DATABASE_SSL_CA`). `DATABASE_SSL_REJECT_UNAUTHORIZED=false` and `ALLOW_INSECURE_DB_SSL` are not valid deployment workarounds (Sprint 3 removed the hatch).
+- Production must reject schema auto-push, missing migration configuration and missing required secrets. Any emergency override must be temporary, documented, audited and unavailable by default.
+- Anonymous API responses must use the public serializer (`stripReviewMetadataAfterRead` / `serializeAnonymousPublicDoc`). Never return reviewer IDs, review timestamps, membership data, draft existence or unrelated tenant records.
+- Rotate exposed session secrets and verify old JWTs fail; see [OPERATIONS.md](./OPERATIONS.md).
+- Do not call a security control verified until the test uses a real cloud object or a reproducible infrastructure assertion; a zero-file staging test proves only that no file was tested.

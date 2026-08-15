@@ -1,10 +1,10 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { isPlatformAdmin } from '@/access'
 import { getPayloadClient } from '@/lib/auth'
+import { setPayloadAuthCookie } from '@/lib/auth-cookies'
 import { safeRedirectPath } from '@/lib/safe-redirect'
 
 export type LoginState = {
@@ -45,13 +45,7 @@ export async function loginAction(
       return { error: 'Login succeeded but no session token was issued.' }
     }
 
-    const cookieStore = await cookies()
-    cookieStore.set('payload-token', result.token, {
-      httpOnly: true,
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    })
+    await setPayloadAuthCookie(result.token)
 
     if (isPlatformAdmin(result.user)) {
       redirect(safeRedirectPath(next, '/admin/tenants'))

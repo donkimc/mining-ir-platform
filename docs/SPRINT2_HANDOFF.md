@@ -16,26 +16,44 @@ Sprint 2 mining-content code is implemented on the Sprint 1 baseline:
 - Public Explorer: `/news`, `/news/[slug]`, `/documents`, `/management`, `/share-structure`, exploration on `/projects/[slug]`
 - Seed: fictional Aurora published + draft fixtures; Northern Copper isolation fixtures
 - ADR-0007: Supabase Storage + controlled migrations
-- Migration: `src/migrations/20260812_061650_sprint2_content.ts`
+- Migration: `src/migrations/20260812_061650_sprint2_content.ts` + `20260812_132324_media_original_filename.ts`
 
 ### Local commands observed
 
 | Command | Result |
 | --- | --- |
-| `npm run lint` | Pass |
+| `npm run lint` | Pass (migration unused-arg warnings cleared) |
 | `npm run typecheck` | Pass |
-| `npm test` | **48/48 pass** (observed) |
-| `npm run build` | Pass |
+| `npm test` | **57/57 pass** (observed 2026-08-15 N5/N1/N2 re-verify; includes drift, guards, auth-cookie specs) |
+| `npm run check:migration-drift` | Pass |
+| `npm run build` / `npm run build:ci` | Pass (`PAYLOAD_DATABASE_PUSH=false`) |
 | `npm run seed:reset` | Pass — Aurora + Northern + Sprint 2 content |
-| `npm run verify` | Pass after each M4/M1/M2/M5/L1 remediation commit |
+| `npm run verify` | Pass — lint + typecheck + test + drift + build:ci (observed 2026-08-15) |
 
 Local seed logins (dev only): `platform@mining-ir.local` / `ChangeMeLocal1!`, `admin@auroragold.local` / `ChangeMeLocal1!`.
 
-### Review remediations observed (2026-08-12)
+### Review remediations observed (2026-08-12; re-verified 2026-08-15)
 
 C1, H2 and H3 were fixed earlier. Medium findings M4, M1, M2, M5 and Low L1+ are remediations in subsequent commits (see git log).
-#### C1 — media access (application side) — **partially remediates; bucket privacy still open**
 
+#### N5 / N1 / N2 re-review fixes (2026-08-12, second pass) — **fixed (re-verified 2026-08-15)**
+
+- **N5:** Added migration `20260812_132324_media_original_filename` (`ALTER TABLE media ADD COLUMN original_filename`). Applied cleanly to a Sprint 2 schema without the column (local simulation + staging Supabase). Added `npm run check:migration-drift` wired into `npm run verify`. ADR-0007 now requires migrations in the same commit as schema changes.
+- **N1:** `Projects`, `InvestmentHighlights`, `Catalysts` use `publishedOnlyOrTenantScopedRead()` + `stripReviewMetadataAfterRead`. `Companies` strips review metadata for anonymous callers (multi-tenant listing retained for Platform Admin / published company directory). Seeded Northern Copper `NORTHERN SECRET` investment highlight as the isolation fixture.
+- **N2:** Production push/SSL guards no longer waive during `phase-production-build`. `push` is forced off during build; `PAYLOAD_DATABASE_PUSH=true` + `NODE_ENV=production` always throws. **Kept** `ALLOW_INSECURE_DB_SSL=true` as a staging-only TLS hatch with warning log and **expiry 2026-09-30** (recorded in ADR-0007).
+
+**Local anon API smoke (observed 2026-08-15 on `next dev`):** `/api/projects`, `/api/investment-highlights`, `/api/catalysts` → tenant `11` only, no `reviewedBy`/`reviewedAt`/`publishedAt` keys; `/api/companies` → company ids `11`+`12`, review keys absent; `/api/media` → **200** (1 published Aurora file). DB still has Northern Copper highlight id `17` (`NORTHERN SECRET`, tenant `12`, published) — absent from anon list.
+
+#### Session kick-out fix — **preserved (do not regress)**
+
+Authenticated dashboard/admin menu navigations must keep the Payload session. Keep these together:
+
+- `FullPageNavLink` (full document `<a>`) in dashboard + admin layouts — not Next soft `<Link>` for auth chrome
+- `getAuthHeaders()` reads `payload-token` from `cookies()` and sets `Authorization: JWT …`
+- Login via `POST /api/users/login` + `window.location.href` hard navigation
+- Cookie `secure` only when `VERCEL === '1'` / protocol-aware helpers in `auth-cookies.ts`
+
+#### C1 — media access (application side) — **partially remediates; bucket privacy still open**
 App changes (observed):
 
 - `Media.access.read` for anonymous users requires a **Published** Document `file` or Person `headshot` on a published active tenant (tenant publication alone is not enough).
@@ -54,19 +72,22 @@ App changes (observed):
 | Anonymous `GET /api/media/file/<name>` while Document is Draft | **403** |
 | Same URL after Document Draft → Review → Published | **200** |
 
+**Re-verified 2026-08-15 (`next dev`):** seed published file → **200**; draft-attached file → **403**; anon `GET /api/media/95` (draft) → **404**; disclosure + isolation + media suites **48/48**.
+
 **Not closed in this change:** Supabase `media` bucket privacy (`public = false`) is the owner’s out-of-band task. Confirm separately on staging; until then direct public object URLs may still bypass the app.
 
-#### H2 — schema push opt-in — **fixed (observed)**
+#### H2 — schema push opt-in — **fixed (observed; tightened by N2)**
 
 - `push` is now `PAYLOAD_DATABASE_PUSH === 'true'` (missing var = off).
-- Runtime hard-fail when push is enabled and `NODE_ENV === 'production'` (skipped only during Next `phase-production-build` so `npm run build` can still load config).
+- Hard-fail when push is enabled and `NODE_ENV === 'production'` **including** Next `phase-production-build` (N2). Use `npm run build:ci` / `PAYLOAD_DATABASE_PUSH=false` for production builds.
 - `.env.example`, README, ADR-0007 updated. Local `.env.local` sets `PAYLOAD_DATABASE_PUSH=true`.
 
-#### H3 — DB TLS CA pinning — **fixed (observed in code/docs)**
+#### H3 — DB TLS CA pinning — **fixed (observed in code/docs; staging hatch kept)**
 
 - Prefer `DATABASE_SSL_CA` → `ssl: { ca, rejectUnauthorized: true }`.
-- `DATABASE_SSL_REJECT_UNAUTHORIZED=false` only when `NODE_ENV !== 'production'` (runtime), with a console warning; production runtime hard-fails and requires CA.
-- Documented in ADR-0007 / `.env.example` / README. Preview must set `DATABASE_SSL_CA` before relying on production-mode runtime.
+- `DATABASE_SSL_REJECT_UNAUTHORIZED=false` is not waived during the Next build phase (N2).
+- Staging may set `ALLOW_INSECURE_DB_SSL=true` until **2026-09-30** (ADR-0007); then require CA.
+- Owner still needs to install the Supabase project CA on Preview/Production and remove the hatch.
 ## Cloud Staging Requirement
 
 The owner has an active Vercel Pro subscription and an active Supabase Pro subscription. Sprint 2 is not complete until the implementation works in a cloud staging/Preview environment.
@@ -95,12 +116,12 @@ At minimum, configure `DATABASE_URI`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`
 
 | Item | Status |
 | --- | --- |
-| Vercel Preview URL | **Pass** — https://mining-ir-platform-apmjvq9hy-donkimc.vercel.app (deployment `dpl_7dBmvtN8tjeYVrxEQ8TMRX1UwnKn`, project `mining-ir-platform`) |
+| Vercel Preview URL | **Pass** — https://mining-ir-platform.vercel.app (stable production alias used as staging; supersedes stale `…-apmjvq9hy-…` deployment) |
 | Supabase staging project | **Pass** — ref `jthotkkremiesvocfsmr` (pooler `aws-0-ap-southeast-1.pooler.supabase.com:6543`); Storage bucket `media` |
-| Migration | **Pass** — `20260812_061650_sprint2_content` applied on staging |
+| Migration | **Pass** — `20260812_061650_sprint2_content` + `20260812_132324_media_original_filename` applied on staging |
 | Seed | **Pass** — fictional Aurora + Northern fixtures; staging seed emails only (not committed) |
-| Preview env | **Pass** — `DATABASE_URI`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, `DEFAULT_TENANT_SLUG=aurora-gold`, `PAYLOAD_DATABASE_PUSH=false`, `DATABASE_SSL_REJECT_UNAUTHORIZED=false`, `S3_*` |
-| Local verification | Pass — lint, typecheck, **43** tests, build, seed:reset; C1/H2/H3 remediations recorded above |
+| Preview env | **Pass** — `DATABASE_URI`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, `DEFAULT_TENANT_SLUG=aurora-gold`, `PAYLOAD_DATABASE_PUSH=false`, `DATABASE_SSL_REJECT_UNAUTHORIZED=false`, `ALLOW_INSECURE_DB_SSL=true` (expires 2026-09-30), `S3_*` |
+| Local verification | Pass — lint, typecheck, **57** tests, drift check, build:ci (re-verified 2026-08-15); N5/N1/N2 + session fix preserved |
 
 **Preview smoke (2026-08-12):**
 
@@ -150,15 +171,16 @@ At minimum, configure `DATABASE_URI`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`
 ### Database / migration steps
 
 1. Local: `PAYLOAD_DATABASE_PUSH=true` (default) pushes schema.
-2. Staging: set `PAYLOAD_DATABASE_PUSH=false`, configure `DATABASE_URI` to Supabase pooler, run `npm run migrate`.
-3. Seed staging with `npm run seed` only (never Production `seed:reset`).
+2. Staging: set `PAYLOAD_DATABASE_PUSH=false`, configure `DATABASE_URI` to Supabase pooler, run `npm run migrate` (includes `media.original_filename`).
+3. After any collection schema change: `npm run migrate:create` in the **same commit**, then `npm run check:migration-drift`.
+4. Seed staging with `npm run seed` only (never Production `seed:reset`).
 
 ### Known limitations
 
-1. Preview deployment URLs are ephemeral; `NEXT_PUBLIC_SERVER_URL` must track the URL under review until a stable staging domain exists.
+1. Staging currently uses the Vercel production alias `https://mining-ir-platform.vercel.app`; keep `NEXT_PUBLIC_SERVER_URL` aligned.
 2. Investment highlights / catalysts can still be created directly as Published (Sprint 1 homepage helpers).
 3. Investors/Corporate remain placeholders.
-4. Production deploy was not promoted; gate Production after Claude review of Preview.
+4. Owner actions still open: C1 bucket privacy, H1 secret rotation, H3 Supabase CA on Preview (remove `ALLOW_INSECURE_DB_SSL` by 2026-09-30), M3 incremental migration before real Production.
 
 ### Deferred work
 

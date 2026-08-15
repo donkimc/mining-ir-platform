@@ -1,11 +1,73 @@
 # AGENTS.md
 
 ## Mission
-Build Sprint 2 of Mining IR Platform as the Mining Content extension of the self-service, multi-tenant SaaS serving junior mining companies.
+Build Sprint 3 of Mining IR Platform as the production-hardening and release-readiness milestone for the self-service, multi-tenant SaaS serving junior mining companies.
 
-Sprint 1 is the completed baseline. Preserve its working tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes and human-review foundation. Do not regress Sprint 1 behavior while adding Sprint 2.
+Sprint 1 is the completed baseline and Sprint 2 implementation is complete. Preserve tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes, mining-content workflows and human-review controls. Do not call the product production-ready until the Sprint 3 gates below are independently verified.
 
-## Current Sprint: Sprint 2 — Mining Content
+## Current Sprint: Sprint 3 — Production Hardening & Investor Readiness
+
+Claude's Sprint 2 review found that the application-level fixes are substantially complete, but production promotion remains conditional. A public Supabase Storage bucket, unrotated exposed credentials, an insecure TLS escape hatch, an untested incremental migration path, and an unverified cloud media upload are release blockers. Treat the attached review as input, not as proof that infrastructure is fixed.
+
+Sprint 2 code completion and production readiness are separate milestones:
+
+- **Sprint 2 implementation:** complete.
+- **Sprint 2 production promotion:** blocked until Sprint 3 gates pass.
+
+## Sprint 3 Decision
+
+Close release-critical security and operations gaps before adding live market data, investor analytics, subscriptions or other investor expansion. This keeps the next Cursor task small, testable and appropriate for a securities-adjacent product where unpublished technical content must remain private.
+
+## Sprint 3 Scope
+
+- Make the Supabase Storage bucket private and prove that direct object URLs cannot download Draft, Review or unauthorized files; all permitted access must use the application authorization path.
+- Rotate every credential that appeared in the review material, including the session signing secret, invalidate old sessions, and verify that no secret remains in Git, Notion, logs or build output.
+- Require verified PostgreSQL TLS with a configured CA in Preview and Production; remove or tightly quarantine the insecure certificate-verification escape hatch.
+- Test an incremental Payload migration against a database created from the prior Sprint 2 schema. Record upgrade, rollback/forward-recovery and drift results.
+- Upload at least one fictional Aurora Gold document to cloud staging and test Draft/Review denial, Published access, redeploy persistence and direct-object denial.
+- Expand security regression tests across every tenant-owned collection, including the four original collections and all Sprint 2 collections. Cover cross-tenant reads/writes, public serializers, reviewer metadata, API enumeration and related-record ownership.
+- Prevent production database guard waivers and schema auto-push. Production and Preview must fail closed when migration or required security configuration is missing.
+- Minimize anonymous API responses so they expose only intentionally public Published fields and never internal reviewer IDs, tenant enumeration or draft existence.
+- Commit all remediation changes, migrations, tests and documentation. A clean verification result from uncommitted changes is not a release artifact.
+- Document backup/restore, rollback, incident response, session invalidation, storage recovery, logs and alert ownership. Perform a restore rehearsal against a non-production database.
+- Deploy and verify a Vercel Pro Preview backed by Supabase Pro staging. Do not promote to Production while any blocker remains open.
+
+## Sprint 3 Out of Scope
+
+- Live stock quotes, market-data licensing or investment analytics.
+- Investor accounts, CRM, subscriptions, email alerts or billing.
+- AI extraction, automated ingestion or automatic publication.
+- SEDAR+ or regulatory integrations.
+- Advanced GIS, drill-hole visualization, 3D maps or predictive analytics.
+- Additional production templates, custom domains or self-serve provisioning.
+
+## Sprint 3 Promotion Blockers
+
+Do not mark Sprint 3 Done, and do not promote to Production, if any of these is unresolved:
+
+1. A Supabase Storage object is downloadable through a direct public URL when it should be private.
+2. Any exposed credential or session secret remains active.
+3. Preview/Production can run without verified database TLS.
+4. An incremental migration has not been exercised against an older schema.
+5. Cloud media behavior has only been tested with zero uploaded files.
+6. Production guardrails can be waived through environment defaults or undocumented flags.
+7. Security remediation is not committed and reproducibly verified.
+
+## Sprint 3 Definition of Done
+
+- `npm run verify` passes on the exact committed release candidate.
+- All Sprint 1 and Sprint 2 routes and tests still pass.
+- Private storage, secret rotation, TLS, migration upgrade and cloud media tests have recorded evidence.
+- All nine tenant-owned content families have tenant, role, published-only and metadata-minimization coverage.
+- Production configuration fails closed for missing TLS, unsafe schema push and missing required secrets.
+- Backup restore rehearsal and rollback/runbook review are complete.
+- Vercel Preview is verified against Supabase Pro staging with fictional data and staging-only accounts.
+- Claude or another independent reviewer has reviewed the deployed Preview and all Critical/High findings are closed or explicitly accepted by the Product Director.
+- Sprint 3 handoff records changed files, commit, commands, results, deployment URL, database project, migration evidence, media evidence, known limitations and any deferred work.
+
+The original investor-feature ideas are moved to Sprint 4 in `docs/ROADMAP.md` and must not be pulled into this hardening sprint without a documented scope decision.
+
+## Sprint 2 Baseline — Mining Content
 
 Sprint 2 proves this loop:
 
@@ -486,6 +548,8 @@ docs/
     ADR-0004-human-approval-for-technical-disclosure.md
     ADR-0005-auth-tenant-resolution-cms-path.md
     ADR-0006-sprint2-mining-content-workflow.md
+    ADR-0007-supabase-storage-and-migrations.md
+    ADR-0008-production-readiness-gates-before-investor-features.md
 ```
 
 Required documentation must be present before Sprint 1 is marked Done. README setup instructions must include prerequisites, environment variables, database setup, seed/reset commands, local login, test commands and the route map.

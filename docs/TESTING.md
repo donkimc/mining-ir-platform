@@ -95,3 +95,35 @@ Before Claude's final Sprint 2 review, test the deployed Vercel Preview URL rath
 8. Record the Preview URL, deployment commit, database project, migration result, seed result and any known limitations in `docs/SPRINT2_HANDOFF.md`.
 
 Cloud staging is a required Sprint 2 gate. A local green test suite is not sufficient by itself.
+
+## Sprint 3 Release-Hardening Matrix
+
+| Scenario | Expected result |
+| --- | --- |
+| Direct Supabase object URL for Draft/Review media | Denied; no bytes returned |
+| Authorized application media route for Published media | Allowed for the intended tenant only |
+| Wrong-tenant or unauthenticated application media route | Denied without metadata leakage |
+| Old session after secret rotation | Invalid; user must authenticate again |
+| Preview/Production without verified TLS CA | Deployment or startup fails closed |
+| Production with schema auto-push enabled | Deployment or startup fails closed |
+| Migration against prior Sprint 2 schema | Applies cleanly and is recorded |
+| Failed migration or release rollback rehearsal | Recovery steps work against non-production data |
+| Real cloud upload followed by redeploy | File persists and authorization remains correct |
+| Anonymous API request across tenant slugs | Only the resolved tenant's intentional Published fields |
+| Public response for all tenant-owned collections | No reviewer IDs, tenant-management fields or draft metadata |
+| Exact remediation commit | CI runs lint, typecheck, tests, migration-drift check and production build |
+
+The matrix must cover Company, Project, News, Document, Person, Share Structure, Exploration, Investment Highlight and Catalyst where those collections exist in the implementation.
+
+## Sprint 3 release-hardening notes
+
+- Private bucket probe: `npm run check:storage-privacy` (requires a real object key or public URL).
+- Incremental upgrade rehearsal: `INCREMENTAL_MIGRATION_DATABASE_URI=postgres://…/disposable npm run test:incremental-migration`.
+- Public API serializer coverage: `tests/sprint3-public-api.int.spec.ts` (all tenant-owned collections).
+- Production TLS/push guards: `tests/database-guards.spec.ts` (no insecure production hatch).
+- Operations: [OPERATIONS.md](./OPERATIONS.md) for rotation, restore, rollback and storage recovery.
+
+## Sprint 3 Evidence Requirements
+
+Record the command, commit SHA, environment class, deployment URL, Supabase project, migration result, direct-object result, cloud upload result, secret-rotation result and restore-rehearsal result in `docs/SPRINT3_HANDOFF.md`. Screenshots or logs may redact secret values but must retain enough context to reproduce the claim.
+

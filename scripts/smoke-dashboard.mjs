@@ -17,8 +17,8 @@ async function loginViaApi(context) {
   const data = await res.json()
   if (!data.token) throw new Error('Login API returned no token')
 
-  // next start sets Secure cookies; Chromium will not keep them on http://localhost.
-  // Inject the same token as a non-Secure cookie so UI actions can be exercised locally.
+  // Form login used to set Secure whenever NODE_ENV=production. next start on
+  // http://localhost drops that cookie, so inject a non-Secure token for local UI smoke.
   await context.addCookies([
     {
       name: 'payload-token',

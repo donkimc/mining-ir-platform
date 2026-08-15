@@ -1,5 +1,4 @@
-import Link from 'next/link'
-
+import { FullPageNavLink } from '@/components/FullPageNavLink'
 import { requirePlatformAdmin } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -17,18 +16,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <span>{user.email}</span>
-            <Link href="/admin/tenants" className="underline">
+            <FullPageNavLink href="/admin/tenants" className="underline">
               Tenants
-            </Link>
-            <Link href="/admin/users" className="underline">
+            </FullPageNavLink>
+            <FullPageNavLink href="/admin/users" className="underline">
               Users
-            </Link>
-            <Link href="/cms" className="underline">
+            </FullPageNavLink>
+            <FullPageNavLink href="/cms" className="underline">
               CMS
-            </Link>
-            <Link href="/logout" className="border border-white/30 px-3 py-2 no-underline">
+            </FullPageNavLink>
+            <FullPageNavLink href="/logout" className="border border-white/30 px-3 py-2 no-underline">
               Log out
-            </Link>
+            </FullPageNavLink>
           </div>
         </div>
       </header>

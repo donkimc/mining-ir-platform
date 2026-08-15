@@ -1,5 +1,4 @@
-import Link from 'next/link'
-
+import { FullPageNavLink } from '@/components/FullPageNavLink'
 import { requireCompanyAdmin } from '@/lib/auth'
 import { getCompanyById } from '@/lib/tenant'
 
@@ -32,19 +31,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <span>{user.email}</span>
-            <Link href="/" className="underline">
+            <FullPageNavLink href="/" className="underline">
               Public site
-            </Link>
-            <Link href="/logout" className="btn btn-dark no-underline">
+            </FullPageNavLink>
+            <FullPageNavLink href="/logout" className="btn btn-dark no-underline">
               Log out
-            </Link>
+            </FullPageNavLink>
           </div>
         </div>
         <nav aria-label="Dashboard" className="section-shell flex flex-wrap gap-4 pb-4 text-sm font-semibold">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className="no-underline hover:underline">
+            <FullPageNavLink key={link.href} href={link.href} className="no-underline hover:underline">
               {link.label}
-            </Link>
+            </FullPageNavLink>
           ))}
           <span className="text-[var(--ink-soft)]">Settings (placeholder)</span>
         </nav>

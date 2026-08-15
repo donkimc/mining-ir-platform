@@ -799,6 +799,31 @@ async function seed() {
   }
   void northernProjectId
 
+  const northernHighlights = await payload.find({
+    collection: 'investment-highlights',
+    where: {
+      and: [
+        { tenant: { equals: northern.id } },
+        { title: { equals: 'NORTHERN SECRET' } },
+      ],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  if (northernHighlights.totalDocs === 0) {
+    await payload.create({
+      collection: 'investment-highlights',
+      data: {
+        tenant: northern.id,
+        title: 'NORTHERN SECRET',
+        summary: 'Isolation fixture highlight — must never appear on Aurora anonymous API reads.',
+        displayOrder: 99,
+        status: 'published',
+      },
+      overrideAccess: true,
+    })
+  }
+
   const northernNews = await payload.find({
     collection: 'news-releases',
     where: { tenant: { equals: northern.id } },

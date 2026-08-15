@@ -42,3 +42,20 @@ Turn the completed tenant-to-public-site foundation into a usable mining content
 ## Sprint 2 Non-Goals
 
 Live market data, investor accounts, CRM, subscriptions, AI extraction, automated publication, regulatory ingestion, billing, advanced GIS and additional templates.
+
+## Sprint 3 Goal
+
+Make the Sprint 2 implementation safe to promote beyond staging. The product must protect unpublished mining disclosure across the application, storage layer, database connection, deployment configuration and public API, with reproducible recovery and review evidence.
+
+## Sprint 3 User Stories
+
+- As a Platform Admin, I can trust that a private document cannot be downloaded by guessing or copying a storage URL.
+- As a Product Director, I can rotate exposed credentials and invalidate old sessions without leaving a known active secret.
+- As an operator, I can upgrade an existing database with controlled migrations and recover from a failed deployment.
+- As a Company Admin, I can upload a fictional document in staging and see it remain private until its content is Published.
+- As an Investor, I receive only intentionally public Published fields and never internal reviewer or tenant-management metadata.
+- As a reviewer, I can see evidence that the exact committed build was tested on Vercel Preview with Supabase Pro staging.
+
+## Sprint 3 Non-Goals
+
+Live market data, stock quotes, investor analytics, subscriptions, email alerts, CRM, billing, AI extraction, automated ingestion, regulatory integrations, advanced GIS and additional templates. These move to Sprint 4 or later.

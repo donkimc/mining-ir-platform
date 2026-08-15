@@ -1,22 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
+import { preventTenantFieldChange } from '@/access'
 import {
-  isPlatformAdmin,
-  preventTenantFieldChange,
-  tenantScopedCompanyAdminWrite,
-  tenantScopedRead,
-  userHasTenantAccess,
-} from '@/access'
+  createPublishableBeforeChange,
+  publishedOnlyOrTenantScopedRead,
+  stripReviewMetadataAfterRead,
+} from '@/lib/collection-hooks'
 import { publicationStatusField, reviewFields } from '@/lib/fields'
-import {
-  applyReviewMetadata,
-  assertDisclosureWriteAllowed,
-  assertPublicationTransition,
-  guardCreateNotPublished,
-  PROJECT_DISCLOSURE_FIELDS,
-  relationId,
-  stripForgedReviewMetadata,
-} from '@/lib/publishing'
+import { PROJECT_DISCLOSURE_FIELDS } from '@/lib/publishing'
 import { PROJECT_STAGES } from '@/lib/constants'
 import { validateHttpUrl } from '@/lib/validate-url'
 
@@ -26,73 +17,15 @@ export const Projects: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'tenant', 'status', 'isFlagship', 'stage'],
   },
-  access: {
-    create: async ({ req, data }) => {
-      if (!req.user) return false
-      if (isPlatformAdmin(req.user)) return true
-      const tenantId = relationId(data?.tenant)
-      if (!tenantId) return false
-      return userHasTenantAccess(req, tenantId, ['company_admin'])
-    },
-    delete: tenantScopedCompanyAdminWrite,
-    read: async ({ req }) => {
-      if (!req.user) {
-        return {
-          status: {
-            equals: 'published',
-          },
-        }
-      }
-      return tenantScopedRead({ req })
-    },
-    update: tenantScopedCompanyAdminWrite,
-  },
+  access: publishedOnlyOrTenantScopedRead(),
   hooks: {
     beforeChange: [
-      async ({ data, originalDoc, req, operation }) => {
-        if (!data) return data
-
-        const next = stripForgedReviewMetadata(data as Record<string, unknown>)
-
-        if (req.user && !isPlatformAdmin(req.user)) {
-          const tenantId = relationId(next.tenant ?? originalDoc?.tenant)
-          if (tenantId) {
-            const allowed = await userHasTenantAccess(req, tenantId, ['company_admin'])
-            if (!allowed) {
-              throw new Error('Forbidden')
-            }
-          }
-
-          // Preserve ownership; Company Admins cannot reassign tenant.
-          if (operation === 'update' && originalDoc?.tenant != null) {
-            next.tenant = relationId(originalDoc.tenant) ?? originalDoc.tenant
-          }
-        }
-
-        const previousStatus = originalDoc?.status ?? null
-        const incomingStatus = (next.status as string | undefined) ?? previousStatus
-
-        if (operation === 'create') {
-          guardCreateNotPublished(incomingStatus)
-        }
-
-        assertPublicationTransition({ incomingStatus, previousStatus })
-        assertDisclosureWriteAllowed({
-          fields: PROJECT_DISCLOSURE_FIELDS,
-          data: next,
-          originalDoc: originalDoc as Record<string, unknown> | undefined,
-          previousStatus,
-          incomingStatus,
-        })
-
-        return applyReviewMetadata({
-          data: next,
-          incomingStatus,
-          previousStatus,
-          reviewerId: req.user?.id,
-        })
-      },
+      createPublishableBeforeChange({
+        disclosureFields: PROJECT_DISCLOSURE_FIELDS,
+        requireSource: false,
+      }),
     ],
+    afterRead: [stripReviewMetadataAfterRead],
   },
   fields: [
     {

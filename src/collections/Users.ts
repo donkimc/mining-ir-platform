@@ -9,7 +9,14 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     defaultColumns: ['email', 'name', 'platformRole', 'status'],
   },
-  auth: true,
+  auth: {
+    // On Vercel (HTTPS) mark the session cookie Secure. Keep non-Secure for local HTTP
+    // (`next start` / `next dev`) so Chromium will store payload-token.
+    cookies: {
+      sameSite: 'Lax',
+      secure: process.env.VERCEL === '1',
+    },
+  },
   access: {
     admin: ({ req }) => isPlatformAdmin(req.user),
     create: platformAdminOnly,

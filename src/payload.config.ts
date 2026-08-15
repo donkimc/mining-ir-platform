@@ -18,6 +18,7 @@ import { Projects } from './collections/Projects'
 import { ShareStructures } from './collections/ShareStructures'
 import { TenantMemberships } from './collections/TenantMemberships'
 import { Users } from './collections/Users'
+import { resolveDatabaseSsl, resolveEnableDatabasePush } from './lib/database-guards'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -30,34 +31,7 @@ const useS3Storage = Boolean(
     process.env.S3_ENDPOINT,
 )
 
-const enableDatabasePush = process.env.PAYLOAD_DATABASE_PUSH === 'true'
-const isNextProductionBuild = process.env.NEXT_PHASE === 'phase-production-build'
-if (enableDatabasePush && process.env.NODE_ENV === 'production' && !isNextProductionBuild) {
-  throw new Error(
-    'PAYLOAD_DATABASE_PUSH=true is not allowed when NODE_ENV=production. Set PAYLOAD_DATABASE_PUSH=false and run migrations.',
-  )
-}
-
-function resolveDatabaseSsl(): { ssl?: { ca?: string; rejectUnauthorized?: boolean } } {
-  const ca = process.env.DATABASE_SSL_CA
-  if (ca && ca.trim().length > 0) {
-    return { ssl: { ca, rejectUnauthorized: true } }
-  }
-
-  if (process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'false') {
-    if (process.env.NODE_ENV === 'production' && !isNextProductionBuild) {
-      throw new Error(
-        'DATABASE_SSL_REJECT_UNAUTHORIZED=false is not allowed when NODE_ENV=production. Set DATABASE_SSL_CA to the Supabase (or provider) CA PEM instead.',
-      )
-    }
-    console.warn(
-      '[payload] DATABASE_SSL_REJECT_UNAUTHORIZED=false — TLS certificate verification is disabled (non-production only). Prefer DATABASE_SSL_CA.',
-    )
-    return { ssl: { rejectUnauthorized: false } }
-  }
-
-  return {}
-}
+const enableDatabasePush = resolveEnableDatabasePush()
 
 export default buildConfig({
   admin: {
@@ -98,6 +72,8 @@ export default buildConfig({
       ...resolveDatabaseSsl(),
     },
     // Opt-in only. Local `.env` should set PAYLOAD_DATABASE_PUSH=true; Preview/Production omit or set false and migrate.
+    // Preview/Production + push=true throws (including Next build phase). Build forces push off via resolveEnableDatabasePush.
+    // Vercel requires DATABASE_SSL_CA (ALLOW_INSECURE_DB_SSL removed in Sprint 3).
     push: enableDatabasePush,
     migrationDir: path.resolve(dirname, 'migrations'),
   }),

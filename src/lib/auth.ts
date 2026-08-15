@@ -1,6 +1,6 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { headers as nextHeaders } from 'next/headers'
+import { cookies as nextCookies, headers as nextHeaders } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { isPlatformAdmin, type AuthUser } from '@/access'
@@ -9,10 +9,38 @@ export async function getPayloadClient() {
   return getPayload({ config })
 }
 
+/**
+ * Build headers Payload can authenticate from.
+ * Next.js App Router soft navigations (RSC fetches) can present Cookie/Origin in ways
+ * that make Payload's cookie extractor drop the session — login works, then menu clicks
+ * bounce to /login. Reading `payload-token` via `cookies()` and sending
+ * `Authorization: JWT …` uses Payload's first jwtOrder strategy and stays stable.
+ */
+export async function getAuthHeaders(): Promise<Headers> {
+  const headerStore = await nextHeaders()
+  const requestHeaders = new Headers(headerStore)
+  const cookieStore = await nextCookies()
+  const token = cookieStore.get('payload-token')?.value
+
+  if (token) {
+    if (!requestHeaders.get('authorization')) {
+      requestHeaders.set('Authorization', `JWT ${token}`)
+    }
+    const existingCookie = requestHeaders.get('cookie')
+    if (!existingCookie?.includes('payload-token=')) {
+      requestHeaders.set(
+        'cookie',
+        existingCookie ? `${existingCookie}; payload-token=${token}` : `payload-token=${token}`,
+      )
+    }
+  }
+
+  return requestHeaders
+}
+
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const payload = await getPayloadClient()
-  const headerStore = await nextHeaders()
-  const { user } = await payload.auth({ headers: headerStore })
+  const { user } = await payload.auth({ headers: await getAuthHeaders() })
   return (user as AuthUser | null) ?? null
 }
 

@@ -103,16 +103,30 @@ describe('tenant isolation and published-only reads', () => {
     expect(company?.publicationStatus).toBe('published')
   })
 
-  it('anonymous access-layer project reads return published only', async () => {
+  it('anonymous access-layer project reads return published only for the resolved tenant', async () => {
     const anon = await payload.find({
       collection: 'projects',
       overrideAccess: false,
       limit: 50,
+      depth: 0,
     })
 
     expect(anon.docs.length).toBeGreaterThan(0)
     expect(anon.docs.every((doc) => doc.status === 'published')).toBe(true)
     expect(anon.docs.some((doc) => doc.slug === 'hidden-lake')).toBe(false)
+    expect(
+      anon.docs.every((doc) => {
+        const tenant = typeof doc.tenant === 'object' && doc.tenant && 'id' in doc.tenant
+          ? doc.tenant.id
+          : doc.tenant
+        return String(tenant) === String(auroraId)
+      }),
+    ).toBe(true)
+    expect(
+      anon.docs.every(
+        (doc) => doc.reviewedBy == null && doc.reviewedAt == null && doc.publishedAt == null,
+      ),
+    ).toBe(true)
   })
 
   it('company admin can read own tenant projects and not another tenant via access', async () => {

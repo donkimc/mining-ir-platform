@@ -2,7 +2,17 @@
 
 Self-service, multi-tenant investor relations websites for junior mining companies.
 
-## Sprint 2
+## Sprint 3
+
+Sprint 2 implementation is complete. Sprint 3 is the release-readiness gate before investor-facing expansion.
+
+The immediate objective is to close the findings from the independent Sprint 2 review: private Supabase Storage, credential rotation and session invalidation, verified database TLS, incremental migration testing, real cloud media verification, public API data minimization, production guard enforcement, committed remediation and operational recovery evidence.
+
+Do not add live market data, analytics, subscriptions or investor accounts in Sprint 3. Those features are planned after the product can safely protect unpublished technical content in staging and production-like conditions.
+
+Read [`docs/SPRINT3_HANDOFF.md`](docs/SPRINT3_HANDOFF.md) for the Cursor implementation brief and review handoff.
+
+## Sprint 2 Baseline
 
 Sprint 2 extends the completed vertical slice with structured mining content:
 
@@ -149,7 +159,7 @@ For Claude/human review after a run, use:
 - **[docs/SPRINT1_HANDOFF.md](docs/SPRINT1_HANDOFF.md)** — Sprint 1 baseline
 - **[docs/SPRINT2_HANDOFF.md](docs/SPRINT2_HANDOFF.md)** — Sprint 2 mining content + staging results
 
-## Cloud Staging
+## Cloud Staging and Release Readiness
 
 The project owner has Vercel Pro and Supabase Pro. Sprint 2 must be tested in a Vercel Preview deployment backed by a Supabase Pro staging database before production release.
 
@@ -164,7 +174,7 @@ Configure Preview and Production variables separately. At minimum: `DATABASE_URI
 
 Staging schema: set `PAYLOAD_DATABASE_PUSH` unset or `false` and run `npm run migrate` against the staging database. Seed with `npm run seed` (never `seed:reset` against Production). Set `DATABASE_SSL_CA` for Preview/Production TLS. Keep the Supabase `media` bucket private.
 
-Before Claude reviews Sprint 2, Cursor must deploy a Preview, seed only fictional staging data, verify public and authenticated flows on the Preview URL, and report the URL plus migration/seed results. See [`docs/SPRINT2_HANDOFF.md`](docs/SPRINT2_HANDOFF.md) for the full staging checklist.
+Before Claude reviews Sprint 3, Cursor must deploy a Preview, seed only fictional staging data, verify public and authenticated flows on the Preview URL, prove private storage with a real uploaded file, and report the URL plus migration, rotation, TLS, media and restore-test results. See [`docs/SPRINT3_HANDOFF.md`](docs/SPRINT3_HANDOFF.md) for the full checklist.
 
 ## Documentation
 
@@ -177,6 +187,8 @@ Before Claude reviews Sprint 2, Cursor must deploy a Preview, seed only fictiona
 - [Testing](docs/TESTING.md)
 - [Sprint 1 Review Handoff](docs/SPRINT1_HANDOFF.md)
 - [ADRs](docs/decisions/ADR-0001-self-service-multi-tenant-saas.md)
+- [Production-readiness ADR](docs/decisions/ADR-0008-production-readiness-gates-before-investor-features.md)
 - [Sprint 2 implementation handoff](docs/SPRINT2_HANDOFF.md)
+- [Sprint 3 production-hardening handoff](docs/SPRINT3_HANDOFF.md)
 
 `AGENTS.md` is the implementation contract. When code and documentation disagree, pause and record the decision before changing the product direction.

@@ -261,6 +261,105 @@ describe('Sprint 2 mining content', () => {
     ).toBe(true)
   })
 
+  it('scopes anonymous Sprint 1 collection reads and strips review metadata', async () => {
+    // Ensure the Northern Copper fixture exists — its absence hid this leak previously.
+    const northernHighlight = await payload.find({
+      collection: 'investment-highlights',
+      where: {
+        and: [
+          { tenant: { equals: northernId } },
+          { title: { equals: 'NORTHERN SECRET' } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (northernHighlight.totalDocs === 0) {
+      const created = await payload.create({
+        collection: 'investment-highlights',
+        overrideAccess: true,
+        data: {
+          tenant: asTenantId(northernId),
+          title: 'NORTHERN SECRET',
+          summary: 'Isolation fixture highlight for anonymous tenant-scope tests.',
+          displayOrder: 99,
+          status: 'published',
+        },
+      })
+      createdIds.push({ collection: 'investment-highlights', id: created.id })
+    }
+
+    const tenantIdOf = (doc: { tenant?: unknown }) => {
+      const tenant = doc.tenant
+      return typeof tenant === 'object' && tenant && 'id' in tenant
+        ? String((tenant as { id: string | number }).id)
+        : String(tenant)
+    }
+
+    for (const collection of ['projects', 'investment-highlights', 'catalysts'] as const) {
+      const anon = await payload.find({
+        collection,
+        limit: 100,
+        depth: 0,
+        overrideAccess: false,
+      })
+      expect(anon.docs.length).toBeGreaterThan(0)
+      expect(anon.docs.every((doc) => tenantIdOf(doc) === String(auroraId))).toBe(true)
+      expect(anon.docs.every((doc) => doc.status === 'published')).toBe(true)
+      expect(
+        anon.docs.every(
+          (doc) =>
+            !('reviewedBy' in doc && doc.reviewedBy) &&
+            !('reviewedAt' in doc && doc.reviewedAt) &&
+            !('publishedAt' in doc && doc.publishedAt),
+        ),
+      ).toBe(true)
+    }
+
+    const highlights = await payload.find({
+      collection: 'investment-highlights',
+      limit: 100,
+      depth: 0,
+      overrideAccess: false,
+    })
+    expect(highlights.docs.some((doc) => doc.title === 'NORTHERN SECRET')).toBe(false)
+
+    const companies = await payload.find({
+      collection: 'companies',
+      limit: 100,
+      depth: 0,
+      overrideAccess: false,
+    })
+    expect(companies.docs.length).toBeGreaterThan(0)
+    expect(
+      companies.docs.every(
+        (doc) =>
+          !('reviewedBy' in doc && doc.reviewedBy) &&
+          !('reviewedAt' in doc && doc.reviewedAt) &&
+          !('publishedAt' in doc && doc.publishedAt),
+      ),
+    ).toBe(true)
+
+    const companyAdminUser = companyAdmin
+    const adminProjects = await payload.find({
+      collection: 'projects',
+      user: companyAdminUser,
+      overrideAccess: false,
+      limit: 100,
+      depth: 0,
+    })
+    expect(adminProjects.docs.every((doc) => tenantIdOf(doc) === String(auroraId))).toBe(true)
+
+    const platformProjects = await payload.find({
+      collection: 'projects',
+      user: platformAdmin,
+      overrideAccess: false,
+      limit: 100,
+      depth: 0,
+    })
+    expect(platformProjects.docs.some((doc) => tenantIdOf(doc) === String(northernId))).toBe(true)
+  })
+
   it('rejects published disclosure edits and content-plus-approve', () => {
     expect(() =>
       assertDisclosureWriteAllowed({

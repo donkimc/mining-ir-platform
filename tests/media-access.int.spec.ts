@@ -125,7 +125,7 @@ describe('media access control (C1)', () => {
     tenantId: string | number
     user: { id: string | number }
     fileId: string | number
-    status: 'draft' | 'published'
+    status: 'draft' | 'review' | 'published'
     slug: string
   }) {
     const doc = await payload.create({
@@ -146,7 +146,7 @@ describe('media access control (C1)', () => {
     })
     created.push({ collection: 'documents', id: doc.id })
 
-    if (args.status === 'published') {
+    if (args.status === 'review' || args.status === 'published') {
       await payload.update({
         collection: 'documents',
         id: doc.id,
@@ -154,6 +154,8 @@ describe('media access control (C1)', () => {
         user: args.user,
         overrideAccess: false,
       })
+    }
+    if (args.status === 'published') {
       await payload.update({
         collection: 'documents',
         id: doc.id,
@@ -165,6 +167,30 @@ describe('media access control (C1)', () => {
 
     return doc
   }
+
+  it('denies anonymous read of media attached to a REVIEW document', async () => {
+    const media = await createMedia({
+      tenantId: auroraId,
+      user: auroraAdmin,
+      originalName: 'review-only-technical-memo.pdf',
+    })
+    await createDocument({
+      tenantId: auroraId,
+      user: auroraAdmin,
+      fileId: media.id,
+      status: 'review',
+      slug: `media-review-${randomUUID().slice(0, 8)}`,
+    })
+
+    const anon = await payload.find({
+      collection: 'media',
+      where: { id: { equals: media.id } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: false,
+    })
+    expect(anon.docs).toHaveLength(0)
+  })
 
   it('denies anonymous read of media attached to a DRAFT document', async () => {
     const media = await createMedia({

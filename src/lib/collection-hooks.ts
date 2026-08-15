@@ -23,7 +23,6 @@ import {
   shouldRequireSource,
   stripForgedReviewMetadata,
 } from '@/lib/publishing'
-import { getPublishedCompanyBySlug, resolveTenantSlug } from '@/lib/tenant'
 
 type RelationCheck = {
   field: string
@@ -57,6 +56,8 @@ export function publishedOnlyOrTenantScopedRead(): CollectionConfig['access'] {
     delete: tenantScopedCompanyAdminWrite,
     read: async ({ req }) => {
       if (!req.user) {
+        // Lazy import avoids loading Payload config when collections are imported for static checks.
+        const { getPublishedCompanyBySlug, resolveTenantSlug } = await import('@/lib/tenant')
         const slug = await resolveTenantSlug()
         const company = await getPublishedCompanyBySlug(slug)
         if (!company) {
@@ -77,13 +78,30 @@ export function publishedOnlyOrTenantScopedRead(): CollectionConfig['access'] {
   }
 }
 
-/** Strip review audit fields from anonymous API/page reads. Authenticated users keep them. */
+/**
+ * Public API serializer for anonymous reads.
+ * Keeps intentional Published fields; strips reviewer identity, review timestamps,
+ * and other internal audit fields. Authenticated dashboard/admin callers keep full docs.
+ */
 export const stripReviewMetadataAfterRead: CollectionAfterReadHook = ({ doc, req }) => {
   if (!doc || req.user) return doc
-  const next = { ...(doc as Record<string, unknown>) }
-  delete next.reviewedBy
-  delete next.reviewedAt
-  delete next.publishedAt
+  return serializeAnonymousPublicDoc(doc as Record<string, unknown>)
+}
+
+/** Alias for clarity in Sprint 3 docs/tests. */
+export const publicApiSerializerAfterRead = stripReviewMetadataAfterRead
+
+const ANON_STRIP_KEYS = [
+  'reviewedBy',
+  'reviewedAt',
+  'publishedAt',
+] as const
+
+export function serializeAnonymousPublicDoc<T extends Record<string, unknown>>(doc: T): T {
+  const next = { ...doc }
+  for (const key of ANON_STRIP_KEYS) {
+    delete next[key]
+  }
   return next
 }
 
