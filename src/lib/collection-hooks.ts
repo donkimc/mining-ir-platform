@@ -81,20 +81,27 @@ export function publishedOnlyOrTenantScopedRead(): CollectionConfig['access'] {
 /**
  * Public API serializer for anonymous reads.
  * Keeps intentional Published fields; strips reviewer identity, review timestamps,
- * and other internal audit fields. Authenticated dashboard/admin callers keep full docs.
+ * tenant relation IDs and platform routing metadata. Authenticated callers keep full docs.
+ * Internal relation checks can set `context.skipPublicSerializer` to retain tenant IDs.
  */
-export const stripReviewMetadataAfterRead: CollectionAfterReadHook = ({ doc, req }) => {
-  if (!doc || req.user) return doc
+export const stripReviewMetadataAfterRead: CollectionAfterReadHook = ({ doc, req, context }) => {
+  if (!doc || req.user || context?.skipPublicSerializer) return doc
   return serializeAnonymousPublicDoc(doc as Record<string, unknown>)
 }
 
-/** Alias for clarity in Sprint 3 docs/tests. */
+/** Alias for clarity in Sprint 3/4 docs/tests. */
 export const publicApiSerializerAfterRead = stripReviewMetadataAfterRead
 
 const ANON_STRIP_KEYS = [
   'reviewedBy',
   'reviewedAt',
   'publishedAt',
+  // L-1: tenant relation IDs are not part of the public API contract.
+  'tenant',
+  // M-1: platform routing / template internals are not investor content.
+  'websiteDomain',
+  'subdomain',
+  'templateKey',
 ] as const
 
 export function serializeAnonymousPublicDoc<T extends Record<string, unknown>>(doc: T): T {

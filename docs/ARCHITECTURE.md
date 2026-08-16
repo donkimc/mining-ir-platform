@@ -26,6 +26,13 @@ Recorded in [ADR-0005](decisions/ADR-0005-auth-tenant-resolution-cms-path.md):
 - Platform Admin routes: cross-tenant management with an explicit platform role.
 - Seed scripts: create Aurora Gold and test memberships; they must not make Aurora Gold a global runtime assumption.
 
+## Sprint 4 public discovery and maps
+
+- Server-side published-only search/filter on Projects, News and Documents ([ADR-0011](decisions/ADR-0011-public-explorer-discovery-contract.md)).
+- Related content on project detail is same-tenant Published news/documents only.
+- Project maps use a provider-neutral OSM embed with accessible text fallback; no paid API keys ([ADR-0010](decisions/ADR-0010-project-map-provider-and-data-policy.md)).
+- Investor accounts, market data and subscriptions remain out of scope ([ADR-0009](decisions/ADR-0009-sprint4-investor-feature-boundary.md)).
+
 ## Request Flow
 
 1. Resolve the tenant from the hostname, route context or authenticated dashboard selection.

@@ -785,6 +785,9 @@ async function seed() {
         commodity: 'Copper',
         jurisdiction: 'British Columbia, Canada',
         locationSummary: 'Fictional isolation fixture project for wrong-tenant relation tests.',
+        // Distinctive poison coordinates — must never appear on Aurora maps.
+        latitude: 54.123456,
+        longitude: -125.654321,
         ownershipPercent: 100,
         stage: 'early_exploration',
         summary: 'Northern Copper isolation project used only for cross-tenant assignment checks.',
@@ -796,6 +799,17 @@ async function seed() {
     })
     await publishViaReview(payload, 'projects', northernProject.id, platformAdmin)
     northernProjectId = northernProject.id
+  } else {
+    // Ensure poison coordinates exist on the isolation fixture for map negative tests.
+    await payload.update({
+      collection: 'projects',
+      id: northernProjectId,
+      data: {
+        latitude: 54.123456,
+        longitude: -125.654321,
+      },
+      overrideAccess: true,
+    })
   }
   void northernProjectId
 
@@ -817,6 +831,33 @@ async function seed() {
         tenant: northern.id,
         title: 'NORTHERN SECRET',
         summary: 'Isolation fixture highlight — must never appear on Aurora anonymous API reads.',
+        displayOrder: 99,
+        status: 'published',
+      },
+      overrideAccess: true,
+    })
+  }
+
+  const northernCatalysts = await payload.find({
+    collection: 'catalysts',
+    where: {
+      and: [
+        { tenant: { equals: northern.id } },
+        { title: { equals: 'NORTHERN CATALYST SECRET' } },
+      ],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  if (northernCatalysts.totalDocs === 0) {
+    await payload.create({
+      collection: 'catalysts',
+      data: {
+        tenant: northern.id,
+        title: 'NORTHERN CATALYST SECRET',
+        expectedTiming: 'Never — isolation fixture',
+        summary:
+          'Isolation fixture catalyst — must never appear on Aurora public routes, APIs or maps.',
         displayOrder: 99,
         status: 'published',
       },

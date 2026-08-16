@@ -127,3 +127,17 @@ The matrix must cover Company, Project, News, Document, Person, Share Structure,
 
 Record the command, commit SHA, environment class, deployment URL, Supabase project, migration result, direct-object result, cloud upload result, secret-rotation result and restore-rehearsal result in `docs/SPRINT3_HANDOFF.md`. Screenshots or logs may redact secret values but must retain enough context to reproduce the claim.
 
+## Sprint 4 public discovery and maps
+
+| Scenario | Expected result |
+| --- | --- |
+| Anonymous `/api/companies` | Only resolved tenant; no `websiteDomain` / `subdomain` / `templateKey` |
+| Anonymous serializers | No `tenant`, reviewer fields or Northern poison strings |
+| Projects/News/Documents filters | Published Aurora matches only; Draft/Review/Archived/Northern absent |
+| Related project content | Same-tenant Published news/documents only |
+| Valid Published coordinates | Illustrative OSM embed + text fallback; no API key in HTML |
+| Invalid/missing/wrong-tenant coordinates | Text fallback only; no unauthorized marker |
+| Map hide/failure control | Text location remains usable |
+
+Coverage lives primarily in `tests/sprint3-public-api.int.spec.ts` plus existing disclosure/isolation suites.
+

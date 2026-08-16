@@ -114,14 +114,9 @@ describe('tenant isolation and published-only reads', () => {
     expect(anon.docs.length).toBeGreaterThan(0)
     expect(anon.docs.every((doc) => doc.status === 'published')).toBe(true)
     expect(anon.docs.some((doc) => doc.slug === 'hidden-lake')).toBe(false)
-    expect(
-      anon.docs.every((doc) => {
-        const tenant = typeof doc.tenant === 'object' && doc.tenant && 'id' in doc.tenant
-          ? doc.tenant.id
-          : doc.tenant
-        return String(tenant) === String(auroraId)
-      }),
-    ).toBe(true)
+    expect(anon.docs.some((doc) => doc.slug === 'copper-ridge-isolation')).toBe(false)
+    // L-1: tenant relation IDs are not part of the anonymous public contract.
+    expect(anon.docs.every((doc) => !('tenant' in doc && doc.tenant != null))).toBe(true)
     expect(
       anon.docs.every(
         (doc) => doc.reviewedBy == null && doc.reviewedAt == null && doc.publishedAt == null,

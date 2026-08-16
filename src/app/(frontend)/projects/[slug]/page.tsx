@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { ProjectLocationMap } from '@/components/public/ProjectLocationMap'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import {
   getPublishedExplorationForProject,
   getPublishedProjectBySlug,
+  getRelatedPublishedForProject,
 } from '@/lib/public-data'
 import { requirePublishedTenant } from '@/lib/tenant'
 
@@ -38,7 +40,10 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project = await getPublishedProjectBySlug(company.id, slug)
   if (!project) notFound()
 
-  const exploration = await getPublishedExplorationForProject(company.id, project.id)
+  const [exploration, related] = await Promise.all([
+    getPublishedExplorationForProject(company.id, project.id),
+    getRelatedPublishedForProject(company.id, project.id),
+  ])
 
   return (
     <main className="min-h-screen bg-[var(--paper)]">
@@ -178,19 +183,13 @@ export default async function ProjectDetailPage({ params }: Props) {
           </div>
 
           <aside className="space-y-8">
-            <div className="border border-[color-mix(in_oklab,var(--ink)_14%,transparent)] bg-[var(--paper-deep)] p-6">
-              <h2 className="display text-2xl">Map</h2>
-              <p className="mt-3 text-sm text-[var(--ink-soft)]">
-                Interactive map placeholder for Sprint 1.
-                {project.latitude != null && project.longitude != null
-                  ? ` Approximate coordinates: ${project.latitude}, ${project.longitude}.`
-                  : ''}
-              </p>
-              <div
-                aria-hidden="true"
-                className="mt-4 h-48 bg-[linear-gradient(135deg,#1f3a2e,#0f1c16_55%,#c4a35a33)]"
-              />
-            </div>
+            <ProjectLocationMap
+              projectName={project.name}
+              latitude={project.latitude}
+              longitude={project.longitude}
+              locationSummary={project.locationSummary}
+              jurisdiction={project.jurisdiction}
+            />
 
             <div>
               <h2 className="display text-2xl">Source index</h2>
@@ -211,13 +210,39 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
 
             <div>
-              <h2 className="display text-2xl">Related content</h2>
-              <ul className="mt-4 space-y-2 text-sm">
+              <h2 className="display text-2xl">Related published content</h2>
+              {related.news.length === 0 && related.documents.length === 0 ? (
+                <p className="mt-4 text-sm text-[var(--ink-soft)]">
+                  No published news or documents are linked to this project yet.
+                </p>
+              ) : (
+                <ul className="mt-4 space-y-3 text-sm">
+                  {related.news.map((item) => (
+                    <li key={`news-${item.id}`}>
+                      <Link href={`/news/${item.slug}`}>{item.title}</Link>
+                      <span className="text-[var(--ink-soft)]"> · News</span>
+                    </li>
+                  ))}
+                  {related.documents.map((doc) => (
+                    <li key={`doc-${doc.id}`}>
+                      {doc.externalUrl ? (
+                        <a href={doc.externalUrl} target="_blank" rel="noreferrer">
+                          {doc.title}
+                        </a>
+                      ) : (
+                        <span>{doc.title}</span>
+                      )}
+                      <span className="text-[var(--ink-soft)]"> · Document</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <ul className="mt-6 space-y-2 text-sm text-[var(--ink-soft)]">
                 <li>
-                  <Link href="/news">News releases</Link>
+                  <Link href="/news">All news releases</Link>
                 </li>
                 <li>
-                  <Link href="/documents">Documents</Link>
+                  <Link href="/documents">All documents</Link>
                 </li>
                 <li>
                   <Link href="/share-structure">Share structure</Link>

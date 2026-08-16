@@ -244,14 +244,8 @@ describe('Sprint 2 mining content', () => {
     })
 
     expect(anon.docs.length).toBeGreaterThan(0)
-    expect(
-      anon.docs.every((doc) => {
-        const tenant = typeof doc.tenant === 'object' && doc.tenant && 'id' in doc.tenant
-          ? doc.tenant.id
-          : doc.tenant
-        return String(tenant) === String(auroraId)
-      }),
-    ).toBe(true)
+    // L-1: tenant relation IDs are stripped from anonymous public docs.
+    expect(anon.docs.every((doc) => !('tenant' in doc && doc.tenant != null))).toBe(true)
     expect(anon.docs.some((doc) => doc.slug === 'northern-isolation-release')).toBe(false)
     expect(
       anon.docs.every(
@@ -289,13 +283,6 @@ describe('Sprint 2 mining content', () => {
       createdIds.push({ collection: 'investment-highlights', id: created.id })
     }
 
-    const tenantIdOf = (doc: { tenant?: unknown }) => {
-      const tenant = doc.tenant
-      return typeof tenant === 'object' && tenant && 'id' in tenant
-        ? String((tenant as { id: string | number }).id)
-        : String(tenant)
-    }
-
     for (const collection of ['projects', 'investment-highlights', 'catalysts'] as const) {
       const anon = await payload.find({
         collection,
@@ -304,7 +291,8 @@ describe('Sprint 2 mining content', () => {
         overrideAccess: false,
       })
       expect(anon.docs.length).toBeGreaterThan(0)
-      expect(anon.docs.every((doc) => tenantIdOf(doc) === String(auroraId))).toBe(true)
+      // L-1: tenant IDs stripped; isolation proven by published-only + no Northern poison.
+      expect(anon.docs.every((doc) => !('tenant' in doc && doc.tenant != null))).toBe(true)
       expect(anon.docs.every((doc) => doc.status === 'published')).toBe(true)
       expect(
         anon.docs.every(
@@ -330,15 +318,26 @@ describe('Sprint 2 mining content', () => {
       depth: 0,
       overrideAccess: false,
     })
-    expect(companies.docs.length).toBeGreaterThan(0)
+    expect(companies.docs).toHaveLength(1)
+    expect((companies.docs[0] as { slug?: string }).slug).toBe('aurora-gold')
     expect(
       companies.docs.every(
         (doc) =>
           !('reviewedBy' in doc && doc.reviewedBy) &&
           !('reviewedAt' in doc && doc.reviewedAt) &&
-          !('publishedAt' in doc && doc.publishedAt),
+          !('publishedAt' in doc && doc.publishedAt) &&
+          !('websiteDomain' in doc && doc.websiteDomain) &&
+          !('subdomain' in doc && doc.subdomain) &&
+          !('templateKey' in doc && doc.templateKey),
       ),
     ).toBe(true)
+
+    const tenantIdOf = (doc: { tenant?: unknown }) => {
+      const tenant = doc.tenant
+      return typeof tenant === 'object' && tenant && 'id' in tenant
+        ? String((tenant as { id: string | number }).id)
+        : String(tenant)
+    }
 
     const companyAdminUser = companyAdmin
     const adminProjects = await payload.find({

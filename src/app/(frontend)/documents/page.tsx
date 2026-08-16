@@ -1,12 +1,17 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { PublicDiscoveryFilters } from '@/components/public/PublicDiscoveryFilters'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedDocuments } from '@/lib/public-data'
 import { buildTenantMetadata } from '@/lib/seo'
 import { requirePublishedTenant } from '@/lib/tenant'
 import type { Document } from '@/payload-types'
+
+type Props = {
+  searchParams: Promise<{ q?: string; category?: string }>
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildTenantMetadata(
@@ -49,10 +54,15 @@ function groupDocuments(documents: Document[]) {
   })).filter((group) => group.items.length > 0)
 }
 
-export default async function DocumentsPage() {
+export default async function DocumentsPage({ searchParams }: Props) {
   const company = await requirePublishedTenant()
-  const documents = await getPublishedDocuments(company.id)
+  const filters = await searchParams
+  const documents = await getPublishedDocuments(company.id, {
+    q: filters.q,
+    category: filters.category,
+  })
   const groups = groupDocuments(documents)
+  const hasFilters = Boolean(filters.q?.trim() || filters.category?.trim())
 
   return (
     <main className="min-h-screen bg-[var(--paper)]">
@@ -65,11 +75,41 @@ export default async function DocumentsPage() {
           dashboard.
         </p>
 
+        <PublicDiscoveryFilters
+          action="/documents"
+          fields={[
+            {
+              name: 'q',
+              label: 'Search',
+              type: 'search',
+              placeholder: 'Document title',
+              defaultValue: filters.q,
+            },
+            {
+              name: 'category',
+              label: 'Category',
+              type: 'select',
+              defaultValue: filters.category,
+              options: [
+                { value: '', label: 'Any category' },
+                { value: 'presentation', label: 'Presentations' },
+                { value: 'technical_report', label: 'Technical reports' },
+                { value: 'financial', label: 'Financial' },
+                { value: 'other', label: 'Other' },
+              ],
+            },
+          ]}
+        />
+
         {documents.length === 0 ? (
           <div className="mt-12 border border-dashed border-[color-mix(in_oklab,var(--ink)_25%,transparent)] p-8">
-            <h2 className="display text-3xl">No published documents yet</h2>
+            <h2 className="display text-3xl">
+              {hasFilters ? 'No matching published documents' : 'No published documents yet'}
+            </h2>
             <p className="mt-3 text-[var(--ink-soft)]">
-              When the company publishes a document, it will appear here.
+              {hasFilters
+                ? 'Try clearing filters or using a different search term.'
+                : 'When the company publishes a document, it will appear here.'}
             </p>
           </div>
         ) : (

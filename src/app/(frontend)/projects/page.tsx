@@ -1,10 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { PublicDiscoveryFilters } from '@/components/public/PublicDiscoveryFilters'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedProjects } from '@/lib/public-data'
 import { requirePublishedTenant } from '@/lib/tenant'
+
+type Props = {
+  searchParams: Promise<{ q?: string; commodity?: string; stage?: string }>
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const company = await requirePublishedTenant()
@@ -14,9 +19,24 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function ProjectsPage() {
+const STAGE_OPTIONS = [
+  { value: '', label: 'Any stage' },
+  { value: 'early_exploration', label: 'Early exploration' },
+  { value: 'advanced_exploration', label: 'Advanced exploration' },
+  { value: 'resource_definition', label: 'Resource definition' },
+  { value: 'development', label: 'Development' },
+  { value: 'production', label: 'Production' },
+]
+
+export default async function ProjectsPage({ searchParams }: Props) {
   const company = await requirePublishedTenant()
-  const projects = await getPublishedProjects(company.id)
+  const filters = await searchParams
+  const projects = await getPublishedProjects(company.id, {
+    q: filters.q,
+    commodity: filters.commodity,
+    stage: filters.stage,
+  })
+  const hasFilters = Boolean(filters.q?.trim() || filters.commodity?.trim() || filters.stage?.trim())
 
   return (
     <main className="min-h-screen bg-[var(--paper)]">
@@ -28,11 +48,42 @@ export default async function ProjectsPage() {
           Published projects only. Draft and review records stay in the company dashboard.
         </p>
 
+        <PublicDiscoveryFilters
+          action="/projects"
+          fields={[
+            {
+              name: 'q',
+              label: 'Search',
+              type: 'search',
+              placeholder: 'Name or summary',
+              defaultValue: filters.q,
+            },
+            {
+              name: 'commodity',
+              label: 'Commodity',
+              type: 'search',
+              placeholder: 'e.g. Gold',
+              defaultValue: filters.commodity,
+            },
+            {
+              name: 'stage',
+              label: 'Stage',
+              type: 'select',
+              defaultValue: filters.stage,
+              options: STAGE_OPTIONS,
+            },
+          ]}
+        />
+
         {projects.length === 0 ? (
           <div className="mt-12 border border-dashed border-[color-mix(in_oklab,var(--ink)_25%,transparent)] p-8">
-            <h2 className="display text-3xl">No published projects yet</h2>
+            <h2 className="display text-3xl">
+              {hasFilters ? 'No matching published projects' : 'No published projects yet'}
+            </h2>
             <p className="mt-3 text-[var(--ink-soft)]">
-              When the company publishes a project, it will appear here.
+              {hasFilters
+                ? 'Try clearing filters or using a different search term.'
+                : 'When the company publishes a project, it will appear here.'}
             </p>
           </div>
         ) : (

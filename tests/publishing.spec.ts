@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   assertDisclosureWriteAllowed,
   assertPublicationTransition,
+  assertSameTenantRelation,
   assertSourceReferenceRequired,
   guardCreateNotPublished,
   isPublishedStatus,
@@ -217,5 +218,57 @@ describe('platform deployment hosts', () => {
   it('treats custom tenant subdomains as not platform hosts', () => {
     expect(isPlatformDeploymentHost('aurora-gold.example.com')).toBe(false)
     expect(isPlatformDeploymentHost('www.example.com')).toBe(false)
+  })
+})
+
+describe('N3 assertSameTenantRelation error mapping', () => {
+  it('maps missing related docs to a 400 same-tenant message (NotFound must not leak through)', async () => {
+    const payload = {
+      findByID: async () => {
+        const { APIError } = await import('payload')
+        // Payload NotFound extends APIError with status 404.
+        throw new APIError('Not Found', 404)
+      },
+    }
+
+    await expect(
+      assertSameTenantRelation({
+        payload: payload as never,
+        tenantId: 1,
+        collection: 'projects',
+        id: 999,
+        label: 'Project',
+      }),
+    ).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringMatching(/same tenant/i),
+    })
+  })
+
+  it('rethrows intentional 400 tenant mismatch errors', async () => {
+    const { APIError } = await import('payload')
+    const payload = {
+      findByID: async () => ({ id: 2, tenant: 99 }),
+    }
+
+    await expect(
+      assertSameTenantRelation({
+        payload: payload as never,
+        tenantId: 1,
+        collection: 'projects',
+        id: 2,
+        label: 'Project',
+      }),
+    ).rejects.toBeInstanceOf(APIError)
+
+    await expect(
+      assertSameTenantRelation({
+        payload: payload as never,
+        tenantId: 1,
+        collection: 'projects',
+        id: 2,
+        label: 'Project',
+      }),
+    ).rejects.toMatchObject({ status: 400 })
   })
 })

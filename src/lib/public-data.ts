@@ -1,4 +1,5 @@
 import { getPayloadClient } from '@/lib/auth'
+import { serializeAnonymousPublicDoc } from '@/lib/collection-hooks'
 import type {
   Catalyst,
   Company,
@@ -10,29 +11,67 @@ import type {
   Project,
   ShareStructure,
 } from '@/payload-types'
+import type { Where } from 'payload'
 
-function omitReviewFields<T extends object>(doc: T): T {
+function toPublicDoc<T extends object>(doc: T): T {
   // Collection afterRead strips these for anonymous requests; keep as defense for overrideAccess reads.
-  const next = { ...(doc as Record<string, unknown>) }
-  delete next.reviewedBy
-  delete next.reviewedAt
-  delete next.publishedAt
-  return next as T
+  return serializeAnonymousPublicDoc(doc as Record<string, unknown>) as T
 }
 
-export async function getPublishedProjects(tenantId: string | number): Promise<Project[]> {
+function nonEmpty(value: string | undefined | null): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
+export type ProjectDiscoveryFilters = {
+  q?: string
+  commodity?: string
+  stage?: string
+}
+
+export type NewsDiscoveryFilters = {
+  q?: string
+}
+
+export type DocumentDiscoveryFilters = {
+  q?: string
+  category?: string
+}
+
+export async function getPublishedProjects(
+  tenantId: string | number,
+  filters: ProjectDiscoveryFilters = {},
+): Promise<Project[]> {
   const payload = await getPayloadClient()
+  const and: Where[] = [
+    { tenant: { equals: tenantId } },
+    { status: { equals: 'published' } },
+  ]
+
+  const q = nonEmpty(filters.q)
+  if (q) {
+    and.push({
+      or: [{ name: { contains: q } }, { summary: { contains: q } }],
+    })
+  }
+  const commodity = nonEmpty(filters.commodity)
+  if (commodity) {
+    and.push({ commodity: { contains: commodity } })
+  }
+  const stage = nonEmpty(filters.stage)
+  if (stage) {
+    and.push({ stage: { equals: stage } })
+  }
+
   const result = await payload.find({
     collection: 'projects',
-    where: {
-      and: [{ tenant: { equals: tenantId } }, { status: { equals: 'published' } }],
-    },
+    where: { and },
     sort: 'displayOrder',
     limit: 100,
     depth: 0,
     overrideAccess: true,
   })
-  return result.docs as Project[]
+  return (result.docs as Project[]).map((doc) => toPublicDoc(doc))
 }
 
 export async function getPublishedProjectBySlug(
@@ -53,7 +92,8 @@ export async function getPublishedProjectBySlug(
     depth: 0,
     overrideAccess: true,
   })
-  return (result.docs[0] as Project | undefined) ?? null
+  const doc = result.docs[0] as Project | undefined
+  return doc ? toPublicDoc(doc) : null
 }
 
 export async function getPublishedHighlights(
@@ -70,7 +110,7 @@ export async function getPublishedHighlights(
     depth: 0,
     overrideAccess: true,
   })
-  return result.docs as InvestmentHighlight[]
+  return (result.docs as InvestmentHighlight[]).map((doc) => toPublicDoc(doc))
 }
 
 export async function getPublishedCatalysts(tenantId: string | number): Promise<Catalyst[]> {
@@ -85,7 +125,7 @@ export async function getPublishedCatalysts(tenantId: string | number): Promise<
     depth: 0,
     overrideAccess: true,
   })
-  return result.docs as Catalyst[]
+  return (result.docs as Catalyst[]).map((doc) => toPublicDoc(doc))
 }
 
 export async function getPublishedShareStructure(
@@ -103,22 +143,34 @@ export async function getPublishedShareStructure(
     overrideAccess: true,
   })
   const doc = result.docs[0] as ShareStructure | undefined
-  return doc ? omitReviewFields(doc) : null
+  return doc ? toPublicDoc(doc) : null
 }
 
-export async function getPublishedNews(tenantId: string | number): Promise<NewsRelease[]> {
+export async function getPublishedNews(
+  tenantId: string | number,
+  filters: NewsDiscoveryFilters = {},
+): Promise<NewsRelease[]> {
   const payload = await getPayloadClient()
+  const and: Where[] = [
+    { tenant: { equals: tenantId } },
+    { status: { equals: 'published' } },
+  ]
+  const q = nonEmpty(filters.q)
+  if (q) {
+    and.push({
+      or: [{ title: { contains: q } }, { excerpt: { contains: q } }],
+    })
+  }
+
   const result = await payload.find({
     collection: 'news-releases',
-    where: {
-      and: [{ tenant: { equals: tenantId } }, { status: { equals: 'published' } }],
-    },
+    where: { and },
     sort: '-releaseDate',
     limit: 50,
     depth: 0,
     overrideAccess: true,
   })
-  return (result.docs as NewsRelease[]).map((doc) => omitReviewFields(doc))
+  return (result.docs as NewsRelease[]).map((doc) => toPublicDoc(doc))
 }
 
 export async function getPublishedNewsBySlug(
@@ -140,22 +192,36 @@ export async function getPublishedNewsBySlug(
     overrideAccess: true,
   })
   const doc = result.docs[0] as NewsRelease | undefined
-  return doc ? omitReviewFields(doc) : null
+  return doc ? toPublicDoc(doc) : null
 }
 
-export async function getPublishedDocuments(tenantId: string | number): Promise<Document[]> {
+export async function getPublishedDocuments(
+  tenantId: string | number,
+  filters: DocumentDiscoveryFilters = {},
+): Promise<Document[]> {
   const payload = await getPayloadClient()
+  const and: Where[] = [
+    { tenant: { equals: tenantId } },
+    { status: { equals: 'published' } },
+  ]
+  const q = nonEmpty(filters.q)
+  if (q) {
+    and.push({ title: { contains: q } })
+  }
+  const category = nonEmpty(filters.category)
+  if (category) {
+    and.push({ category: { equals: category } })
+  }
+
   const result = await payload.find({
     collection: 'documents',
-    where: {
-      and: [{ tenant: { equals: tenantId } }, { status: { equals: 'published' } }],
-    },
+    where: { and },
     sort: '-publicationDate',
     limit: 100,
     depth: 0,
     overrideAccess: true,
   })
-  return (result.docs as Document[]).map((doc) => omitReviewFields(doc))
+  return (result.docs as Document[]).map((doc) => toPublicDoc(doc))
 }
 
 export async function getPublishedPeople(tenantId: string | number): Promise<Person[]> {
@@ -170,7 +236,7 @@ export async function getPublishedPeople(tenantId: string | number): Promise<Per
     depth: 0,
     overrideAccess: true,
   })
-  return (result.docs as Person[]).map((doc) => omitReviewFields(doc))
+  return (result.docs as Person[]).map((doc) => toPublicDoc(doc))
 }
 
 export async function getPublishedExplorationForProject(
@@ -192,7 +258,57 @@ export async function getPublishedExplorationForProject(
     depth: 0,
     overrideAccess: true,
   })
-  return (result.docs as ExplorationContent[]).map((doc) => omitReviewFields(doc))
+  return (result.docs as ExplorationContent[]).map((doc) => toPublicDoc(doc))
+}
+
+export type RelatedPublishedContent = {
+  news: NewsRelease[]
+  documents: Document[]
+}
+
+/**
+ * Same-tenant Published news and documents linked to a project (ADR-0011).
+ */
+export async function getRelatedPublishedForProject(
+  tenantId: string | number,
+  projectId: string | number,
+): Promise<RelatedPublishedContent> {
+  const payload = await getPayloadClient()
+  const [news, documents] = await Promise.all([
+    payload.find({
+      collection: 'news-releases',
+      where: {
+        and: [
+          { tenant: { equals: tenantId } },
+          { project: { equals: projectId } },
+          { status: { equals: 'published' } },
+        ],
+      },
+      sort: '-releaseDate',
+      limit: 10,
+      depth: 0,
+      overrideAccess: true,
+    }),
+    payload.find({
+      collection: 'documents',
+      where: {
+        and: [
+          { tenant: { equals: tenantId } },
+          { project: { equals: projectId } },
+          { status: { equals: 'published' } },
+        ],
+      },
+      sort: '-publicationDate',
+      limit: 10,
+      depth: 0,
+      overrideAccess: true,
+    }),
+  ])
+
+  return {
+    news: (news.docs as NewsRelease[]).map((doc) => toPublicDoc(doc)),
+    documents: (documents.docs as Document[]).map((doc) => toPublicDoc(doc)),
+  }
 }
 
 export type PublicHomeData = {

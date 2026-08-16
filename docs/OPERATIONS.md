@@ -55,6 +55,26 @@ Rotate any credential that appeared in review packets, chat, logs or shared docs
 - Supabase Pro includes automated daily backups / PITR per plan. Confirm retention in the Supabase dashboard before go-live.
 - Before risky migrations: create a manual backup or snapshot note (project ref, timestamp, migration name about to apply).
 
+### Restore rehearsal (non-production) — L-3 checklist
+
+Perform this on **staging** (`jthotkkremiesvocfsmr`) only. Never restore Production (`bwftfsfbiyzgwztwtqmh`) as a rehearsal target while it is empty or holds customer data without Product Director approval.
+
+1. Confirm Supabase Pro PITR/backup retention is enabled for the staging project (Dashboard → Database → Backups).
+2. Note a marker: current time (UTC), latest migration name from `src/migrations/index.ts`, and that Aurora public `/` loads.
+3. Choose one supported method:
+   - **PITR / point-in-time restore** to a timestamp before a disposable test change, **or**
+   - **Branch / clone restore** into a disposable project if the plan provides it.
+4. After restore: set local/Preview `DATABASE_URI` temporarily to the restored target only if it is disposable; otherwise restore staging in place and re-point Vercel Preview when healthy.
+5. Run `PAYLOAD_DATABASE_PUSH=false npm run migrate` if the restored schema is behind the app.
+6. Smoke without secrets in logs:
+   - Public `/` shows Aurora Published content only
+   - Company Admin login works
+   - One Published media file via `/api/media/file/…`
+   - Northern Copper poison strings absent from public HTML/JSON
+7. Record in `docs/SPRINT4_HANDOFF.md`: project ref, UTC timestamp, restore method, operator, smoke pass/fail. Do not paste connection strings or keys.
+
+**Evidence status:** Live UI rehearsal requires operator access to the Supabase staging dashboard. Until recorded in the Sprint 4 completion report, treat L-3 as documentation-complete / evidence-pending.
+
 ### Restore rehearsal (non-production)
 
 1. Choose the staging project (never Production).

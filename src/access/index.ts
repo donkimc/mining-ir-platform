@@ -92,13 +92,27 @@ export const tenantScopedCompanyAdminWrite: Access = async ({ req }) => {
 
 export const companiesReadAccess: Access = async ({ req }) => {
   if (!req.user) {
-    const where: Where = {
-      and: [
-        { status: { equals: 'active' } },
-        { publicationStatus: { equals: 'published' } },
-      ],
+    // M-1: anonymous callers see only the resolved published tenant, never a multi-tenant directory.
+    try {
+      const { getPublishedCompanyBySlug, resolveTenantSlug } = await import('@/lib/tenant')
+      const slug = await resolveTenantSlug()
+      const company = await getPublishedCompanyBySlug(slug)
+      if (!company) {
+        const empty: Where = { id: { in: [] } }
+        return empty
+      }
+      const where: Where = {
+        and: [
+          { id: { equals: company.id } },
+          { status: { equals: 'active' } },
+          { publicationStatus: { equals: 'published' } },
+        ],
+      }
+      return where
+    } catch {
+      const empty: Where = { id: { in: [] } }
+      return empty
     }
-    return where
   }
 
   if (isPlatformAdmin(req.user)) return true

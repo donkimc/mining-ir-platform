@@ -24,24 +24,20 @@ function payloadMediaFileUrl(filename: string): string {
 
 /**
  * Anonymous visitors may only read media referenced by published Documents/People
- * belonging to a published, active tenant. Tenant publication alone is not enough.
+ * for the **resolved** published tenant (N4: do not materialize IDs across all tenants).
  */
 export async function publishedReferencedMediaWhere(req: PayloadRequest): Promise<Where> {
-  const publishedTenants = await req.payload.find({
-    collection: 'companies',
-    where: {
-      and: [
-        { status: { equals: 'active' } },
-        { publicationStatus: { equals: 'published' } },
-      ],
-    },
-    limit: 1000,
-    depth: 0,
-    overrideAccess: true,
-  })
+  let companyId: string | number | null = null
+  try {
+    const { getPublishedCompanyBySlug, resolveTenantSlug } = await import('@/lib/tenant')
+    const slug = await resolveTenantSlug()
+    const company = await getPublishedCompanyBySlug(slug)
+    companyId = company?.id ?? null
+  } catch {
+    return { id: { in: [] } }
+  }
 
-  const tenantIds = publishedTenants.docs.map((doc) => doc.id)
-  if (tenantIds.length === 0) {
+  if (companyId == null) {
     return { id: { in: [] } }
   }
 
@@ -51,7 +47,7 @@ export async function publishedReferencedMediaWhere(req: PayloadRequest): Promis
       where: {
         and: [
           { status: { equals: 'published' } },
-          { tenant: { in: tenantIds } },
+          { tenant: { equals: companyId } },
           { file: { exists: true } },
         ],
       },
@@ -64,7 +60,7 @@ export async function publishedReferencedMediaWhere(req: PayloadRequest): Promis
       where: {
         and: [
           { status: { equals: 'published' } },
-          { tenant: { in: tenantIds } },
+          { tenant: { equals: companyId } },
           { headshot: { exists: true } },
         ],
       },

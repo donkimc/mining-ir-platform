@@ -264,6 +264,8 @@ export async function assertSameTenantRelation(args: {
       id,
       depth: 0,
       overrideAccess: true,
+      // Retain tenant IDs for server-side relation checks (public serializer strips them for anon).
+      context: { skipPublicSerializer: true },
     })
 
     const docTenant = relationId((doc as { tenant?: unknown }).tenant)
@@ -271,7 +273,8 @@ export async function assertSameTenantRelation(args: {
       throw new APIError(`${label} must belong to the same tenant.`, 400)
     }
   } catch (error) {
-    if (error instanceof APIError) throw error
+    // N3: Payload NotFound extends APIError — only rethrow intentional 400 validation errors.
+    if (error instanceof APIError && error.status === 400) throw error
     throw new APIError(`${label} must belong to the same tenant.`, 400)
   }
 }

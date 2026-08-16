@@ -1,11 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { PublicDiscoveryFilters } from '@/components/public/PublicDiscoveryFilters'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedNews } from '@/lib/public-data'
 import { buildTenantMetadata } from '@/lib/seo'
 import { requirePublishedTenant } from '@/lib/tenant'
+
+type Props = {
+  searchParams: Promise<{ q?: string }>
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildTenantMetadata(
@@ -19,9 +24,11 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(new Date(value))
 }
 
-export default async function NewsPage() {
+export default async function NewsPage({ searchParams }: Props) {
   const company = await requirePublishedTenant()
-  const news = await getPublishedNews(company.id)
+  const filters = await searchParams
+  const news = await getPublishedNews(company.id, { q: filters.q })
+  const hasFilters = Boolean(filters.q?.trim())
 
   return (
     <main className="min-h-screen bg-[var(--paper)]">
@@ -33,11 +40,28 @@ export default async function NewsPage() {
           Published releases only. Draft and review records stay in the company dashboard.
         </p>
 
+        <PublicDiscoveryFilters
+          action="/news"
+          fields={[
+            {
+              name: 'q',
+              label: 'Search',
+              type: 'search',
+              placeholder: 'Title or excerpt',
+              defaultValue: filters.q,
+            },
+          ]}
+        />
+
         {news.length === 0 ? (
           <div className="mt-12 border border-dashed border-[color-mix(in_oklab,var(--ink)_25%,transparent)] p-8">
-            <h2 className="display text-3xl">No published news yet</h2>
+            <h2 className="display text-3xl">
+              {hasFilters ? 'No matching published news' : 'No published news yet'}
+            </h2>
             <p className="mt-3 text-[var(--ink-soft)]">
-              When the company publishes a news release, it will appear here.
+              {hasFilters
+                ? 'Try clearing the search or using a different term.'
+                : 'When the company publishes a news release, it will appear here.'}
             </p>
           </div>
         ) : (

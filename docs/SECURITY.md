@@ -67,5 +67,7 @@ Test wrong-tenant IDs, wrong-tenant related projects/documents, forged reviewer 
 - Preview and Production database connections must use certificate verification with a configured CA (`DATABASE_SSL_CA`). `DATABASE_SSL_REJECT_UNAUTHORIZED=false` and `ALLOW_INSECURE_DB_SSL` are not valid deployment workarounds (Sprint 3 removed the hatch).
 - Production must reject schema auto-push, missing migration configuration and missing required secrets. Any emergency override must be temporary, documented, audited and unavailable by default.
 - Anonymous API responses must use the public serializer (`stripReviewMetadataAfterRead` / `serializeAnonymousPublicDoc`). Never return reviewer IDs, review timestamps, membership data, draft existence or unrelated tenant records.
+- Anonymous serializers also strip tenant relation IDs and platform routing fields (`websiteDomain`, `subdomain`, `templateKey`).
+- Anonymous `GET /api/companies` returns only the **resolved** published tenant (never a multi-tenant directory). Platform Admins retain cross-tenant listing.
 - Rotate exposed session secrets and verify old JWTs fail; see [OPERATIONS.md](./OPERATIONS.md).
 - Do not call a security control verified until the test uses a real cloud object or a reproducible infrastructure assertion; a zero-file staging test proves only that no file was tested.
