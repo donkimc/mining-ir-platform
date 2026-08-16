@@ -8,6 +8,7 @@ import {
   tenantScopedRead,
   userHasTenantAccess,
 } from '@/access'
+import { serializeAnonymousPublicDoc } from '@/lib/collection-hooks'
 
 function relationId(value: unknown): string | number | null {
   if (!value) return null
@@ -116,7 +117,14 @@ export const Media: CollectionConfig = {
   },
   hooks: {
     beforeOperation: [
-      ({ operation, req }) => {
+      ({ operation, req, args }) => {
+        // S4-2: never expand tenant for anonymous media list/detail reads.
+        if (!req.user && (operation === 'read' || operation === 'find' || operation === 'findByID')) {
+          if (args && typeof args === 'object') {
+            ;(args as { depth?: number }).depth = 0
+          }
+        }
+
         if ((operation !== 'create' && operation !== 'update') || !req.file?.name) return
         const originalName = req.file.name
         req.context = {
@@ -142,7 +150,7 @@ export const Media: CollectionConfig = {
       },
     ],
     afterRead: [
-      ({ doc }) => {
+      ({ doc, req, context }) => {
         if (!doc) return doc
         if (doc.filename && typeof doc.filename === 'string') {
           doc.url = payloadMediaFileUrl(doc.filename)
@@ -154,6 +162,11 @@ export const Media: CollectionConfig = {
           ) {
             doc.url = doc.filename ? payloadMediaFileUrl(String(doc.filename)) : null
           }
+        }
+        // S4-2 / L-1: anonymous callers must not receive tenant (or expanded company) fields.
+        // Internal relation checks set context.skipPublicSerializer to retain tenant IDs.
+        if (!req.user && !context?.skipPublicSerializer) {
+          return serializeAnonymousPublicDoc(doc as Record<string, unknown>)
         }
         return doc
       },

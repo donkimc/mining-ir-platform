@@ -152,6 +152,24 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
     expect(jsonHasPoison(anon.docs)).toBe(false)
   })
 
+  it('S4-2: anonymous media reads strip tenant (L-1 contract)', async () => {
+    const anon = await payload.find({
+      collection: 'media',
+      limit: 5,
+      // Intentionally omit depth:0 here — afterRead + beforeOperation must still strip tenant
+      // even if a caller would otherwise expand the relation.
+      overrideAccess: false,
+      user: null,
+    })
+    expect(anon.docs.length).toBeGreaterThan(0)
+    for (const doc of anon.docs) {
+      expect(Object.prototype.hasOwnProperty.call(doc, 'tenant')).toBe(false)
+      for (const key of REVIEW_KEYS) {
+        expect(Object.prototype.hasOwnProperty.call(doc, key)).toBe(false)
+      }
+    }
+  })
+
   it('company admin still sees own-tenant drafts including review metadata fields when present', async () => {
     const drafts = await payload.find({
       collection: 'news-releases',

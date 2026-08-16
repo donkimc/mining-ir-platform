@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export type ProjectLocationMapProps = {
   projectName: string
@@ -9,6 +9,9 @@ export type ProjectLocationMapProps = {
   locationSummary?: string | null
   jurisdiction?: string | null
 }
+
+/** How long to wait for iframe `load` before treating the map as unavailable. */
+export const MAP_LOAD_TIMEOUT_MS = 5000
 
 /** Valid WGS84-ish bounds; rejects NaN and impossible values. */
 export function isValidMapCoordinate(
@@ -37,6 +40,11 @@ function osmEmbedUrl(latitude: number, longitude: number): string {
  * Provider-neutral read-only location map (ADR-0010).
  * Uses an OSM embed when coordinates are valid — no API key.
  * Text location details are always present as the accessible fallback.
+ *
+ * Failure detection (verified in Chromium): CSP-blocked and unreachable iframe
+ * targets fire neither `error` nor `load`. A successful cross-origin OSM embed
+ * fires `load`. Therefore we clear a load-timeout on `load` / `error`, and
+ * treat timeout as failure so visitors never see a silent blank rectangle.
  */
 export function ProjectLocationMap({
   projectName,
@@ -46,10 +54,48 @@ export function ProjectLocationMap({
   jurisdiction,
 }: ProjectLocationMapProps) {
   const [mapFailed, setMapFailed] = useState(false)
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasCoords = isValidMapCoordinate(latitude, longitude)
   const showMap = hasCoords && !mapFailed
   const lat = hasCoords ? latitude : null
   const lng = hasCoords ? longitude : null
+
+  useEffect(() => {
+    if (!showMap) {
+      if (loadTimerRef.current) {
+        clearTimeout(loadTimerRef.current)
+        loadTimerRef.current = null
+      }
+      return
+    }
+
+    loadTimerRef.current = setTimeout(() => {
+      setMapFailed(true)
+    }, MAP_LOAD_TIMEOUT_MS)
+
+    return () => {
+      if (loadTimerRef.current) {
+        clearTimeout(loadTimerRef.current)
+        loadTimerRef.current = null
+      }
+    }
+  }, [showMap, lat, lng])
+
+  function clearLoadTimer() {
+    if (loadTimerRef.current) {
+      clearTimeout(loadTimerRef.current)
+      loadTimerRef.current = null
+    }
+  }
+
+  function handleMapLoad() {
+    clearLoadTimer()
+  }
+
+  function handleMapError() {
+    clearLoadTimer()
+    setMapFailed(true)
+  }
 
   return (
     <section
@@ -94,9 +140,9 @@ export function ProjectLocationMap({
             title={`Illustrative map of ${projectName}`}
             src={osmEmbedUrl(lat, lng)}
             className="h-48 w-full border-0 bg-[color-mix(in_oklab,var(--ink)_8%,transparent)]"
-            loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            onError={() => setMapFailed(true)}
+            onLoad={handleMapLoad}
+            onError={handleMapError}
           />
           <p className="mt-2 text-xs text-[var(--ink-soft)]">
             Map data ©{' '}
@@ -113,7 +159,10 @@ export function ProjectLocationMap({
           <button
             type="button"
             className="mt-2 text-xs underline text-[var(--ink-soft)]"
-            onClick={() => setMapFailed(true)}
+            onClick={() => {
+              clearLoadTimer()
+              setMapFailed(true)
+            }}
           >
             Hide map and use text location only
           </button>

@@ -361,3 +361,31 @@ Filled 2026-08-16 after commit `f068fc3`.
 - Map and discovery evidence: **live smoke pass**
 - Independent review result: **pending**
 - Deferred work and accepted risks: **see above**
+
+## S4-1 / S4-2 remediation (post-review)
+
+**Date:** 2026-08-16  
+**Review:** `docs/SPRINT4_REVIEW.md` (Ship with conditions; S4-1 High, S4-2 Medium)
+
+### Fixes
+- **S4-1a:** Added `frame-src https://www.openstreetmap.org` to CSP (`src/lib/content-security-policy.ts` → `next.config.ts`). No wildcards; no other directives loosened.
+- **S4-1b:** Chromium probe showed CSP-blocked / unreachable iframes fire **neither** `error` nor `load`; successful OSM embeds fire `load`. Implemented a **5s load-timeout** cleared on `load`/`error`, plus retained manual Hide control. Removed `loading="lazy"` so the timeout does not race a deferred below-the-fold fetch.
+- **S4-2:** Media `afterRead` composes `serializeAnonymousPublicDoc` for anonymous callers (respects `context.skipPublicSerializer` for relation checks). Anonymous reads force `depth: 0` in `beforeOperation`.
+
+### Tests (fail-before / pass-after)
+- Temporarily removed `frame-src` and Media serializer → `tests/content-security-policy.spec.ts` and S4-2 media test **failed**.
+- Restored fixes → both **passed**. Full suite: **79/79**.
+
+### Local browser verification (`http://localhost:3000/projects/north-ridge`)
+- CSP header includes `frame-src https://www.openstreetmap.org`.
+- **0** CSP frame-violation console errors.
+- OSM embed navigated; tile requests to `tile.openstreetmap.org` observed; map tiles + marker + OSM attribution **visibly rendered** (screenshot `/tmp/map-section.png`).
+- Failure simulation (strip `frame-src` via response rewrite): CSP refusal logged; after timeout, iframe removed and **"Map unavailable. Use the location details above."** shown — not a blank box.
+- `GET /api/media?limit=5`: no `tenant` key.
+- Regressions: `/projects/hidden-lake` 404; `/projects/copper-ridge-isolation` 404; `?q=NORTHERN SECRET` empty; `/api/companies` → only `aurora-gold` without `websiteDomain`/`subdomain`/`templateKey`/`tenant`.
+
+### L-3
+Still **not done** — Supabase PITR/restore UI rehearsal remains an owner action outside this remediation.
+
+### Live alias re-verify
+After push/redeploy of this remediation commit, re-check map tiles + zero CSP violations in a real browser against https://mining-ir-platform.vercel.app/projects/north-ridge (not curl-only).
