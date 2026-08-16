@@ -2,7 +2,9 @@
 
 ## Status
 
-Planning only. This document does not authorize application-code changes. Cursor must not implement Sprint 4 until the Product Director confirms the open questions in this document and the scope is copied into an implementation task.
+**Implementation complete on commit `f068fc3` — not marked Done.** Local `npm run verify` passed. Staging-backed Vercel alias shows Sprint 4 behavior. Independent review and L-3 live PITR UI evidence are still required before Sprint 4 is marked complete or real customer content is loaded.
+
+Product Director authorized implementation via the Sprint 4 task (overrides the earlier planning-only gate in this document).
 
 ## Sprint Goal
 
@@ -295,23 +297,67 @@ Use this request:
 
 > Review the Mining IR Platform Sprint 4 release candidate against `AGENTS.md`, `docs/SPRINT4_HANDOFF.md`, `docs/SPRINT3_REVIEW.md`, `docs/SECURITY.md`, `docs/TESTING.md`, `docs/OPERATIONS.md`, `docs/DEPLOYMENT.md`, ADR-0004, ADR-0007 and ADR-0008. Follow ADR-0008's Evidence Standard: verify claims with reproducible commands, deployment observations, infrastructure settings or test fixtures. Prioritize M-1 tenant leakage, public serializer scope, Northern Copper negative fixtures, published-only discovery, cross-tenant related content, unauthorized map coordinates, API-key exposure, disclosure-gate regressions, migration safety, TLS, Vercel environment separation and restore evidence. Classify findings as Critical, High, Medium or Low, include reproduction steps and affected files/routes, and do not recommend customer-content promotion while a Critical or High issue remains open.
 
-## Completion Report Template
+## Completion Report
 
-Cursor or the implementing engineer must append evidence here before Sprint 4 is marked complete:
+Filled 2026-08-16 after commit `f068fc3`.
 
-- Product Director scope decision:
-- Map provider/ADR decision, or documented deferral:
-- Commit SHA:
-- Changed files:
-- Migration files and drift result:
-- `npm run verify` result:
-- M-1/L-1/L-2/L-3/N3/N4 results:
-- Preview URL and Vercel environment:
-- Production Supabase project reference:
-- `DATABASE_SSL_CA` verification:
-- `PAYLOAD_DATABASE_PUSH` verification:
-- Restore rehearsal evidence:
-- Northern Copper negative-case evidence:
-- Map and discovery evidence:
-- Independent review result:
-- Deferred work and accepted risks:
+- **Product Director scope decision:** Maps + anonymous public discovery IN; market data, analytics and subscriptions OUT (ADR-0009). Optional N3/N4 included.
+- **Map provider/ADR decision:** Provider-neutral OpenStreetMap embed, no API key (ADR-0010). Paid Mapbox/Google deferred for Product Director.
+- **Commit SHA:** `f068fc3f83fcb15d41108c46c4c552057ce28cff`
+- **Changed files (implementation commit):**
+  - Access/serializer: `src/access/index.ts`, `src/lib/collection-hooks.ts`, `src/lib/publishing.ts`, `src/collections/Media.ts`
+  - Public data/UI: `src/lib/public-data.ts`, `src/components/public/ProjectLocationMap.tsx`, `src/components/public/PublicDiscoveryFilters.tsx`, `src/app/(frontend)/projects/page.tsx`, `src/app/(frontend)/projects/[slug]/page.tsx`, `src/app/(frontend)/news/page.tsx`, `src/app/(frontend)/documents/page.tsx`
+  - Seed/tests: `src/seed/index.ts`, `tests/sprint3-public-api.int.spec.ts`, `tests/sprint2-content.int.spec.ts`, `tests/tenant-isolation.int.spec.ts`, `tests/publishing.spec.ts`
+  - Docs/ADRs: `docs/SPRINT4_HANDOFF.md`, `docs/SPRINT3_REVIEW.md`, `docs/OPERATIONS.md`, `docs/SECURITY.md`, `docs/TESTING.md`, `docs/ARCHITECTURE.md`, `docs/DESIGN.md`, ADR-0009/0010/0011
+- **Migration files and drift result:** No new migration (no schema change). `npm run check:migration-drift` — pass.
+- **`npm run verify` result:** Pass locally (`lint`, `typecheck`, `test` 76/76, `check:migration-drift`, `build:ci`).
+- **M-1/L-1/L-2/L-3/N3/N4 results:**
+  - **M-1:** Fixed — anonymous companies read resolves one tenant; live `/api/companies` returns 1 doc (`aurora-gold`) without platform fields.
+  - **L-1:** Fixed — anon serializer strips `tenant`, `websiteDomain`, `subdomain`, `templateKey` (+ review fields). Relation checks use `context.skipPublicSerializer`.
+  - **L-2:** Fixed in seed — Northern project, `NORTHERN SECRET` highlight, `NORTHERN CATALYST SECRET` catalyst + poison coordinates; covered by tests. Live APIs show no Northern poison titles.
+  - **L-3:** Checklist documented in `docs/OPERATIONS.md`. **Live Supabase PITR UI rehearsal evidence still pending** operator dashboard access — not claimed complete.
+  - **N3:** Fixed — only rethrow `APIError` with status 400; unit coverage added.
+  - **N4:** Fixed — anonymous media ID materialization scoped to resolved tenant only.
+- **Preview URL and Vercel environment:**
+  - Staging alias (Vercel **Production** target backed by Supabase **staging**): https://mining-ir-platform.vercel.app
+  - Deployment observed serving Sprint 4 UI: `dpl_3o4HCk6uT3oF9W9wtkyAurGV4zn1` / https://mining-ir-platform-19w9n5mbi-donkimc.vercel.app (aliases include `mining-ir-platform.vercel.app` and `mining-ir-platform-git-main-donkimc.vercel.app`)
+  - Git push of `f068fc3` to `main` triggered this deploy.
+  - CLI `vercel` **Preview** env deploy **failed** (`password authentication failed for user "postgres"`) — Preview env `DATABASE_URI` needs operator repair; do not treat that failed Preview URL as evidence.
+- **Production Supabase project reference:** empty real Production project `bwftfsfbiyzgwztwtqmh` (unchanged; no customer content). Staging/ref used by alias: `jthotkkremiesvocfsmr`.
+- **`DATABASE_SSL_CA` verification:** Relies on Sprint 3 Production/Preview env configuration (not re-rotated this sprint). Not re-observed from CLI secrets.
+- **`PAYLOAD_DATABASE_PUSH` verification:** Local `build:ci` forces `PAYLOAD_DATABASE_PUSH=false`. Deployed env expected absent/false per Sprint 3; not re-dumped from Vercel secrets here.
+- **Restore rehearsal evidence:** Procedure updated; **live UI restore not performed** in this session — L-3 remains evidence-pending.
+- **Northern Copper negative-case evidence:**
+  - Local tests assert fixtures exist and never appear on anon Aurora reads.
+  - Live: `/projects/copper-ridge-isolation` → 404; `/projects/hidden-lake` → 404; `/api/catalysts` and `/api/investment-highlights` titles contain no Northern poison; search `q=NORTHERN SECRET` → empty state (query echo only in the form value).
+- **Map and discovery evidence (live alias):**
+  - `/projects` shows filter form; `q=Ridge` returns North Ridge only among matches.
+  - `/projects/north-ridge` shows “Location map”, “Illustrative location”, OpenStreetMap embed attribution; no Mapbox/Google keys in HTML.
+  - Related published content section present.
+  - `/api/companies` minimized fields as above.
+- **Independent review result:** **Not run yet.** Use the review request in this document against commit `f068fc3` and https://mining-ir-platform.vercel.app.
+- **Deferred work and accepted risks:**
+  - L-3 live PITR/restore UI evidence.
+  - Repair Vercel Preview-environment `DATABASE_URI` (CLI Preview builds fail auth).
+  - Paid map provider decision (optional later ADR-0010 amendment).
+  - Sprint 5+: market data, analytics, subscriptions, investor accounts, AI/SEDAR+, real Production promotion of `bwftfsfbiyzgwztwtqmh`.
+  - Sprint 4 is **not** marked complete until independent review clears Critical/High and L-3 evidence is recorded.
+
+### Completion Report Template (checklist form)
+
+- Product Director scope decision: **Yes — narrow Sprint 4 slice authorized**
+- Map provider/ADR decision, or documented deferral: **ADR-0010 OSM embed / no paid key**
+- Commit SHA: **`f068fc3`**
+- Changed files: **see list above**
+- Migration files and drift result: **none / pass**
+- `npm run verify` result: **pass**
+- M-1/L-1/L-2/L-3/N3/N4 results: **M-1/L-1/L-2/N3/N4 fixed; L-3 docs-only pending live evidence**
+- Preview URL and Vercel environment: **staging alias https://mining-ir-platform.vercel.app (`dpl_3o4HCk6uT3oF9W9wtkyAurGV4zn1`); CLI Preview failed**
+- Production Supabase project reference: **`bwftfsfbiyzgwztwtqmh` (empty)**
+- `DATABASE_SSL_CA` verification: **not re-dumped; Sprint 3 config assumed**
+- `PAYLOAD_DATABASE_PUSH` verification: **local build:ci false; deployed assumed false**
+- Restore rehearsal evidence: **pending**
+- Northern Copper negative-case evidence: **local + live smoke pass**
+- Map and discovery evidence: **live smoke pass**
+- Independent review result: **pending**
+- Deferred work and accepted risks: **see above**
