@@ -389,3 +389,11 @@ Still **not done** — Supabase PITR/restore UI rehearsal remains an owner actio
 
 ### Live alias re-verify
 After push/redeploy of this remediation commit, re-check map tiles + zero CSP violations in a real browser against https://mining-ir-platform.vercel.app/projects/north-ridge (not curl-only).
+
+**Live evidence (2026-08-16, post-remediation):**
+- Remediation commit: `6b62a89`
+- Deployment: `dpl_6Ngb8vRJosSv189Yfdi7XyPa7TiL` / https://mining-ir-platform-94z8yh6q9-donkimc.vercel.app → aliased to https://mining-ir-platform.vercel.app
+- CSP header includes `frame-src https://www.openstreetmap.org`
+- Chromium against `/projects/north-ridge`: iframe present for ≥8s, OSM frame URL loaded, **0** CSP frame violations, Hide control present, text coordinates present; map section screenshot shows tiles + marker
+- Anonymous `/api/media?limit=5`: no `tenant` key
+- L-3 still not done
