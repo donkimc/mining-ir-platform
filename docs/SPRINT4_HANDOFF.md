@@ -438,3 +438,10 @@ Still **not done**.
 
 ### Live alias re-verify
 After push/redeploy, repeat the 5× map check against https://mining-ir-platform.vercel.app/projects/north-ridge.
+
+**Live evidence (2026-08-17, post S4-6/S4-7):**
+- Commit: `49c2970`
+- Deployment: `https://mining-ir-platform-c39d1s7vu-donkimc.vercel.app` → aliased to https://mining-ir-platform.vercel.app
+- Playwright Chromium ×5 after ~8s — all PASS (iframe present, not unavailable, OSM src, 0 CSP violations, `frame-src` present)
+- Regressions: `/projects/hidden-lake` 404; Northern poison links 0; `/api/media` no `tenant`; `/api/companies` → only `aurora-gold`
+- L-3 still not done
