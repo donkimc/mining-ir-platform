@@ -27,6 +27,24 @@ Maintain distinct values for Vercel Preview and Production:
 
 Never commit or paste secret values into Git, Notion or documentation. Use staging-only accounts and fictional seed content.
 
+### Environment preflight (`npm run check:env`)
+
+Before repairing Vercel Preview or promoting to the real Production Supabase project, run:
+
+```bash
+npm run check:env
+```
+
+The script loads `.env.local`, then `.env.staging.local`, then `.env`. For each required variable (`DATABASE_URI`, `DATABASE_SSL_CA`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, `DEFAULT_TENANT_SLUG`, `PAYLOAD_DATABASE_PUSH`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`, `S3_ENDPOINT`) it prints only `PRESENT` or `MISSING` — never the value.
+
+For `DATABASE_URI` it also prints a safe summary: username, host, port and password **length** (not the password). It warns when:
+
+- the username is not `postgres.<project-ref>` (pooler form), or
+- the host is `db.<ref>.supabase.co` with port `6543` (direct host + pooler port mix), or
+- `PAYLOAD_DATABASE_PUSH` is `true`.
+
+Exit code is non-zero if any required variable is missing. Use this when pointing Preview or Production at a new Supabase project so misconfigured pooler URIs are caught before a debugging cycle.
+
 ## Database and Media
 
 Use a Supabase connection suitable for Vercel serverless runtime traffic. Keep schema changes controlled and repeatable; local `push: true` is not a production migration policy. Configure persistent object storage before relying on uploads because Vercel's local filesystem is ephemeral.

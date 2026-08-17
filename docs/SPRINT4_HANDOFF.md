@@ -397,3 +397,44 @@ After push/redeploy of this remediation commit, re-check map tiles + zero CSP vi
 - Chromium against `/projects/north-ridge`: iframe present for ≥8s, OSM frame URL loaded, **0** CSP frame violations, Hide control present, text coordinates present; map section screenshot shows tiles + marker
 - Anonymous `/api/media?limit=5`: no `tenant` key
 - L-3 still not done
+
+## S4-6 / S4-7 remediation + env preflight (post re-review)
+
+**Date:** 2026-08-17  
+**Review addendum:** `docs/SPRINT4_REVIEW.md` (S4-6 Medium map race; S4-7 untracked unlock script)
+
+### Approach (S4-6)
+Chose **client-side-only iframe mounting** plus an **already-loaded guard**:
+- SSR no longer emits the iframe, so HTML parse cannot fire `load` before React attaches `onLoad` (root cause of the intermittent ~5s removal).
+- `shouldArmMapLoadTimeout` / `isIframeAlreadyLoaded` skip arming only for a completed **non-`about:blank`** same-origin document. Initial `about:blank` is ignored so the failure watchdog still arms for hung/CSP-blocked embeds.
+- `onLoad` also ignores `about:blank` so an early blank load does not clear the watchdog before the real embed finishes.
+- Did **not** raise `MAP_LOAD_TIMEOUT_MS`.
+
+### S4-7
+**Committed** `scripts/unlock-staging-users.ts` with an ops header (when to use, staging-only guards). Not gitignored — the script has no hardcoded secrets and belongs in the repo for repeatable staging unlocks.
+
+### Env preflight
+- Added `scripts/check-env.mts` and `npm run check:env` (PRESENT/MISSING only; `DATABASE_URI` prints username/host/port + password length).
+- Documented in `docs/DEPLOYMENT.md`.
+
+### Local verification
+- `npm run verify`: pass (lint, typecheck, **83/83** tests, migration-drift, `build:ci`).
+- `npm run check:env` (local): all PRESENT; warnings for non-pooler local username and `PAYLOAD_DATABASE_PUSH=true` (expected for `.env.local`).
+- Playwright Chromium `/projects/north-ridge` ×5 after ~8s:
+
+| Load | iframe still present | Map unavailable | OSM src | CSP violations |
+| --- | --- | --- | --- | --- |
+| 1 | yes | no | yes | 0 |
+| 2 | yes | no | yes | 0 |
+| 3 | yes | no | yes | 0 |
+| 4 | yes | no | yes | 0 |
+| 5 | yes | no | yes | 0 |
+
+- Failure path: hang OSM requests → after ~6.5s iframe removed, **"Map unavailable. Use the location details above."** with coordinates still shown; then successful load restored.
+- Regressions: `/projects/hidden-lake` 404; `?q=NORTHERN SECRET` no poison result links; anonymous `/api/media` no `tenant`; `/api/companies` → only `aurora-gold`.
+
+### L-3
+Still **not done**.
+
+### Live alias re-verify
+After push/redeploy, repeat the 5× map check against https://mining-ir-platform.vercel.app/projects/north-ridge.

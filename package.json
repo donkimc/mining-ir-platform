@@ -20,6 +20,7 @@
     "migrate:create": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:create",
     "check:migration-drift": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts tests/migration-drift.spec.ts",
     "check:storage-privacy": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/check-storage-privacy.mts",
+    "check:env": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/check-env.mts",
     "test:incremental-migration": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/test-incremental-migration.mts",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx src/seed/index.ts",
     "seed:reset": "cross-env NODE_OPTIONS=--no-deprecation SEED_RESET=true tsx src/seed/index.ts",
