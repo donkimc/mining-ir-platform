@@ -5,7 +5,7 @@ Build Mining IR Platform as a self-service, multi-tenant SaaS serving junior min
 
 Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes, mining-content workflows, human-review controls, private storage authorization, public API minimization and the public discovery/map surfaces. Do not call the product ready for customer content until the promotion gates below are satisfied.
 
-## Project Status (updated 2026-08-17)
+## Project Status (updated 2026-08-19)
 
 | Sprint | Scope | Status |
 | --- | --- | --- |
@@ -13,31 +13,31 @@ Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenan
 | 2 | Mining content — news, documents, people, share structure, exploration | ✅ Complete, reviewed |
 | 3 | Production hardening — private storage, secrets, TLS, migrations, guards | ✅ Complete, reviewed |
 | 4 | Investor features — public discovery, read-only maps, Sprint 3 carry-ins | ✅ Complete, reviewed |
-| 5 | Automation — document ingestion, AI-assisted extraction, approval workflow | ▶ Next |
+| 5 | Automation — ingestion, provenance, reviewer source checks (no external AI) | ▶ Implementation complete; independent review pending |
 
-**Review record:** `docs/SPRINT2_REVIEW.md`, `docs/SPRINT2_REREVIEW.md`, `docs/SPRINT2_CARRYFORWARD.md`, `docs/SPRINT3_REVIEW.md`, `docs/SPRINT4_REVIEW.md` (including its 2026-08-17 addendum). No Critical or High findings are open.
+**Review record:** `docs/SPRINT2_REVIEW.md`, `docs/SPRINT2_REREVIEW.md`, `docs/SPRINT2_CARRYFORWARD.md`, `docs/SPRINT3_REVIEW.md`, `docs/SPRINT4_REVIEW.md` (including its 2026-08-17 addendum). No Critical or High findings are open from Sprints 1–4. Sprint 5 review is pending (`docs/SPRINT5_HANDOFF.md`).
 
 **Verification command:** `npm run verify` = lint + typecheck + tests + migration-drift + `build:ci`. `npm run check:env` reports required environment variables per environment without printing values.
 
 ### Deployment reality
 
 - Vercel **Production** alias `https://mining-ir-platform.vercel.app` is backed by the Supabase **staging** project `jthotkkremiesvocfsmr`. "Vercel Production" and "Supabase Production" are not the same thing.
-- The real production Supabase project `bwftfsfbiyzgwztwtqmh` is **empty and has never been migrated**. It must be set up with `npm run migrate` (never push) before any customer content.
+- The real production Supabase project `bwftfsfbiyzgwztwtqmh` has been **schema-migrated** (Sprint 2–5 migrations present as of 2026-08-19). It is still **empty of customer content**. Vercel Production alias remains on staging until an explicit cutover. Do not run `seed:reset` against Production.
 - Vercel environment variables are **per-environment**. A variable set only for Preview does not reach a Production build. This has cost two debugging cycles.
 
 ### Open promotion gates — customer content and real Production go-live
 
-1. Migrate `bwftfsfbiyzgwztwtqmh` with `npm run migrate`, set its project-specific `DATABASE_SSL_CA`, confirm `PAYLOAD_DATABASE_PUSH` is false or absent, and smoke-test with fictional data only.
-2. Observe `DATABASE_SSL_CA` and `PAYLOAD_DATABASE_PUSH` from the **deployed** environment rather than assuming Sprint 3 configuration. Use `npm run check:env`.
+1. ~~Migrate `bwftfsfbiyzgwztwtqmh` with `npm run migrate`~~ **Done 2026-08-19** (schema only; no `seed:reset`). Still require project-specific `DATABASE_SSL_CA` on any Vercel env that points at this DB, `PAYLOAD_DATABASE_PUSH=false` or absent, and fictional smoke before customer content. Explicit Vercel cutover from staging is separate.
+2. Observe `DATABASE_SSL_CA` and `PAYLOAD_DATABASE_PUSH` from the **deployed** environment rather than assuming Sprint 3 configuration. Use `npm run check:env` / Vercel UI (Sensitive pulls may redact).
 3. Never run `seed:reset` against the production project.
 
 Staging restore rehearsal (L-3) is **complete and evidenced** — restored in place from a scheduled backup with smoke checks passing.
 
-### Deferred low-severity findings (carry into Sprint 5)
+### Deferred low-severity findings from Sprint 4 (addressed in Sprint 5 implementation)
 
-- **S4-3:** anonymous media authorization materializes up to 1000 IDs and silently caps.
-- **S4-4:** ADR-0010 records no CSP or visitor-privacy analysis for the OSM embed.
-- **S4-5:** `README.md` and `docs/SPRINT1_HANDOFF.md` publish a local seed password that no longer works.
+- **S4-3:** anonymous media authorization materializes up to 1000 IDs and silently caps. → pagination fix + fixtures in Sprint 5 (pending independent review).
+- **S4-4:** ADR-0010 records no CSP or visitor-privacy analysis for the OSM embed. → ADR-0010 / SECURITY updated in Sprint 5 (pending independent review).
+- **S4-5:** `README.md` and `docs/SPRINT1_HANDOFF.md` publish a local seed password that no longer works. → literal passwords removed from tracked docs in Sprint 5 (pending independent review).
 
 ## Current Sprint: Sprint 5 — Automation
 

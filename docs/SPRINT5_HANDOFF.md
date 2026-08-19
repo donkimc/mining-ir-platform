@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation in progress (local). Application code, ADRs 0012–0015, provenance migrations, ingestion UI, fixture extraction adapter and tests are present. `npm run verify` passes locally. Sprint 5 is **not Done** until committed release-candidate evidence, deployed `check:env`, Production migrate (or explicit Product Director deferral) and independent review close Critical/High findings.
+Implementation complete on `main` through `ff90259`; staging and **real Production** (`bwftfsfbiyzgwztwtqmh`) schemas include Sprint 5 provenance migrations. Sprint 5 is **not Done** until independent review closes Critical/High findings and the Product Director accepts remaining Not-verified items (full deployed `check:env` readability, Preview env repair if still broken, optional fictional Production smoke seed). Vercel Production alias remains on **staging** DB `jthotkkremiesvocfsmr` until an explicit cutover.
 
 ## Sprint Goal
 
@@ -39,7 +39,7 @@ Sprint 5 should ship **secure ingestion + provenance + reviewer context**, not l
 
 **Priority:** First operational gate, before customer content.
 
-**Rationale:** The real Production Supabase project `bwftfsfbiyzgwztwtqmh` has never been migrated or exercised. Sprint 5 must not build automation on an environment whose TLS and migration configuration are only assumed.
+**Rationale:** The real Production Supabase project `bwftfsfbiyzgwztwtqmh` must not remain an unverified empty schema while Sprint 5 claims production readiness. Sprint 5 must not build automation on an environment whose TLS and migration configuration are only assumed. **Status 2026-08-19:** schema migrated (Sprint 2–5 migrations present); Vercel alias still on staging; fictional smoke seed optional and not yet run.
 
 **Files/areas touched:**
 
@@ -54,7 +54,7 @@ Sprint 5 should ship **secure ingestion + provenance + reviewer context**, not l
 
 **Risk:** Critical operational risk. A wrong Vercel environment variable can connect the public alias to the wrong database or leave TLS/push guards unverified.
 
-**Acceptance criterion:** A recorded deployment observation from the intended Vercel environment shows the correct Supabase project, a project-specific `DATABASE_SSL_CA`, `PAYLOAD_DATABASE_PUSH=false` or absent, and no Preview-only variable dependency. The empty Production project is migrated with `npm run migrate`, followed by fictional smoke data only. `seed:reset` is never run against Production.
+**Acceptance criterion:** A recorded deployment observation from the intended Vercel environment shows `DATABASE_SSL_CA` present, `PAYLOAD_DATABASE_PUSH=false` or absent, and no Preview-only variable dependency treated as Production. The empty Production project is migrated with `npm run migrate` (**done 2026-08-19**, schema-only), followed by optional fictional smoke data only. `seed:reset` is never run against Production. Vercel alias cutover to `bwftfsfbiyzgwztwtqmh` remains a separate Product Director decision.
 
 **Required evidence:** Run `npm run check:env` in the deployed environment or use an equivalent non-secret deployment probe. Do not infer environment values from local `.env` files or from a successful database connection.
 
@@ -312,7 +312,7 @@ The reviewer view must show the proposed value, prior value, machine-origin mark
 1. Keep the reviewed Vercel alias backed by staging until Sprint 5 code, carry-ins and independent review are complete.
 2. Repair and verify the Vercel Preview environment before using it as evidence; the Sprint 4 review found a broken Preview `DATABASE_URI`.
 3. Run `npm run check:env` against Preview and Production separately. Do not infer `DATABASE_SSL_CA` or `PAYLOAD_DATABASE_PUSH` from local files or successful database boot.
-4. Confirm the real Production Supabase project is `bwftfsfbiyzgwztwtqmh` and remains empty before migration.
+4. Confirm the real Production Supabase project is `bwftfsfbiyzgwztwtqmh`. **Schema migrated 2026-08-19**; remains empty of customer content. Do not cut Vercel over until Product Director decides.
 5. Configure the Production Vercel variables explicitly: project-specific `DATABASE_URI`, project-specific `DATABASE_SSL_CA`, `PAYLOAD_DATABASE_PUSH=false` or absent, Production `PAYLOAD_SECRET`, private storage credentials and no unapproved AI provider credentials.
 6. Run `npm run migrate` against the real project. Never run Payload schema push and never run `seed:reset` against Production.
 7. Confirm the staging restore rehearsal evidence is complete and repeat the required Production smoke/recovery checks before customer content. The restore process must not be inferred from documentation alone.
@@ -322,7 +322,7 @@ The reviewer view must show the proposed value, prior value, machine-origin mark
 
 ## Exit Criteria
 
-- Production project `bwftfsfbiyzgwztwtqmh` is migrated with `npm run migrate`, never push, or the Product Director records an explicit non-promotion decision.
+- Production project `bwftfsfbiyzgwztwtqmh` is migrated with `npm run migrate`, never push (**done 2026-08-19**, schema-only; no `seed:reset`).
 - `DATABASE_SSL_CA` and `PAYLOAD_DATABASE_PUSH` are observed from the intended deployed environments, not assumed.
 - S4-3 is fixed or explicitly deferred with evidence and risk acceptance.
 - S4-4 and S4-5 are closed with browser/documentation checks.
@@ -343,7 +343,7 @@ The reviewer view must show the proposed value, prior value, machine-origin mark
 2. Is any external processing of unpublished NI 43-101 or drill-result documents acceptable, and under what contractual/privacy terms?
 3. Should machine-assisted provenance fields be added now to all disclosure-bearing collections, or only to the first future extraction target while preserving a shared schema?
 4. Which roles may perform the enhanced source-verification acknowledgement: Company Admin, Platform Admin, or a new reviewer role?
-5. Is the real Production project migration part of Sprint 5 completion, or should it remain a separate go-live milestone after this sprint?
+5. ~~Is the real Production project migration part of Sprint 5 completion, or should it remain a separate go-live milestone after this sprint?~~ **Decided 2026-08-19:** in-scope for Sprint 5 (no customers yet; migrate empty `bwftfsfbiyzgwztwtqmh` now). Vercel alias cutover to that DB remains a separate decision.
 
 ## Independent Review Handoff
 
@@ -357,26 +357,29 @@ Use this request:
 
 Cursor or the implementing engineer must append evidence here before Sprint 5 is marked complete:
 
-- Product Director scope and data-egress decision: **Assumed recommended narrower Sprint 5** (ingestion + provenance + review; no external AI egress per ADR-0013). Explicit Product Director sign-off still required.
-- Commit SHA: `95e6666` (pushed to `origin/main`).
-- Changed files: ADRs 0012–0015; provenance fields/hooks/migrations; Media pagination (S4-3); document PDF attach; MachineOriginReviewPanel; fixture extraction adapter; S4-5 docs/env cleanup; ADR-0010/SECURITY updates; unit + integration tests.
+- Product Director scope and data-egress decision: **Assumed recommended narrower Sprint 5** (ingestion + provenance + review; no external AI egress per ADR-0013). Explicit Product Director sign-off still required for Done. **Production migrate decision (2026-08-19):** in-scope — migrate empty `bwftfsfbiyzgwztwtqmh` now; do not defer.
+- Commit SHA (implementation tip): `ff90259` on `origin/main` (includes provenance/ingestion through PDF open hardening). Earlier RC markers: `95e6666`, staging migrate note `0ebd168`.
+- Changed files: ADRs 0012–0015; provenance fields/hooks/migrations; Media pagination (S4-3); document PDF attach + sanitized object keys; session-streamed dashboard PDF open (no shareable signed URL); MachineOriginReviewPanel; fixture extraction adapter; S4-5 docs/env cleanup; ADR-0010/SECURITY updates; unit + integration tests.
 - Migration files and drift result: `20260818_sprint5_provenance.ts`, `20260819_sprint5_content_origin_enums.ts` (+ `.json` snapshot). `npm run check:migration-drift` **pass**.
-- `npm run verify` result: **pass** locally (2026-08-19) — lint, typecheck, 97 tests, migration-drift, `build:ci`.
-- `npm run check:env` results by deployed environment: **Not verified** in this session (requires deployed Preview/Production observation).
-- Production project migration result: **Not run** against `bwftfsfbiyzgwztwtqmh`.
+- `npm run verify` result: **pass** locally (2026-08-19) on the Sprint 5 implementation commit family — lint, typecheck, tests, migration-drift, `build:ci`.
+- `npm run check:env` / deployed env observation:
+  - Local `.env.local`: expected localhost + `PAYLOAD_DATABASE_PUSH=true` (not a deploy gate).
+  - Vercel **Production** and **Preview**: operator set `PAYLOAD_DATABASE_PUSH=false` in UI (2026-08-19); Production redeployed. `vercel env pull` still redacts Sensitive values as `[SENSITIVE]` — **pull Not verified** for readable `false` / CA PEM; UI operator observation recorded instead.
+  - `DATABASE_SSL_CA`: PRESENT on pulled Production/Preview files as Sensitive placeholder; treat full PEM observation as **Not verified via pull**.
+- Production project migration result (`bwftfsfbiyzgwztwtqmh`): **Verified 2026-08-19** (re-checked same day after `.env.production.local` ready). `payload migrate` with `PAYLOAD_DATABASE_PUSH=false` against pooler user `postgres.bwftfsfbiyzgwztwtqmh` completed (`Done.`). DB check: `payload_migrations` contains `20260812_061650_sprint2_content`, `20260812_132324_media_original_filename`, `20260818_sprint5_provenance`, `20260819_sprint5_content_origin_enums`; `companies.content_origin` uses `enum_companies_content_origin`. **Never** ran `seed:reset`. Fictional Production smoke seed: **not run** (schema-only). Vercel alias **not** cut over to this DB (still staging).
 - Staging schema migration (Vercel Production alias DB `jthotkkremiesvocfsmr`): **Applied 2026-08-19** — `20260818_sprint5_provenance` and `20260819_sprint5_content_origin_enums` with `PAYLOAD_DATABASE_PUSH=false`. Required after deploy of `95e6666` failed prerender with `column companies.content_origin does not exist`.
 - S4-3/S4-4/S4-5 results: S4-3 pagination + >1000 mock coverage in `tests/sprint5-provenance.int.spec.ts`; S4-4 ADR-0010/SECURITY updated; S4-5 literal seed passwords removed from tracked docs / `.env.example` emptied for passwords.
-- Ingestion and private-media evidence: Dashboard `attachDocumentPdfAction` + `src/lib/ingestion.ts` (PDF, 10 MiB). Deployed Preview upload + direct-object denial **Not verified** this session.
+- Ingestion and private-media evidence: Dashboard PDF attach + private Media path; object-key sanitization; session-checked `/dashboard/documents/[id]/file` stream (no signed URL). Browser smoke on staging alias: upload/open exercised by Product Director; incognito on app URL expected Login.
 - Provenance/machine-origin evidence: Server strip/restore, no downgrade, anon strip; int test forge + ack gate **pass**.
-- Reviewer source-context evidence: `MachineOriginReviewPanel` + source-check checkbox on disclosure content types including company/projects/news/documents/exploration/management/share-structure. Browser UI **Not verified** this session.
+- Reviewer source-context evidence: `MachineOriginReviewPanel` + source-check checkbox on disclosure content types. Staging browser exercise: **partial** (PDF path exercised).
 - Plausible extraction-error evidence: Fixture adapter returns wrong grade/hole/units; int test reject→draft path **pass**.
 - External-egress/no-provider-call evidence: Fixture-only adapter (no network). Live provider secrets not added.
-- Restore/recovery evidence: **Deferred** to staging/Production ops (not re-run this session).
-- Preview URL and deployment ID: Redeploy of `95e6666` (or follow-up evidence commit) pending after staging migrate.
-- Independent review result: **Pending** after successful deployed build + manual smoke.
+- Restore/recovery evidence: Staging restore rehearsal remains prior-sprint evidence; Production restore not re-run this sprint.
+- Preview URL and deployment ID: Staging alias https://mining-ir-platform.vercel.app (Vercel Production → staging DB). Exact latest deployment ID: record from Vercel UI after redeploys.
+- Independent review result: **Pending**.
 - Deferred work and accepted risks:
-  - Deployed Preview repair + `check:env` evidence
-  - Production migrate (or Product Director non-promotion decision)
-  - Cloud staging PDF upload / direct-object denial probe
-  - Northern Copper machine-assisted negative fixture on public routes (extend if review requires)
-  - Do not mark Sprint 5 Done until exit criteria and review gates pass
+  - Readable `vercel env pull` for Sensitive vars (UI operator observation used for `PAYLOAD_DATABASE_PUSH=false`)
+  - Vercel cutover from staging DB to `bwftfsfbiyzgwztwtqmh` (explicit future decision)
+  - Fictional smoke seed on real Production (optional; never `seed:reset`)
+  - Preview `DATABASE_URI` repair if still broken for CLI Preview deploys
+  - Independent review / mark Sprint 5 Done
