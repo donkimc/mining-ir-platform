@@ -9,6 +9,7 @@ import {
   userHasTenantAccess,
 } from '@/access'
 import { serializeAnonymousPublicDoc } from '@/lib/collection-hooks'
+import { buildMediaObjectKey } from '@/lib/media-object-key'
 
 function relationId(value: unknown): string | number | null {
   if (!value) return null
@@ -134,8 +135,7 @@ export const Media: CollectionConfig = {
           ...req.context,
           originalFilename: originalName,
         }
-        const safeName = originalName.replace(/[/\\]/g, '_')
-        req.file.name = `${randomUUID()}-${safeName}`
+        req.file.name = buildMediaObjectKey(originalName, randomUUID())
       },
     ],
     beforeChange: [

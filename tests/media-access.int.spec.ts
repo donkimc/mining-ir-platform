@@ -309,6 +309,21 @@ describe('media access control (C1)', () => {
     expect(String(media.url || '')).not.toMatch(/storage\.supabase\.co/)
   })
 
+  it('sanitizes spaces and unicode in object keys while keeping display name', async () => {
+    const originalName = 'Dario Amodei — Machines of Loving Grace.pdf'
+    const media = await createMedia({
+      tenantId: auroraId,
+      user: auroraAdmin,
+      originalName,
+    })
+
+    expect(String(media.filename)).toMatch(
+      /^[0-9a-f-]{36}-Dario-Amodei-Machines-of-Loving-Grace\.pdf$/i,
+    )
+    expect(String(media.filename)).not.toMatch(/\s|—/)
+    expect(media.originalFilename || media.alt).toBe(originalName)
+  })
+
   it('denies anonymous read of seeded draft uploaded memo media when present', async () => {
     const draftDoc = await payload.find({
       collection: 'documents',
