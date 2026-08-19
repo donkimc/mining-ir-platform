@@ -358,12 +358,13 @@ Use this request:
 Cursor or the implementing engineer must append evidence here before Sprint 5 is marked complete:
 
 - Product Director scope and data-egress decision: **Assumed recommended narrower Sprint 5** (ingestion + provenance + review; no external AI egress per ADR-0013). Explicit Product Director sign-off still required.
-- Commit SHA: **Not committed yet** (working tree). Commit only when Product Director requests.
-- Changed files: ADRs 0012–0015; provenance fields/hooks/migrations; Media pagination (S4-3); document PDF attach; MachineOriginReviewPanel; fixture extraction adapter; S4-5 docs/env cleanup; ADR-0010/SECURITY updates; unit + integration tests. See `git status` / eventual commit list.
+- Commit SHA: `95e6666` (pushed to `origin/main`).
+- Changed files: ADRs 0012–0015; provenance fields/hooks/migrations; Media pagination (S4-3); document PDF attach; MachineOriginReviewPanel; fixture extraction adapter; S4-5 docs/env cleanup; ADR-0010/SECURITY updates; unit + integration tests.
 - Migration files and drift result: `20260818_sprint5_provenance.ts`, `20260819_sprint5_content_origin_enums.ts` (+ `.json` snapshot). `npm run check:migration-drift` **pass**.
 - `npm run verify` result: **pass** locally (2026-08-19) — lint, typecheck, 97 tests, migration-drift, `build:ci`.
 - `npm run check:env` results by deployed environment: **Not verified** in this session (requires deployed Preview/Production observation).
-- Production project migration result: **Not run** against `bwftfsfbiyzgwztwtqmh` in this session. Local migrate applied enum conversion.
+- Production project migration result: **Not run** against `bwftfsfbiyzgwztwtqmh`.
+- Staging schema migration (Vercel Production alias DB `jthotkkremiesvocfsmr`): **Applied 2026-08-19** — `20260818_sprint5_provenance` and `20260819_sprint5_content_origin_enums` with `PAYLOAD_DATABASE_PUSH=false`. Required after deploy of `95e6666` failed prerender with `column companies.content_origin does not exist`.
 - S4-3/S4-4/S4-5 results: S4-3 pagination + >1000 mock coverage in `tests/sprint5-provenance.int.spec.ts`; S4-4 ADR-0010/SECURITY updated; S4-5 literal seed passwords removed from tracked docs / `.env.example` emptied for passwords.
 - Ingestion and private-media evidence: Dashboard `attachDocumentPdfAction` + `src/lib/ingestion.ts` (PDF, 10 MiB). Deployed Preview upload + direct-object denial **Not verified** this session.
 - Provenance/machine-origin evidence: Server strip/restore, no downgrade, anon strip; int test forge + ack gate **pass**.
@@ -371,8 +372,8 @@ Cursor or the implementing engineer must append evidence here before Sprint 5 is
 - Plausible extraction-error evidence: Fixture adapter returns wrong grade/hole/units; int test reject→draft path **pass**.
 - External-egress/no-provider-call evidence: Fixture-only adapter (no network). Live provider secrets not added.
 - Restore/recovery evidence: **Deferred** to staging/Production ops (not re-run this session).
-- Preview URL and deployment ID: **Not deployed** this session.
-- Independent review result: **Pending** after commit + Preview evidence.
+- Preview URL and deployment ID: Redeploy of `95e6666` (or follow-up evidence commit) pending after staging migrate.
+- Independent review result: **Pending** after successful deployed build + manual smoke.
 - Deferred work and accepted risks:
   - Deployed Preview repair + `check:env` evidence
   - Production migrate (or Product Director non-promotion decision)
