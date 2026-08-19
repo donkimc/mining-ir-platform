@@ -1,10 +1,13 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { readFile } from 'fs/promises'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { getFileKey } from '@payloadcms/plugin-cloud-storage/utilities'
 import { NextResponse } from 'next/server'
-import path from 'path'
+import { sanitizeFilename } from 'payload/shared'
 
-import { getCurrentUser, getPayloadClient } from '@/lib/auth'
+import { getAuthHeaders, getCurrentUser, getPayloadClient } from '@/lib/auth'
 import { relationId } from '@/lib/publishing'
+
+export const runtime = 'nodejs'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -20,10 +23,54 @@ function isS3StorageConfigured(): boolean {
   )
 }
 
+function asciiDownloadName(name: string): string {
+  const cleaned = name.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '')
+  return cleaned || 'document.pdf'
+}
+
+async function redirectToSignedObject(args: {
+  filename: string
+  downloadName: string
+  contentType: string
+  docPrefix?: string
+}): Promise<NextResponse> {
+  const { fileKey } = getFileKey({
+    collectionPrefix: '',
+    docPrefix: args.docPrefix || '',
+    filename: sanitizeFilename(args.filename),
+    useCompositePrefixes: false,
+  })
+
+  const client = new S3Client({
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+    },
+    region: process.env.S3_REGION as string,
+    endpoint: process.env.S3_ENDPOINT as string,
+    forcePathStyle: true,
+  })
+
+  const signedUrl = await getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET as string,
+      Key: fileKey,
+      ResponseContentType: args.contentType,
+      ResponseContentDisposition: `inline; filename="${asciiDownloadName(args.downloadName)}"`,
+    }),
+    { expiresIn: 120 },
+  )
+
+  return NextResponse.redirect(signedUrl, 302)
+}
+
 /**
  * Authenticated Company Admin download for a Document's attached PDF.
- * Uses session JWT via getCurrentUser (same path as dashboard), not anonymous
- * `/api/media/file` access — Draft/Review files must stay private to the tenant.
+ *
+ * Confirms Document/Media access via Local API, then serves via:
+ * 1) Payload `/api/media/file` with session JWT (uses signedDownloads when configured), or
+ * 2) a short-lived S3 signed URL built with the same key helper Payload uses on upload.
  */
 export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params
@@ -74,51 +121,78 @@ export async function GET(request: Request, context: RouteContext) {
     (typeof media.originalFilename === 'string' && media.originalFilename) || filename
   const contentType =
     (typeof media.mimeType === 'string' && media.mimeType) || 'application/pdf'
+  const docPrefix =
+    typeof (media as { prefix?: unknown }).prefix === 'string'
+      ? ((media as { prefix?: string }).prefix as string)
+      : ''
+
+  const authHeaders = await getAuthHeaders()
+  const authorization = authHeaders.get('Authorization')
 
   try {
-    if (isS3StorageConfigured()) {
-      const client = new S3Client({
-        credentials: {
-          accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
-        },
-        region: process.env.S3_REGION as string,
-        endpoint: process.env.S3_ENDPOINT as string,
-        forcePathStyle: true,
+    if (authorization) {
+      const upstreamUrl = new URL(`/api/media/file/${encodeURIComponent(filename)}`, request.url)
+      const upstream = await fetch(upstreamUrl, {
+        headers: { Authorization: authorization },
+        redirect: 'manual',
+        cache: 'no-store',
       })
-      const object = await client.send(
-        new GetObjectCommand({
-          Bucket: process.env.S3_BUCKET as string,
-          Key: filename,
-        }),
-      )
-      if (!object.Body) {
-        return new NextResponse('Empty object', { status: 404 })
+
+      if (upstream.status >= 300 && upstream.status < 400) {
+        const location = upstream.headers.get('location')
+        if (location) return NextResponse.redirect(location, 302)
       }
-      const bytes = Buffer.from(await object.Body.transformToByteArray())
-      return new NextResponse(bytes, {
-        status: 200,
-        headers: {
-          'Content-Type': contentType,
-          'Content-Length': String(bytes.length),
-          'Content-Disposition': `inline; filename="${downloadName.replace(/"/g, '')}"`,
-          'Cache-Control': 'private, no-store',
-        },
+
+      if (upstream.ok && upstream.body) {
+        const headers = new Headers()
+        headers.set('Content-Type', upstream.headers.get('Content-Type') || contentType)
+        headers.set(
+          'Content-Disposition',
+          `inline; filename="${asciiDownloadName(downloadName)}"`,
+        )
+        headers.set('Cache-Control', 'private, no-store')
+        const length = upstream.headers.get('Content-Length')
+        if (length) headers.set('Content-Length', length)
+        return new NextResponse(upstream.body, { status: 200, headers })
+      }
+
+      console.error(
+        '[dashboard/documents/file] upstream',
+        filename,
+        upstream.status,
+      )
+    }
+
+    if (isS3StorageConfigured()) {
+      return await redirectToSignedObject({
+        filename,
+        downloadName,
+        contentType,
+        docPrefix,
       })
     }
 
-    const localPath = path.join(process.cwd(), 'media', filename)
-    const bytes = await readFile(localPath)
-    return new NextResponse(bytes, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Content-Length': String(bytes.length),
-        'Content-Disposition': `inline; filename="${downloadName.replace(/"/g, '')}"`,
-        'Cache-Control': 'private, no-store',
-      },
-    })
-  } catch {
+    return new NextResponse('Unable to load file', { status: 502 })
+  } catch (error) {
+    const message = error instanceof Error ? `${error.name}: ${error.message}` : 'unknown'
+    console.error('[dashboard/documents/file]', filename, message)
+
+    if (isS3StorageConfigured()) {
+      try {
+        return await redirectToSignedObject({
+          filename,
+          downloadName,
+          contentType,
+          docPrefix,
+        })
+      } catch (fallbackError) {
+        console.error(
+          '[dashboard/documents/file] signed fallback',
+          fallbackError instanceof Error ? fallbackError.message : fallbackError,
+        )
+      }
+    }
+
     return new NextResponse('Unable to load file', { status: 502 })
   }
 }
