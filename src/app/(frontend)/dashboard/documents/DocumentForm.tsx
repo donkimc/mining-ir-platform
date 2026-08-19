@@ -106,6 +106,65 @@ export function DocumentForm({
         />
       ) : null}
 
+      {mode === 'create' ? (
+        <section className="panel space-y-2" aria-labelledby="pdf-create-hint">
+          <h2 id="pdf-create-hint" className="display text-2xl">
+            Technical report PDF
+          </h2>
+          <p className="text-sm text-[var(--ink-soft)]">
+            PDF upload is available on the next screen after you create this draft. Create the
+            document first (title, slug, dates), then use <strong>Attach PDF</strong> on the edit
+            page. External URL is optional and separate from the private file upload.
+          </p>
+        </section>
+      ) : null}
+
+      {mode === 'edit' && documentId ? (
+        <form
+          action={uploadFormAction}
+          className="panel space-y-4 border-[color-mix(in_oklab,var(--accent)_35%,transparent)]"
+          encType="multipart/form-data"
+          id="attach-pdf"
+        >
+          <h2 className="display text-2xl">Technical report PDF</h2>
+          <FormMessage type="success" message={uploadState.success} />
+          <FormMessage type="error" message={uploadState.error} />
+          {attachedFileLabel ? (
+            <p className="text-sm text-[var(--ink-soft)]">
+              Current file: {attachedFileLabel}
+              {attachedFileUrl ? (
+                <>
+                  {' '}
+                  —{' '}
+                  <a href={attachedFileUrl} className="underline" target="_blank" rel="noreferrer">
+                    Open while logged in
+                  </a>
+                </>
+              ) : null}
+            </p>
+          ) : (
+            <p className="text-sm text-[var(--ink-soft)]">No PDF attached yet.</p>
+          )}
+          <div>
+            <label htmlFor="pdf" className="mb-1 block text-sm font-semibold">
+              Upload PDF (max 10 MiB)
+            </label>
+            <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" className="input" />
+            {uploadState.fieldErrors?.pdf ? (
+              <p className="mt-1 text-sm text-[var(--danger)]">{uploadState.fieldErrors.pdf}</p>
+            ) : null}
+          </div>
+          <button type="submit" className="btn btn-dark" disabled={uploadPending}>
+            {uploadPending ? 'Uploading…' : 'Attach PDF'}
+          </button>
+          <p className="text-xs text-[var(--ink-soft)]">
+            Uses private Supabase Storage via Payload Media. Open the file with the logged-in
+            dashboard link above (Draft/Review are blocked on the public media route until
+            Published). Max 10 MiB PDF.
+          </p>
+        </form>
+      ) : null}
+
       <form action={contentFormAction} className="panel space-y-5">
         <h2 className="display text-2xl">Document content</h2>
         <FormMessage type="success" message={contentState.success} />
@@ -225,49 +284,12 @@ export function DocumentForm({
             be moved back to Review before editing.
           </p>
         ) : (
-          <p className="text-xs text-[var(--ink-soft)]">New documents are created as Draft.</p>
+          <p className="text-xs text-[var(--ink-soft)]">
+            New documents are created as Draft. After you create, this page opens the draft so you
+            can attach a technical-report PDF.
+          </p>
         )}
       </form>
-
-      {mode === 'edit' && documentId ? (
-        <form action={uploadFormAction} className="panel space-y-4" encType="multipart/form-data">
-          <h2 className="display text-2xl">Technical report PDF</h2>
-          <FormMessage type="success" message={uploadState.success} />
-          <FormMessage type="error" message={uploadState.error} />
-          {attachedFileLabel ? (
-            <p className="text-sm text-[var(--ink-soft)]">
-              Current file: {attachedFileLabel}
-              {attachedFileUrl ? (
-                <>
-                  {' '}
-                  —{' '}
-                  <a href={attachedFileUrl} className="underline">
-                    Open via app route
-                  </a>
-                </>
-              ) : null}
-            </p>
-          ) : (
-            <p className="text-sm text-[var(--ink-soft)]">No PDF attached yet.</p>
-          )}
-          <div>
-            <label htmlFor="pdf" className="mb-1 block text-sm font-semibold">
-              Upload PDF (max 10 MiB)
-            </label>
-            <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" className="input" />
-            {uploadState.fieldErrors?.pdf ? (
-              <p className="mt-1 text-sm text-[var(--danger)]">{uploadState.fieldErrors.pdf}</p>
-            ) : null}
-          </div>
-          <button type="submit" className="btn btn-dark" disabled={uploadPending}>
-            {uploadPending ? 'Uploading…' : 'Attach PDF'}
-          </button>
-          <p className="text-xs text-[var(--ink-soft)]">
-            Uses private Supabase Storage via Payload Media. Draft/Review files are not anonymously
-            downloadable.
-          </p>
-        </form>
-      ) : null}
 
       {mode === 'edit' && documentId ? (
         <PublicationStatusForm

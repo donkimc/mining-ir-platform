@@ -22,7 +22,8 @@ export default async function DashboardDocumentsPage() {
         <div>
           <h1 className="display text-4xl">Documents</h1>
           <p className="mt-2 text-[var(--ink-soft)]">
-            Manage presentations and documents. Public pages show Published only.
+            Manage presentations and documents. Public pages show Published only. To attach a
+            technical-report PDF, open a document and use the upload panel on the edit page.
           </p>
         </div>
         <Link href="/dashboard/documents/new" className="btn btn-dark no-underline">

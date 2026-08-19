@@ -9,6 +9,12 @@ const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  // Match ADR-0014 10 MiB PDF limit (Vercel default server-action body is ~1–4.5 MiB).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   images: {
     localPatterns: [
       {

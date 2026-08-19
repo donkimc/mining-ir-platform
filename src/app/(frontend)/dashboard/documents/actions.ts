@@ -225,6 +225,14 @@ export async function attachDocumentPdfAction(
     return { error: 'Choose a PDF file to upload.', fieldErrors: { pdf: 'Required' } }
   }
 
+  // Vercel request body limits can still reject large multipart payloads before this runs.
+  if (file.size > 10 * 1024 * 1024) {
+    return {
+      error: 'File exceeds the 10 MiB ingestion limit.',
+      fieldErrors: { pdf: 'Max 10 MiB' },
+    }
+  }
+
   try {
     assertAllowedIngestionFile({
       mimeType: file.type,

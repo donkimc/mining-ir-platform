@@ -51,7 +51,7 @@ export default async function EditDocumentPage({ params }: Props) {
         (media.filename as string | undefined) ||
         String(media.id)
       if (media.filename) {
-        attachedFileUrl = `/api/media/file/${encodeURIComponent(String(media.filename))}`
+        attachedFileUrl = `/dashboard/documents/${encodeURIComponent(String(document.id))}/file`
       }
     } catch {
       attachedFileLabel = null
