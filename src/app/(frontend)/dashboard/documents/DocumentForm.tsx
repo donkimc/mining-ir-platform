@@ -136,7 +136,7 @@ export function DocumentForm({
                 <>
                   {' '}
                   —{' '}
-                  <a href={attachedFileUrl} className="underline" target="_blank" rel="noreferrer">
+                  <a href={attachedFileUrl} className="underline">
                     Open while logged in
                   </a>
                 </>

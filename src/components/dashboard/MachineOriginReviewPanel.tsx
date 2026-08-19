@@ -55,7 +55,7 @@ export function MachineOriginReviewPanel({
               <>
                 {' '}
                 —{' '}
-                <a href={fileUrl} className="underline" target="_blank" rel="noreferrer">
+                <a href={fileUrl} className="underline">
                   Open file
                 </a>
               </>

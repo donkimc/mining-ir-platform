@@ -52,5 +52,8 @@ export function safeRedirectPath(next: string, fallback: string): string {
   ) {
     return next
   }
+  if (/^\/dashboard\/documents\/[^/]+\/file$/.test(pathOnly)) {
+    return next
+  }
   return fallback
 }
