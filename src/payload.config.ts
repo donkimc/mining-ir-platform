@@ -84,14 +84,11 @@ export default buildConfig({
           s3Storage({
             collections: {
               // Keep Payload access control; never emit public bucket URLs.
-              // signedDownloads: after access checks, redirect to a short-lived S3 URL
-              // (avoids brittle serverless streaming of private objects).
+              // Do not enable signedDownloads for media: short-lived signed URLs are still
+              // bearer tokens and must not be used for Draft/Review disclosure files.
               media: {
                 generateFileURL: ({ filename }) =>
                   `/api/media/file/${encodeURIComponent(filename)}`,
-                signedDownloads: {
-                  expiresIn: 120,
-                },
               },
             },
             bucket: process.env.S3_BUCKET as string,
