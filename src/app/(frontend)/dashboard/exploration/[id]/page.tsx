@@ -37,7 +37,7 @@ export default async function EditExplorationPage({ params }: Props) {
     <ExplorationForm
       mode="edit"
       contentId={String(content.id)}
-      initial={content}
+      initial={content as never}
       projects={projects}
     />
   )

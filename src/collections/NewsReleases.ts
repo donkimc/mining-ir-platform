@@ -13,6 +13,7 @@ import {
   sourceDocumentField,
   sourceUrlField,
 } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { NEWS_DISCLOSURE_FIELDS } from '@/lib/publishing'
 
 export const NewsReleases: CollectionConfig = {
@@ -52,5 +53,6 @@ export const NewsReleases: CollectionConfig = {
     disclosureLevelField,
     publicationStatusField,
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

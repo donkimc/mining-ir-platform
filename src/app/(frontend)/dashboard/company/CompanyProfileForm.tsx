@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 
+import { MachineOriginReviewPanel } from '@/components/dashboard/MachineOriginReviewPanel'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { StatusBadge } from '@/components/public/StatusBadge'
 import {
@@ -24,6 +25,10 @@ type CompanyFormProps = {
     irContactEmail?: string | null
     irContactPhone?: string | null
     publicationStatus: string
+    contentOrigin?: string | null
+    sourceLocation?: unknown
+    provenanceClaims?: unknown
+    extractionProvider?: string | null
     brandColors?: {
       primary?: string | null
       secondary?: string | null
@@ -41,6 +46,7 @@ export function CompanyProfileForm({ company }: CompanyFormProps) {
     updateCompanyStatusAction,
     initialState,
   )
+  const machineAssisted = company.contentOrigin === 'machine_assisted'
 
   return (
     <div className="space-y-6">
@@ -48,6 +54,13 @@ export function CompanyProfileForm({ company }: CompanyFormProps) {
         <h1 className="display text-4xl">Company profile</h1>
         <StatusBadge status={company.publicationStatus} />
       </div>
+
+      <MachineOriginReviewPanel
+        contentOrigin={company.contentOrigin}
+        sourceLocation={company.sourceLocation as never}
+        provenanceClaims={company.provenanceClaims as never}
+        extractionProvider={company.extractionProvider}
+      />
 
       <form action={contentAction} className="panel space-y-5">
         <h2 className="display text-2xl">Profile content</h2>
@@ -156,6 +169,21 @@ export function CompanyProfileForm({ company }: CompanyFormProps) {
             Status-only action. Draft cannot jump to Published. Approve only after Review.
           </p>
         </div>
+        {machineAssisted ? (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="sourceCheckAcknowledged"
+              value="true"
+              className="mt-1"
+              required={company.publicationStatus === 'review'}
+            />
+            <span>
+              I verified the machine-assisted proposals against the source document and page/location
+              before approving to Published.
+            </span>
+          </label>
+        ) : null}
         <button type="submit" className="btn btn-dark" disabled={statusPending}>
           {statusPending ? 'Updating…' : 'Update status'}
         </button>

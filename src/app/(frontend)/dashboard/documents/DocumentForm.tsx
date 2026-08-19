@@ -3,11 +3,13 @@
 import { useActionState } from 'react'
 
 import { DashboardField, PublicationStatusForm } from '@/components/dashboard/ContentForms'
+import { MachineOriginReviewPanel } from '@/components/dashboard/MachineOriginReviewPanel'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { StatusBadge } from '@/components/public/StatusBadge'
 import { DISCLOSURE_LEVELS, DOCUMENT_CATEGORIES } from '@/lib/constants'
 
 import {
+  attachDocumentPdfAction,
   createDocumentAction,
   updateDocumentContentAction,
   updateDocumentStatusAction,
@@ -28,6 +30,12 @@ type DocumentValues = {
   project?: unknown
   disclosureLevel?: string | null
   status?: string
+  contentOrigin?: string | null
+  sourceLocation?: unknown
+  provenanceClaims?: unknown
+  extractionProvider?: string | null
+  file?: unknown
+  sourceDocument?: unknown
 }
 
 function toDateInput(value?: string | null) {
@@ -48,11 +56,15 @@ export function DocumentForm({
   documentId,
   initial,
   projects,
+  attachedFileLabel,
+  attachedFileUrl,
 }: {
   mode: 'create' | 'edit'
   documentId?: string
   initial?: DocumentValues
   projects: ProjectOption[]
+  attachedFileLabel?: string | null
+  attachedFileUrl?: string | null
 }) {
   const contentAction =
     mode === 'create'
@@ -64,7 +76,15 @@ export function DocumentForm({
     initialState,
   )
 
+  const [uploadState, uploadFormAction, uploadPending] = useActionState(
+    documentId
+      ? attachDocumentPdfAction.bind(null, documentId)
+      : async (_prev: DocumentFormState, _formData: FormData): Promise<DocumentFormState> => ({}),
+    initialState,
+  )
+
   const projectValue = relationValue(initial?.project)
+  const machineAssisted = initial?.contentOrigin === 'machine_assisted'
 
   return (
     <div className="space-y-6">
@@ -74,6 +94,17 @@ export function DocumentForm({
         </h1>
         {initial?.status ? <StatusBadge status={initial.status} /> : null}
       </div>
+
+      {mode === 'edit' ? (
+        <MachineOriginReviewPanel
+          contentOrigin={initial?.contentOrigin}
+          sourceLocation={initial?.sourceLocation as never}
+          provenanceClaims={initial?.provenanceClaims as never}
+          sourceDocumentId={relationValue(initial?.sourceDocument) || null}
+          fileUrl={attachedFileUrl}
+          extractionProvider={initial?.extractionProvider}
+        />
+      ) : null}
 
       <form action={contentFormAction} className="panel space-y-5">
         <h2 className="display text-2xl">Document content</h2>
@@ -199,8 +230,49 @@ export function DocumentForm({
       </form>
 
       {mode === 'edit' && documentId ? (
+        <form action={uploadFormAction} className="panel space-y-4" encType="multipart/form-data">
+          <h2 className="display text-2xl">Technical report PDF</h2>
+          <FormMessage type="success" message={uploadState.success} />
+          <FormMessage type="error" message={uploadState.error} />
+          {attachedFileLabel ? (
+            <p className="text-sm text-[var(--ink-soft)]">
+              Current file: {attachedFileLabel}
+              {attachedFileUrl ? (
+                <>
+                  {' '}
+                  —{' '}
+                  <a href={attachedFileUrl} className="underline">
+                    Open via app route
+                  </a>
+                </>
+              ) : null}
+            </p>
+          ) : (
+            <p className="text-sm text-[var(--ink-soft)]">No PDF attached yet.</p>
+          )}
+          <div>
+            <label htmlFor="pdf" className="mb-1 block text-sm font-semibold">
+              Upload PDF (max 10 MiB)
+            </label>
+            <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" className="input" />
+            {uploadState.fieldErrors?.pdf ? (
+              <p className="mt-1 text-sm text-[var(--danger)]">{uploadState.fieldErrors.pdf}</p>
+            ) : null}
+          </div>
+          <button type="submit" className="btn btn-dark" disabled={uploadPending}>
+            {uploadPending ? 'Uploading…' : 'Attach PDF'}
+          </button>
+          <p className="text-xs text-[var(--ink-soft)]">
+            Uses private Supabase Storage via Payload Media. Draft/Review files are not anonymously
+            downloadable.
+          </p>
+        </form>
+      ) : null}
+
+      {mode === 'edit' && documentId ? (
         <PublicationStatusForm
           status={initial?.status}
+          machineAssisted={machineAssisted}
           action={updateDocumentStatusAction.bind(null, documentId)}
         />
       ) : null}

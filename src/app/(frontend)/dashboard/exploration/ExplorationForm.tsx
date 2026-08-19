@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 
 import { DashboardField, PublicationStatusForm } from '@/components/dashboard/ContentForms'
+import { MachineOriginReviewPanel } from '@/components/dashboard/MachineOriginReviewPanel'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { StatusBadge } from '@/components/public/StatusBadge'
 import { DISCLOSURE_LEVELS } from '@/lib/constants'
@@ -27,6 +28,11 @@ type ExplorationValues = {
   sourceUrl?: string | null
   disclosureLevel?: string | null
   status?: string
+  contentOrigin?: string | null
+  sourceLocation?: unknown
+  provenanceClaims?: unknown
+  extractionProvider?: string | null
+  sourceDocument?: unknown
 }
 
 function toDateInput(value?: string | null) {
@@ -64,6 +70,7 @@ export function ExplorationForm({
   )
 
   const projectValue = relationValue(initial?.project)
+  const machineAssisted = initial?.contentOrigin === 'machine_assisted'
 
   return (
     <div className="space-y-6">
@@ -73,6 +80,16 @@ export function ExplorationForm({
         </h1>
         {initial?.status ? <StatusBadge status={initial.status} /> : null}
       </div>
+
+      {mode === 'edit' ? (
+        <MachineOriginReviewPanel
+          contentOrigin={initial?.contentOrigin}
+          sourceLocation={initial?.sourceLocation as never}
+          provenanceClaims={initial?.provenanceClaims as never}
+          sourceDocumentId={relationValue(initial?.sourceDocument) || null}
+          extractionProvider={initial?.extractionProvider}
+        />
+      ) : null}
 
       <form action={contentFormAction} className="panel space-y-5">
         <h2 className="display text-2xl">Exploration content</h2>
@@ -187,6 +204,7 @@ export function ExplorationForm({
       {mode === 'edit' && contentId ? (
         <PublicationStatusForm
           status={initial?.status}
+          machineAssisted={machineAssisted}
           action={updateExplorationStatusAction.bind(null, contentId)}
         />
       ) : null}

@@ -33,12 +33,39 @@ export default async function EditDocumentPage({ params }: Props) {
   }
 
   const projects = await listTenantProjects(tenantId, user)
+
+  let attachedFileLabel: string | null = null
+  let attachedFileUrl: string | null = null
+  const fileId = relationId(document.file)
+  if (fileId != null) {
+    try {
+      const media = await payload.findByID({
+        collection: 'media',
+        id: fileId,
+        depth: 0,
+        user,
+        overrideAccess: false,
+      })
+      attachedFileLabel =
+        (media.originalFilename as string | undefined) ||
+        (media.filename as string | undefined) ||
+        String(media.id)
+      if (media.filename) {
+        attachedFileUrl = `/api/media/file/${encodeURIComponent(String(media.filename))}`
+      }
+    } catch {
+      attachedFileLabel = null
+    }
+  }
+
   return (
     <DocumentForm
       mode="edit"
       documentId={String(document.id)}
-      initial={document}
+      initial={document as never}
       projects={projects}
+      attachedFileLabel={attachedFileLabel}
+      attachedFileUrl={attachedFileUrl}
     />
   )
 }

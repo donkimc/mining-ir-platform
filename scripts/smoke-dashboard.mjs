@@ -1,8 +1,11 @@
 import { chromium } from 'playwright'
 
 const BASE = process.env.SMOKE_BASE_URL || 'http://localhost:3000'
-const EMAIL = 'admin@auroragold.local'
-const PASSWORD = 'ChangeMeLocal1!'
+const EMAIL = process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@auroragold.local'
+const PASSWORD = process.env.SEED_COMPANY_ADMIN_PASSWORD
+if (!PASSWORD) {
+  throw new Error('Set SEED_COMPANY_ADMIN_PASSWORD (from .env.local) before running smoke-dashboard.')
+}
 const SLUG = `smoke-${Date.now()}`
 
 async function loginViaApi(context) {

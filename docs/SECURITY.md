@@ -18,11 +18,15 @@ Public queries filter by tenant and `Published` status. Draft, Review and Archiv
 
 ## Disclosure Review
 
-Technical mining disclosure cannot move directly from draft or AI-assisted content to Published. A server-validated review action records reviewer identity and timestamp. Sprint 1 may use a manual admin action; automation is later scope.
+Technical mining disclosure cannot move directly from draft or AI-assisted content to Published. A server-validated review action records reviewer identity and timestamp. Machine-assisted drafts (ADR-0012) additionally require source-verification acknowledgement. Sprint 5 does not send unpublished documents to external AI providers (ADR-0013).
+
+## Maps and third-party requests
+
+The OpenStreetMap embed requires CSP `frame-src https://www.openstreetmap.org`. Loading the embed discloses the visitor’s IP/request metadata to OSM operators; see ADR-0010. Text location remains available without the iframe.
 
 ## Secrets and Data
 
-Keep secrets in environment variables. Provide `.env.example` with names only. Do not commit real credentials, private keys or production data. Validate URLs and user-provided rich text according to the selected CMS safeguards.
+Keep secrets in environment variables. Provide `.env.example` with names only. Do not commit real credentials, private keys or production data. Do not publish literal seed passwords in Markdown. Validate URLs and user-provided rich text according to the selected CMS safeguards. Never log document bytes or raw source excerpts.
 
 ## Security Verification
 

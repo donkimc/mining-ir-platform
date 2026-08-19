@@ -31,5 +31,5 @@ export default async function EditShareStructurePage({ params }: Props) {
     notFound()
   }
 
-  return <ShareStructureForm mode="edit" recordId={String(record.id)} initial={record} />
+  return <ShareStructureForm mode="edit" recordId={String(record.id)} initial={record as never} />
 }

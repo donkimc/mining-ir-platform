@@ -12,6 +12,7 @@ import {
   sourceDocumentField,
   sourceUrlField,
 } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { SHARE_DISCLOSURE_FIELDS } from '@/lib/publishing'
 
 export const ShareStructures: CollectionConfig = {
@@ -45,5 +46,6 @@ export const ShareStructures: CollectionConfig = {
     sourceDocumentField,
     publicationStatusField,
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

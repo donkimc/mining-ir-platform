@@ -33,5 +33,5 @@ export default async function EditNewsPage({ params }: Props) {
   }
 
   const projects = await listTenantProjects(tenantId, user)
-  return <NewsForm mode="edit" newsId={String(news.id)} initial={news} projects={projects} />
+  return <NewsForm mode="edit" newsId={String(news.id)} initial={news as never} projects={projects} />
 }

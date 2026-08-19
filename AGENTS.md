@@ -1,18 +1,71 @@
 # AGENTS.md
 
 ## Mission
-Build Sprint 3 of Mining IR Platform as the production-hardening and release-readiness milestone for the self-service, multi-tenant SaaS serving junior mining companies.
+Build Mining IR Platform as a self-service, multi-tenant SaaS serving junior mining companies.
 
-Sprint 1 is the completed baseline and Sprint 2 implementation is complete. Preserve tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes, mining-content workflows and human-review controls. Do not call the product production-ready until the Sprint 3 gates below are independently verified.
+Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes, mining-content workflows, human-review controls, private storage authorization, public API minimization and the public discovery/map surfaces. Do not call the product ready for customer content until the promotion gates below are satisfied.
 
-## Current Sprint: Sprint 3 — Production Hardening & Investor Readiness
+## Project Status (updated 2026-08-17)
 
-Claude's Sprint 2 review found that the application-level fixes are substantially complete, but production promotion remains conditional. A public Supabase Storage bucket, unrotated exposed credentials, an insecure TLS escape hatch, an untested incremental migration path, and an unverified cloud media upload are release blockers. Treat the attached review as input, not as proof that infrastructure is fixed.
+| Sprint | Scope | Status |
+| --- | --- | --- |
+| 1 | Vertical slice — tenant, Explorer, dashboard, publication rules | ✅ Complete, reviewed |
+| 2 | Mining content — news, documents, people, share structure, exploration | ✅ Complete, reviewed |
+| 3 | Production hardening — private storage, secrets, TLS, migrations, guards | ✅ Complete, reviewed |
+| 4 | Investor features — public discovery, read-only maps, Sprint 3 carry-ins | ✅ Complete, reviewed |
+| 5 | Automation — document ingestion, AI-assisted extraction, approval workflow | ▶ Next |
 
-Sprint 2 code completion and production readiness are separate milestones:
+**Review record:** `docs/SPRINT2_REVIEW.md`, `docs/SPRINT2_REREVIEW.md`, `docs/SPRINT2_CARRYFORWARD.md`, `docs/SPRINT3_REVIEW.md`, `docs/SPRINT4_REVIEW.md` (including its 2026-08-17 addendum). No Critical or High findings are open.
 
-- **Sprint 2 implementation:** complete.
-- **Sprint 2 production promotion:** blocked until Sprint 3 gates pass.
+**Verification command:** `npm run verify` = lint + typecheck + tests + migration-drift + `build:ci`. `npm run check:env` reports required environment variables per environment without printing values.
+
+### Deployment reality
+
+- Vercel **Production** alias `https://mining-ir-platform.vercel.app` is backed by the Supabase **staging** project `jthotkkremiesvocfsmr`. "Vercel Production" and "Supabase Production" are not the same thing.
+- The real production Supabase project `bwftfsfbiyzgwztwtqmh` is **empty and has never been migrated**. It must be set up with `npm run migrate` (never push) before any customer content.
+- Vercel environment variables are **per-environment**. A variable set only for Preview does not reach a Production build. This has cost two debugging cycles.
+
+### Open promotion gates — customer content and real Production go-live
+
+1. Migrate `bwftfsfbiyzgwztwtqmh` with `npm run migrate`, set its project-specific `DATABASE_SSL_CA`, confirm `PAYLOAD_DATABASE_PUSH` is false or absent, and smoke-test with fictional data only.
+2. Observe `DATABASE_SSL_CA` and `PAYLOAD_DATABASE_PUSH` from the **deployed** environment rather than assuming Sprint 3 configuration. Use `npm run check:env`.
+3. Never run `seed:reset` against the production project.
+
+Staging restore rehearsal (L-3) is **complete and evidenced** — restored in place from a scheduled backup with smoke checks passing.
+
+### Deferred low-severity findings (carry into Sprint 5)
+
+- **S4-3:** anonymous media authorization materializes up to 1000 IDs and silently caps.
+- **S4-4:** ADR-0010 records no CSP or visitor-privacy analysis for the OSM embed.
+- **S4-5:** `README.md` and `docs/SPRINT1_HANDOFF.md` publish a local seed password that no longer works.
+
+## Current Sprint: Sprint 5 — Automation
+
+Document ingestion, AI-assisted extraction and human approval workflow improvements. See `docs/ROADMAP.md`.
+
+**Governing constraint (ADR-0004).** Sprints 1–4 protected against *human* error. Sprint 5 introduces machine-generated text into a securities-disclosure pipeline, which changes the threat model. The system currently records **who** approved a record but not **where the content came from** — there is no way to distinguish "a human approved human-written text" from "a human approved machine-generated text." That distinction is the safety story for this sprint and is a data-model decision. It must be settled in an ADR **before** implementation, not retrofitted.
+
+**Second-order constraint.** If extraction uses an external LLM API, unpublished technical reports leave the tenant boundary. Decide whether that egress is acceptable at all — and on what retention, training and residency terms — before choosing a provider. Record it in an ADR.
+
+**Non-negotiable.** No automatic publication. No investor PII. No market data. No SEDAR+ integration. Ingestion is a new write path into Media and must inherit tenant scoping, private-bucket authorization, UUID object keys and the published-reference rule for anonymous access — proven, not assumed.
+
+## Sprint 4 Baseline — Investor Features (complete)
+
+Delivered: public Explorer search/filtering over Published content only, related published-content navigation, read-only project maps from existing coordinates with an accessible text fallback, and the Sprint 3 carry-in fixes.
+
+Decisions recorded in ADR-0009 (investor-feature boundary), ADR-0010 (map provider and data policy), ADR-0011 (public discovery contract).
+
+**Rules established in Sprint 4 that apply to all future public surfaces:**
+
+- Anonymous reads resolve **one** tenant server-side and filter `Published` at the data query — never fetch broadly and filter in React.
+- The anonymous serializer strips `reviewedBy`, `reviewedAt`, `publishedAt`, `tenant`, `websiteDomain`, `subdomain` and `templateKey`. Any collection with its own `afterRead` must compose the shared serializer, not replace it.
+- Maps are provider-neutral OpenStreetMap embeds with no API key. Third-party frames require an explicit CSP `frame-src` entry scoped to that origin — never a wildcard.
+- Coordinates render only for Published, same-tenant records with valid WGS84 values. Failure must degrade to text, never to a blank rectangle.
+- Every new public surface ships with a **negative-case fixture** — a Northern Copper record that must not appear. Two defects survived a full review cycle because no second-tenant record existed to leak.
+
+## Sprint 3 Baseline — Production Hardening (complete)
+
+The Sprint 3 sections below are retained as the historical contract and the standard for future hardening work. All gates were independently verified closed.
 
 ## Sprint 3 Decision
 
@@ -541,6 +594,10 @@ docs/
   SECURITY.md
   TESTING.md
   DEPLOYMENT.md
+  OPERATIONS.md
+  SPRINT1_HANDOFF.md … SPRINT4_HANDOFF.md
+  SPRINT2_REVIEW.md, SPRINT2_REREVIEW.md, SPRINT2_CARRYFORWARD.md
+  SPRINT3_REVIEW.md, SPRINT4_REVIEW.md
   decisions/
     ADR-0001-self-service-multi-tenant-saas.md
     ADR-0002-explorer-template-first.md
@@ -550,7 +607,12 @@ docs/
     ADR-0006-sprint2-mining-content-workflow.md
     ADR-0007-supabase-storage-and-migrations.md
     ADR-0008-production-readiness-gates-before-investor-features.md
+    ADR-0009-sprint4-investor-feature-boundary.md
+    ADR-0010-project-map-provider-and-data-policy.md
+    ADR-0011-public-explorer-discovery-contract.md
 ```
+
+Each sprint adds a handoff (what was built, what was verified, what was not) and an independent review. A handoff must state what it could **not** verify rather than omitting it.
 
 Required documentation must be present before Sprint 1 is marked Done. README setup instructions must include prerequisites, environment variables, database setup, seed/reset commands, local login, test commands and the route map.
 
@@ -596,3 +658,22 @@ When reviewing implementation, prioritize:
 - Incomplete dashboard-to-public-site data flow.
 - Broken responsive layouts on investor pages.
 - Missing source-link affordances near material technical claims.
+- Provenance of machine-generated content, once automation exists.
+
+## Evidence Rules (learned across four review cycles)
+
+These are not style preferences. Each one is the direct product of a defect that shipped.
+
+1. **Verify at the layer that must actually succeed.** Every sprint shipped a defect found one layer below where evidence was gathered — a green test suite over a failing build (Sprint 1), an app route over a public storage bucket (Sprint 2), a stale deployment URL over the live one (Sprint 3), server-rendered HTML over browser execution (Sprint 4). The markup was correct every time.
+
+2. **A green suite is not evidence the app runs.** `npm run verify` includes `build:ci` and migration-drift for this reason. Deployed behaviour still requires a deployed observation.
+
+3. **Schema changes require a generated migration in the same commit.** Local `push: true` masked a missing migration and broke staging. Drift CI now enforces this.
+
+4. **Isolation tests need a negative fixture.** A test with nothing to leak proves nothing. Seed the Northern Copper record that must not appear.
+
+5. **For race-shaped or timing-dependent behaviour, one successful observation is not evidence.** Repeat it. A map that worked once was removed on half of subsequent loads.
+
+6. **Fix the class, not the instance.** Remediations that fixed only the named file produced follow-up findings in three consecutive sprints. After each fix ask: *what else has this shape?*
+
+7. **Report what you could not verify.** "Not verified" is a valid and useful result. A completion report that claims a passing check which does not pass costs a full review cycle.

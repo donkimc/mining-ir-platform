@@ -10,9 +10,11 @@ const initialState: ContentFormState = {}
 export function PublicationStatusForm({
   status,
   action,
+  machineAssisted = false,
 }: {
   status?: string
   action: (prev: ContentFormState, formData: FormData) => Promise<ContentFormState>
+  machineAssisted?: boolean
 }) {
   const [state, formAction, pending] = useActionState(action, initialState)
 
@@ -26,16 +28,32 @@ export function PublicationStatusForm({
           Status
         </label>
         <select id="status" name="status" className="select" defaultValue={status || 'draft'}>
-          <option value="draft">Draft (save without review)</option>
+          <option value="draft">Draft (save without review / request changes)</option>
           <option value="review">Review (submit for review)</option>
           <option value="published">Published (approve &amp; publish)</option>
           <option value="archived">Archived</option>
         </select>
         <p className="mt-1 text-xs text-[var(--ink-soft)]">
           Status-only action. Draft cannot jump to Published. Approve only after Review. Do not
-          change disclosure fields in the same request.
+          change disclosure fields in the same request. Choosing Draft while in Review rejects or
+          requests changes without publishing.
         </p>
       </div>
+      {machineAssisted ? (
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="sourceCheckAcknowledged"
+            value="true"
+            className="mt-1"
+            required={status === 'review'}
+          />
+          <span>
+            I verified the machine-assisted proposals against the source document and page/location
+            before approving to Published.
+          </span>
+        </label>
+      ) : null}
       <button type="submit" className="btn btn-dark" disabled={pending}>
         {pending ? 'Updating…' : 'Update status'}
       </button>

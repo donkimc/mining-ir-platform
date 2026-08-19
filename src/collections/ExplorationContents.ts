@@ -13,6 +13,7 @@ import {
   sourceDocumentField,
   sourceUrlField,
 } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { EXPLORATION_DISCLOSURE_FIELDS } from '@/lib/publishing'
 
 export const ExplorationContents: CollectionConfig = {
@@ -60,5 +61,6 @@ export const ExplorationContents: CollectionConfig = {
     disclosureLevelField,
     publicationStatusField,
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

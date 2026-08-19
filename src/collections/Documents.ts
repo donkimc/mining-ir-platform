@@ -14,6 +14,7 @@ import {
   sourceDocumentField,
   sourceUrlField,
 } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { DOCUMENT_DISCLOSURE_FIELDS } from '@/lib/publishing'
 import { validateHttpUrl } from '@/lib/validate-url'
 
@@ -67,5 +68,6 @@ export const Documents: CollectionConfig = {
     disclosureLevelField,
     publicationStatusField,
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

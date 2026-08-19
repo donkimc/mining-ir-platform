@@ -29,10 +29,14 @@ Hand-off for post-implementation review (Claude or human). Read this after runni
 
 After `npm run seed` (or `npm run seed:reset`):
 
+> **Superseded (2026-08-17).** The literal passwords once printed here no longer work and have been
+> removed. Local seed credentials come from `SEED_*` variables in your gitignored `.env.local`; see
+> `README.md`. Retained as a historical record of Sprint 1 only.
+
 | Role | Email | Password | Lands on |
 | --- | --- | --- | --- |
-| Platform Admin | `platform@mining-ir.local` | `ChangeMeLocal1!` | `/admin/tenants` |
-| Company Admin (Aurora Gold) | `admin@auroragold.local` | `ChangeMeLocal1!` | `/dashboard` |
+| Platform Admin | `SEED_PLATFORM_EMAIL` | `SEED_PLATFORM_PASSWORD` | `/admin/tenants` |
+| Company Admin (Aurora Gold) | `SEED_COMPANY_ADMIN_EMAIL` | `SEED_COMPANY_ADMIN_PASSWORD` | `/dashboard` |
 
 Dev-only credentials. Do not use in production. Source of truth also in README and `.env.example`.
 

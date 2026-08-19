@@ -14,13 +14,18 @@ import {
 } from '@/access'
 import {
   applyReviewMetadata,
+  applySourceCheckMetadata,
   assertDisclosureWriteAllowed,
+  assertMachineAssistedSourceCheck,
   assertPublicationTransition,
   assertSameTenantRelation,
   assertSourceReferenceRequired,
+  guardCreateNotMachinePublished,
   guardCreateNotPublished,
   relationId,
+  restoreProvenanceFromOriginal,
   shouldRequireSource,
+  stripForgedProvenanceMetadata,
   stripForgedReviewMetadata,
 } from '@/lib/publishing'
 
@@ -102,6 +107,18 @@ const ANON_STRIP_KEYS = [
   'websiteDomain',
   'subdomain',
   'templateKey',
+  // ADR-0012: provenance / extraction / source-check never anonymous.
+  'contentOrigin',
+  'originLockedAt',
+  'sourceLocation',
+  'provenanceClaims',
+  'extractionRunId',
+  'extractionProvider',
+  'extractionModel',
+  'extractionModelVersion',
+  'extractedAt',
+  'reviewerSourceCheckBy',
+  'reviewerSourceCheckAt',
 ] as const
 
 export function serializeAnonymousPublicDoc<T extends Record<string, unknown>>(doc: T): T {
@@ -122,7 +139,23 @@ export function createPublishableBeforeChange(args: {
   return async ({ data, originalDoc, req, operation }) => {
     if (!data) return data
 
-    const next = stripForgedReviewMetadata(data as Record<string, unknown>)
+    let next = stripForgedReviewMetadata(data as Record<string, unknown>)
+    next = stripForgedProvenanceMetadata(next)
+
+    const sourceCheckAcknowledged = Boolean(
+      req.context && (req.context as { sourceCheckAcknowledged?: boolean }).sourceCheckAcknowledged,
+    )
+
+    const serverProvenance =
+      req.context && (req.context as { serverProvenance?: Record<string, unknown> }).serverProvenance
+
+    next = restoreProvenanceFromOriginal({
+      data: next,
+      originalDoc: originalDoc as Record<string, unknown> | undefined,
+      serverProvenance: serverProvenance as Parameters<
+        typeof restoreProvenanceFromOriginal
+      >[0]['serverProvenance'],
+    })
 
     if (req.user && !isPlatformAdmin(req.user)) {
       const tenantId = relationId(next.tenant ?? originalDoc?.tenant)
@@ -165,6 +198,10 @@ export function createPublishableBeforeChange(args: {
 
     if (operation === 'create') {
       guardCreateNotPublished(incomingStatus)
+      guardCreateNotMachinePublished({
+        status: incomingStatus,
+        contentOrigin: next.contentOrigin as string | undefined,
+      })
     }
 
     assertSourceReferenceRequired({
@@ -185,6 +222,22 @@ export function createPublishableBeforeChange(args: {
       originalDoc: originalDoc as Record<string, unknown> | undefined,
       previousStatus,
       incomingStatus,
+    })
+
+    assertMachineAssistedSourceCheck({
+      originalDoc: originalDoc as Record<string, unknown> | undefined,
+      incomingStatus,
+      previousStatus,
+      sourceCheckAcknowledged,
+    })
+
+    next = applySourceCheckMetadata({
+      data: next,
+      incomingStatus,
+      previousStatus,
+      reviewerId: req.user?.id,
+      originalDoc: originalDoc as Record<string, unknown> | undefined,
+      sourceCheckAcknowledged,
     })
 
     return applyReviewMetadata({

@@ -135,6 +135,9 @@ export async function updateCompanyStatusAction(
       data: {
         publicationStatus: parsed.data.publicationStatus,
       },
+      context: {
+        sourceCheckAcknowledged: formData.get('sourceCheckAcknowledged') === 'true',
+      },
     })
   } catch (error) {
     return {

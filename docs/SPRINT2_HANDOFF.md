@@ -30,7 +30,7 @@ Sprint 2 mining-content code is implemented on the Sprint 1 baseline:
 | `npm run seed:reset` | Pass — Aurora + Northern + Sprint 2 content |
 | `npm run verify` | Pass — lint + typecheck + test + drift + build:ci (observed 2026-08-15) |
 
-Local seed logins (dev only): `platform@mining-ir.local` / `ChangeMeLocal1!`, `admin@auroragold.local` / `ChangeMeLocal1!`.
+Local seed logins (dev only): emails and passwords come from the `SEED_*` variables in your gitignored `.env.local`. Literal credentials are no longer published in this repository — see `README.md`.
 
 ### Review remediations observed (2026-08-12; re-verified 2026-08-15)
 

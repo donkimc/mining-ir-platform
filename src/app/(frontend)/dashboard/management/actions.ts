@@ -171,6 +171,9 @@ export async function updatePersonStatusAction(
       data: {
         status: parsed.data.status,
       },
+      context: {
+        sourceCheckAcknowledged: formData.get('sourceCheckAcknowledged') === 'true',
+      },
     })
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Unable to update status.' }

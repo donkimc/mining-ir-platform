@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 
 import { DashboardField, PublicationStatusForm } from '@/components/dashboard/ContentForms'
+import { MachineOriginReviewPanel } from '@/components/dashboard/MachineOriginReviewPanel'
 import { FormMessage } from '@/components/ui/FormMessage'
 import { StatusBadge } from '@/components/public/StatusBadge'
 
@@ -24,6 +25,11 @@ type ShareStructureValues = {
   marketCapNote?: string | null
   sourceUrl?: string | null
   status?: string
+  contentOrigin?: string | null
+  sourceLocation?: unknown
+  provenanceClaims?: unknown
+  extractionProvider?: string | null
+  sourceDocument?: unknown
 }
 
 function toDateInput(value?: string | null) {
@@ -33,6 +39,14 @@ function toDateInput(value?: string | null) {
 
 function numberValue(value?: number | null) {
   return value != null ? String(value) : ''
+}
+
+function relationValue(value: unknown): string {
+  if (!value) return ''
+  if (typeof value === 'object' && value !== null && 'id' in value) {
+    return String((value as { id: string | number }).id)
+  }
+  return String(value)
 }
 
 export function ShareStructureForm({
@@ -54,6 +68,8 @@ export function ShareStructureForm({
     initialState,
   )
 
+  const machineAssisted = initial?.contentOrigin === 'machine_assisted'
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -62,6 +78,16 @@ export function ShareStructureForm({
         </h1>
         {initial?.status ? <StatusBadge status={initial.status} /> : null}
       </div>
+
+      {mode === 'edit' ? (
+        <MachineOriginReviewPanel
+          contentOrigin={initial?.contentOrigin}
+          sourceLocation={initial?.sourceLocation as never}
+          provenanceClaims={initial?.provenanceClaims as never}
+          sourceDocumentId={relationValue(initial?.sourceDocument) || null}
+          extractionProvider={initial?.extractionProvider}
+        />
+      ) : null}
 
       <form action={contentFormAction} className="panel space-y-5">
         <h2 className="display text-2xl">Share structure content</h2>
@@ -141,6 +167,7 @@ export function ShareStructureForm({
       {mode === 'edit' && recordId ? (
         <PublicationStatusForm
           status={initial?.status}
+          machineAssisted={machineAssisted}
           action={updateShareStructureStatusAction.bind(null, recordId)}
         />
       ) : null}

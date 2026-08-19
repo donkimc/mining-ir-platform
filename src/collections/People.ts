@@ -7,6 +7,7 @@ import {
   tenantField,
 } from '@/lib/collection-hooks'
 import { disclosureLevelField, publicationStatusField, reviewFields } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { PERSON_GROUPS } from '@/lib/constants'
 import { PERSON_DISCLOSURE_FIELDS } from '@/lib/publishing'
 
@@ -58,5 +59,6 @@ export const People: CollectionConfig = {
     disclosureLevelField,
     publicationStatusField,
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

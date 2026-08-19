@@ -217,6 +217,45 @@ export interface Company {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -284,6 +323,45 @@ export interface Project {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -354,6 +432,45 @@ export interface NewsRelease {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -393,6 +510,45 @@ export interface Document {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -447,6 +603,45 @@ export interface Person {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -481,6 +676,45 @@ export interface ShareStructure {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -518,6 +752,45 @@ export interface ExplorationContent {
   reviewedBy?: (number | null) | User;
   reviewedAt?: string | null;
   publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -701,6 +974,17 @@ export interface CompaniesSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -754,6 +1038,17 @@ export interface ProjectsSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -803,6 +1098,17 @@ export interface NewsReleasesSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -826,6 +1132,17 @@ export interface DocumentsSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -846,6 +1163,17 @@ export interface PeopleSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -867,6 +1195,17 @@ export interface ShareStructuresSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -888,6 +1227,17 @@ export interface ExplorationContentsSelect<T extends boolean = true> {
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

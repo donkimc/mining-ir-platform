@@ -7,6 +7,7 @@ import {
   platformAdminOnly,
 } from '@/access'
 import { reviewFields } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { stripReviewMetadataAfterRead } from '@/lib/collection-hooks'
 import {
   applyReviewMetadata,
@@ -179,5 +180,6 @@ export const Companies: CollectionConfig = {
       ],
     },
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

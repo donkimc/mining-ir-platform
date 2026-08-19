@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 import { assertOwnedRecord } from '@/lib/dashboard-crud'
+import { assertAllowedIngestionFile } from '@/lib/ingestion'
 import { assertPublicationTransition, guardCreateNotPublished } from '@/lib/publishing'
 import {
   fieldErrorsFromZod,
@@ -165,6 +166,8 @@ export async function updateDocumentStatusAction(
     return { error: 'Choose a valid status.' }
   }
 
+  const sourceCheckAcknowledged = formData.get('sourceCheckAcknowledged') === 'true'
+
   try {
     assertPublicationTransition({
       incomingStatus: parsed.data.status,
@@ -185,6 +188,9 @@ export async function updateDocumentStatusAction(
       data: {
         status: parsed.data.status,
       },
+      context: {
+        sourceCheckAcknowledged,
+      },
     })
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Unable to update status.' }
@@ -193,4 +199,89 @@ export async function updateDocumentStatusAction(
   revalidatePath(`/dashboard/documents/${documentId}`)
   revalidateDocuments()
   return { success: 'Publication status updated.' }
+}
+
+export async function attachDocumentPdfAction(
+  documentId: string,
+  _prev: DocumentFormState,
+  formData: FormData,
+): Promise<DocumentFormState> {
+  const { user, tenantId } = await requireCompanyAdmin()
+  const payload = await getPayloadClient()
+
+  const owned = await assertOwnedRecord('documents', documentId, tenantId, user)
+  if ('error' in owned) return { error: owned.error }
+  const existing = owned.existing as { status?: string }
+
+  if (existing.status === 'published') {
+    return {
+      error:
+        'Published documents cannot receive a new file in place. Move to Review before replacing the file.',
+    }
+  }
+
+  const file = formData.get('pdf')
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: 'Choose a PDF file to upload.', fieldErrors: { pdf: 'Required' } }
+  }
+
+  try {
+    assertAllowedIngestionFile({
+      mimeType: file.type,
+      filename: file.name,
+      sizeBytes: file.size,
+    })
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Invalid file.' }
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  let mediaId: string | number | null = null
+
+  try {
+    const media = await payload.create({
+      collection: 'media',
+      user,
+      overrideAccess: false,
+      data: {
+        tenant: tenantId as unknown as number,
+        alt: file.name,
+      },
+      file: {
+        data: buffer,
+        mimetype: file.type || 'application/pdf',
+        name: file.name,
+        size: buffer.length,
+      },
+    })
+    mediaId = media.id
+
+    await payload.update({
+      collection: 'documents',
+      id: documentId,
+      user,
+      overrideAccess: false,
+      data: {
+        file: media.id as unknown as number,
+      },
+    })
+  } catch (error) {
+    if (mediaId != null) {
+      try {
+        await payload.delete({
+          collection: 'media',
+          id: mediaId,
+          user,
+          overrideAccess: false,
+        })
+      } catch {
+        // Best-effort orphan cleanup; object remains non-anonymous until published reference.
+      }
+    }
+    return { error: error instanceof Error ? error.message : 'Unable to attach PDF.' }
+  }
+
+  revalidatePath(`/dashboard/documents/${documentId}`)
+  revalidateDocuments()
+  return { success: 'PDF attached to this document (private until Published).' }
 }

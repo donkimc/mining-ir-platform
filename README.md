@@ -108,8 +108,10 @@ After `npm run seed`:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Platform Admin | `platform@mining-ir.local` | `ChangeMeLocal1!` |
-| Company Admin (Aurora Gold) | `admin@auroragold.local` | `ChangeMeLocal1!` |
+| Platform Admin | value of `SEED_PLATFORM_EMAIL` | value of `SEED_PLATFORM_PASSWORD` |
+| Company Admin (Aurora Gold) | value of `SEED_COMPANY_ADMIN_EMAIL` | value of `SEED_COMPANY_ADMIN_PASSWORD` |
+
+Both are read from your local `.env.local` (gitignored) by `npm run seed`. Change them there, not here — literal credentials are never published in this repository, including for local development.
 
 - Company Admin → `/login` → `/dashboard`
 - Platform Admin → `/login` → `/admin/tenants`
@@ -129,7 +131,11 @@ After `npm run seed`:
 | `npm run seed:reset` | Clear seeded collections and reseed (local/staging only — never Production) |
 | `npm run migrate` | Run Payload Postgres migrations (required when `PAYLOAD_DATABASE_PUSH=false`) |
 | `npm run migrate:create` | Generate a new migration from schema changes |
-| `npm run verify` | lint + typecheck + test + build |
+| `npm run verify` | lint + typecheck + test + migration-drift + `build:ci` — the release gate |
+| `npm run check:env` | Report required environment variables per environment (never prints values) |
+| `npm run check:migration-drift` | Fail if a collection field has no corresponding migration |
+| `npm run check:storage-privacy` | Probe that a Supabase Storage object is not anonymously downloadable |
+| `npm run test:incremental-migration` | Rehearse an incremental migration on a disposable database |
 | `npm run generate:types` | Regenerate `src/payload-types.ts` |
 | `npm run generate:importmap` | Regenerate Payload import map |
 

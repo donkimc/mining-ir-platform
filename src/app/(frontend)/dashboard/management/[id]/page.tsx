@@ -31,5 +31,5 @@ export default async function EditPersonPage({ params }: Props) {
     notFound()
   }
 
-  return <PersonForm mode="edit" personId={String(person.id)} initial={person} />
+  return <PersonForm mode="edit" personId={String(person.id)} initial={person as never} />
 }

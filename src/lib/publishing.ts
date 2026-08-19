@@ -194,6 +194,15 @@ export function stripForgedReviewMetadata<T extends Record<string, unknown>>(dat
   return next
 }
 
+/** Re-export provenance helpers used by collection hooks and tests. */
+export {
+  applySourceCheckMetadata,
+  assertMachineAssistedSourceCheck,
+  guardCreateNotMachinePublished,
+  restoreProvenanceFromOriginal,
+  stripForgedProvenanceMetadata,
+} from '@/lib/provenance'
+
 export function relationId(value: unknown): string | number | null {
   if (!value) return null
   if (typeof value === 'object' && value !== null && 'id' in value) {

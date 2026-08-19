@@ -7,6 +7,7 @@ import {
   stripReviewMetadataAfterRead,
 } from '@/lib/collection-hooks'
 import { publicationStatusField, reviewFields } from '@/lib/fields'
+import { provenanceFields } from '@/lib/provenance-fields'
 import { PROJECT_DISCLOSURE_FIELDS } from '@/lib/publishing'
 import { PROJECT_STAGES } from '@/lib/constants'
 import { validateHttpUrl } from '@/lib/validate-url'
@@ -111,5 +112,6 @@ export const Projects: CollectionConfig = {
       defaultValue: 0,
     },
     ...reviewFields,
+    ...provenanceFields,
   ],
 }

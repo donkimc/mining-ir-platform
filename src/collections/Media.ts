@@ -23,11 +23,19 @@ function payloadMediaFileUrl(filename: string): string {
   return `/api/media/file/${encodeURIComponent(filename)}`
 }
 
+/** Page size for anonymous media reference collection (S4-3). No hard total cap. */
+export const MEDIA_REFERENCE_PAGE_SIZE = 100
+
 /**
  * Anonymous visitors may only read media referenced by published Documents/People
  * for the **resolved** published tenant (N4: do not materialize IDs across all tenants).
+ *
+ * S4-3: paginate reference queries — do not silently cap at 1000.
  */
-export async function publishedReferencedMediaWhere(req: PayloadRequest): Promise<Where> {
+export async function publishedReferencedMediaWhere(
+  req: PayloadRequest,
+  options?: { pageSize?: number },
+): Promise<Where> {
   let companyId: string | number | null = null
   try {
     const { getPublishedCompanyBySlug, resolveTenantSlug } = await import('@/lib/tenant')
@@ -42,46 +50,41 @@ export async function publishedReferencedMediaWhere(req: PayloadRequest): Promis
     return { id: { in: [] } }
   }
 
-  const [documents, people] = await Promise.all([
-    req.payload.find({
-      collection: 'documents',
-      where: {
-        and: [
-          { status: { equals: 'published' } },
-          { tenant: { equals: companyId } },
-          { file: { exists: true } },
-        ],
-      },
-      limit: 1000,
-      depth: 0,
-      overrideAccess: true,
-    }),
-    req.payload.find({
-      collection: 'people',
-      where: {
-        and: [
-          { status: { equals: 'published' } },
-          { tenant: { equals: companyId } },
-          { headshot: { exists: true } },
-        ],
-      },
-      limit: 1000,
-      depth: 0,
-      overrideAccess: true,
-    }),
-  ])
-
   const mediaIds = new Set<string>()
+  const pageSize = options?.pageSize ?? MEDIA_REFERENCE_PAGE_SIZE
 
-  for (const doc of documents.docs) {
-    const fileId = relationId(doc.file)
-    if (fileId != null) mediaIds.add(String(fileId))
+  async function collectReferencedIds(
+    collection: 'documents' | 'people',
+    fileField: 'file' | 'headshot',
+  ) {
+    let page = 1
+    for (;;) {
+      const result = await req.payload.find({
+        collection,
+        where: {
+          and: [
+            { status: { equals: 'published' } },
+            { tenant: { equals: companyId } },
+            { [fileField]: { exists: true } },
+          ],
+        },
+        limit: pageSize,
+        page,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      for (const doc of result.docs) {
+        const fileId = relationId((doc as unknown as Record<string, unknown>)[fileField])
+        if (fileId != null) mediaIds.add(String(fileId))
+      }
+
+      if (!result.hasNextPage) break
+      page += 1
+    }
   }
 
-  for (const person of people.docs) {
-    const headshotId = relationId(person.headshot)
-    if (headshotId != null) mediaIds.add(String(headshotId))
-  }
+  await Promise.all([collectReferencedIds('documents', 'file'), collectReferencedIds('people', 'headshot')])
 
   return {
     id: {
