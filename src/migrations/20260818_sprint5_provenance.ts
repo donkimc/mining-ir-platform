@@ -1,5 +1,14 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
 
+/**
+ * Sprint 5 provenance columns (text default for content_origin).
+ *
+ * No companion `.json` snapshot: Payload drift CI compares only the latest migration
+ * snapshot (`20260819_sprint5_content_origin_enums.json`), which supersedes this step
+ * after the per-table enum follow-up. Omitting an intermediate snapshot is intentional
+ * — not a missing artifact (S5-4).
+ */
+
 const TABLES = [
   'companies',
   'projects',

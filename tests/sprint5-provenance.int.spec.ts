@@ -59,7 +59,7 @@ describe('sprint5 provenance + media authorization', () => {
     expect(src).not.toMatch(/limit:\s*1000/)
   })
 
-  it('rejects forged provenance on update and preserves machine origin', async () => {
+  it('errors on forged provenance update then preserves machine origin on legitimate edit', async () => {
     const proposal = await getDefaultExtractionAdapter().extractFromFixture()
     const project = await payload.find({
       collection: 'projects',
@@ -104,19 +104,42 @@ describe('sprint5 provenance + media authorization', () => {
 
     expect(createdDoc.contentOrigin).toBe('machine_assisted')
 
-    const forged = await payload.update({
+    await expect(
+      payload.update({
+        collection: 'exploration-contents',
+        id: createdDoc.id,
+        user: auroraAdmin as never,
+        overrideAccess: false,
+        data: {
+          contentOrigin: 'human_authored',
+          extractionRunId: 'forged-run',
+          summary: `${createdDoc.summary} edited`,
+        },
+      }),
+    ).rejects.toThrow(/cannot be modified by clients/i)
+
+    const afterForgeAttempt = await payload.findByID({
+      collection: 'exploration-contents',
+      id: createdDoc.id,
+      overrideAccess: true,
+      context: { skipPublicSerializer: true },
+    })
+    expect(afterForgeAttempt.contentOrigin).toBe('machine_assisted')
+    expect(afterForgeAttempt.extractionRunId).toBe(proposal.extractionRunId)
+    expect(afterForgeAttempt.summary).toBe(createdDoc.summary)
+
+    const edited = await payload.update({
       collection: 'exploration-contents',
       id: createdDoc.id,
       user: auroraAdmin as never,
       overrideAccess: false,
       data: {
-        contentOrigin: 'human_authored',
-        extractionRunId: 'forged-run',
         summary: `${createdDoc.summary} edited`,
       },
     })
-    expect(forged.contentOrigin).toBe('machine_assisted')
-    expect(forged.extractionRunId).toBe(proposal.extractionRunId)
+    expect(edited.contentOrigin).toBe('machine_assisted')
+    expect(edited.extractionRunId).toBe(proposal.extractionRunId)
+    expect(edited.summary).toBe(`${createdDoc.summary} edited`)
 
     await payload.update({
       collection: 'exploration-contents',

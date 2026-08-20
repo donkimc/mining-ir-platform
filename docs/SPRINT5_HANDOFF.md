@@ -360,25 +360,27 @@ Cursor or the implementing engineer must append evidence here before Sprint 5 is
 - Product Director scope and data-egress decision: **Assumed recommended narrower Sprint 5** (ingestion + provenance + review; no external AI egress per ADR-0013). Explicit Product Director sign-off still required for Done. **Production migrate decision (2026-08-19):** in-scope — migrate empty `bwftfsfbiyzgwztwtqmh` now; do not defer.
 - Commit SHA (implementation tip): `ff90259` on `origin/main` (includes provenance/ingestion through PDF open hardening). Earlier RC markers: `95e6666`, staging migrate note `0ebd168`.
 - Changed files: ADRs 0012–0015; provenance fields/hooks/migrations; Media pagination (S4-3); document PDF attach + sanitized object keys; session-streamed dashboard PDF open (no shareable signed URL); MachineOriginReviewPanel; fixture extraction adapter; S4-5 docs/env cleanup; ADR-0010/SECURITY updates; unit + integration tests.
-- Migration files and drift result: `20260818_sprint5_provenance.ts`, `20260819_sprint5_content_origin_enums.ts` (+ `.json` snapshot). `npm run check:migration-drift` **pass**.
+- Migration files and drift result: `20260818_sprint5_provenance.ts` (no companion `.json` by design — latest snapshot is `20260819_sprint5_content_origin_enums.json`; documented in migration comment, S5-4), `20260819_sprint5_content_origin_enums.ts` (+ `.json`). `npm run check:migration-drift` **pass**.
 - `npm run verify` result: **pass** locally (2026-08-19) on the Sprint 5 implementation commit family — lint, typecheck, tests, migration-drift, `build:ci`.
 - `npm run check:env` / deployed env observation:
   - Local `.env.local`: expected localhost + `PAYLOAD_DATABASE_PUSH=true` (not a deploy gate).
-  - Vercel **Production** and **Preview**: operator set `PAYLOAD_DATABASE_PUSH=false` in UI (2026-08-19); Production redeployed. `vercel env pull` still redacts Sensitive values as `[SENSITIVE]` — **pull Not verified** for readable `false` / CA PEM; UI operator observation recorded instead.
-  - `DATABASE_SSL_CA`: PRESENT on pulled Production/Preview files as Sensitive placeholder; treat full PEM observation as **Not verified via pull**.
+  - Vercel **Production** and **Preview**: operator set `PAYLOAD_DATABASE_PUSH=false` in UI (2026-08-19); Production redeployed.
+  - `vercel env pull` still redacts Sensitive values as `[SENSITIVE]`, so pull cannot read the literal `false` or the CA PEM. That alone understated the evidence.
+  - **Stronger observation (S5-2):** `src/lib/database-guards.ts` fails closed on Vercel — missing `DATABASE_SSL_CA` throws, `DATABASE_SSL_REJECT_UNAUTHORIZED=false` throws, `PAYLOAD_DATABASE_PUSH=true` throws. A serving deployment that answers DB-backed routes (e.g. `/api/projects` → 200 on the staging alias) therefore proves the CA is **present** and push is **not** `"true"`.
+  - **Limit (state honestly):** this does **not** prove the PEM contents, and it does **not** distinguish `PAYLOAD_DATABASE_PUSH=false` from the variable being absent (both are allowed).
 - Production project migration result (`bwftfsfbiyzgwztwtqmh`): **Verified 2026-08-19** (re-checked same day after `.env.production.local` ready). `payload migrate` with `PAYLOAD_DATABASE_PUSH=false` against pooler user `postgres.bwftfsfbiyzgwztwtqmh` completed (`Done.`). DB check: `payload_migrations` contains `20260812_061650_sprint2_content`, `20260812_132324_media_original_filename`, `20260818_sprint5_provenance`, `20260819_sprint5_content_origin_enums`; `companies.content_origin` uses `enum_companies_content_origin`. **Never** ran `seed:reset`. Fictional Production smoke seed: **not run** (schema-only). Vercel alias **not** cut over to this DB (still staging).
 - Staging schema migration (Vercel Production alias DB `jthotkkremiesvocfsmr`): **Applied 2026-08-19** — `20260818_sprint5_provenance` and `20260819_sprint5_content_origin_enums` with `PAYLOAD_DATABASE_PUSH=false`. Required after deploy of `95e6666` failed prerender with `column companies.content_origin does not exist`.
 - S4-3/S4-4/S4-5 results: S4-3 pagination + >1000 mock coverage in `tests/sprint5-provenance.int.spec.ts`; S4-4 ADR-0010/SECURITY updated; S4-5 literal seed passwords removed from tracked docs / `.env.example` emptied for passwords.
 - Ingestion and private-media evidence: Dashboard PDF attach + private Media path; object-key sanitization; session-checked `/dashboard/documents/[id]/file` stream (no signed URL). Browser smoke on staging alias: upload/open exercised by Product Director; incognito on app URL expected Login.
-- Provenance/machine-origin evidence: Server strip/restore, no downgrade, anon strip; int test forge + ack gate **pass**.
+- Provenance/machine-origin evidence: Server strip/restore backstop; client provenance mutation on update returns explicit 400 (S5-3); no downgrade; anon strip; int test forge error + ack gate **pass**.
 - Reviewer source-context evidence: `MachineOriginReviewPanel` + source-check checkbox on disclosure content types. Staging browser exercise: **partial** (PDF path exercised).
 - Plausible extraction-error evidence: Fixture adapter returns wrong grade/hole/units; int test reject→draft path **pass**.
 - External-egress/no-provider-call evidence: Fixture-only adapter (no network). Live provider secrets not added.
 - Restore/recovery evidence: Staging restore rehearsal remains prior-sprint evidence; Production restore not re-run this sprint.
 - Preview URL and deployment ID: Staging alias https://mining-ir-platform.vercel.app (Vercel Production → staging DB). Exact latest deployment ID: record from Vercel UI after redeploys.
-- Independent review result: **Pending**.
+- Independent review result: **Ship with conditions** (`docs/SPRINT5_REVIEW.md`, 2026-08-19). No Critical/High. Remediations for S5-2 (handoff evidence), S5-3 (explicit provenance mutation error), S5-4 (migration snapshot comment), and importMap CI guard (S5-1 class) applied after review; Product Director Done sign-off still required.
 - Deferred work and accepted risks:
-  - Readable `vercel env pull` for Sensitive vars (UI operator observation used for `PAYLOAD_DATABASE_PUSH=false`)
+  - PEM contents / literal `false` vs absent for `PAYLOAD_DATABASE_PUSH` (guard-based presence only; see S5-2)
   - Vercel cutover from staging DB to `bwftfsfbiyzgwztwtqmh` (explicit future decision)
   - Fictional smoke seed on real Production (optional; never `seed:reset`)
   - Preview `DATABASE_URI` repair if still broken for CLI Preview deploys

@@ -21,6 +21,50 @@ export type ProvenanceClaim = {
   unit?: string
 }
 
+/**
+ * On update, reject client attempts to *change* server-controlled provenance fields.
+ * Strip-and-restore remains the security backstop; this improves the API signal (S5-3).
+ * Payload Local API often echoes existing provenance keys on partial updates — identical
+ * values are allowed. Create may still include forged keys — they are stripped without error.
+ * Server paths that set `serverProvenance` in request context are allowed.
+ */
+export function assertNoClientProvenanceMutation(args: {
+  data: Record<string, unknown>
+  originalDoc?: Record<string, unknown> | null
+  operation?: 'create' | 'update' | string | null
+  allowServerProvenance?: boolean
+}): void {
+  if (args.operation !== 'update') return
+  if (args.allowServerProvenance) return
+
+  const attempted = PROVENANCE_FIELD_NAMES.filter((key) => {
+    if (!Object.prototype.hasOwnProperty.call(args.data, key)) return false
+    return !provenanceValuesEqual(args.data[key], args.originalDoc?.[key])
+  })
+  if (attempted.length === 0) return
+
+  throw new APIError(
+    `Server-controlled provenance fields cannot be modified by clients (${attempted.join(', ')}).`,
+    400,
+  )
+}
+
+function normalizeProvenanceValue(value: unknown): unknown {
+  if (value == null) return null
+  if (value instanceof Date) return value.toISOString()
+  if (typeof value === 'object' && value !== null && 'id' in value) {
+    return (value as { id: unknown }).id
+  }
+  return value
+}
+
+function provenanceValuesEqual(incoming: unknown, original: unknown): boolean {
+  return (
+    JSON.stringify(normalizeProvenanceValue(incoming)) ===
+    JSON.stringify(normalizeProvenanceValue(original))
+  )
+}
+
 /** Drop client-supplied provenance / origin / extraction / source-check fields. */
 export function stripForgedProvenanceMetadata<T extends Record<string, unknown>>(data: T): T {
   const next = { ...data }

@@ -17,6 +17,7 @@ import {
   applySourceCheckMetadata,
   assertDisclosureWriteAllowed,
   assertMachineAssistedSourceCheck,
+  assertNoClientProvenanceMutation,
   assertPublicationTransition,
   assertSameTenantRelation,
   assertSourceReferenceRequired,
@@ -139,15 +140,23 @@ export function createPublishableBeforeChange(args: {
   return async ({ data, originalDoc, req, operation }) => {
     if (!data) return data
 
-    let next = stripForgedReviewMetadata(data as Record<string, unknown>)
-    next = stripForgedProvenanceMetadata(next)
-
     const sourceCheckAcknowledged = Boolean(
       req.context && (req.context as { sourceCheckAcknowledged?: boolean }).sourceCheckAcknowledged,
     )
 
     const serverProvenance =
       req.context && (req.context as { serverProvenance?: Record<string, unknown> }).serverProvenance
+
+    // S5-3: explicit error when clients attempt provenance writes on update; strip/restore remain.
+    assertNoClientProvenanceMutation({
+      data: data as Record<string, unknown>,
+      originalDoc: originalDoc as Record<string, unknown> | undefined,
+      operation,
+      allowServerProvenance: Boolean(serverProvenance),
+    })
+
+    let next = stripForgedReviewMetadata(data as Record<string, unknown>)
+    next = stripForgedProvenanceMetadata(next)
 
     next = restoreProvenanceFromOriginal({
       data: next,
@@ -156,7 +165,6 @@ export function createPublishableBeforeChange(args: {
         typeof restoreProvenanceFromOriginal
       >[0]['serverProvenance'],
     })
-
     if (req.user && !isPlatformAdmin(req.user)) {
       const tenantId = relationId(next.tenant ?? originalDoc?.tenant)
       if (tenantId) {

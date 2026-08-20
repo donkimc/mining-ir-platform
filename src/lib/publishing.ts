@@ -198,6 +198,7 @@ export function stripForgedReviewMetadata<T extends Record<string, unknown>>(dat
 export {
   applySourceCheckMetadata,
   assertMachineAssistedSourceCheck,
+  assertNoClientProvenanceMutation,
   guardCreateNotMachinePublished,
   restoreProvenanceFromOriginal,
   stripForgedProvenanceMetadata,

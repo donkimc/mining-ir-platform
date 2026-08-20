@@ -9,6 +9,7 @@ import { assertAllowedIngestionFile, INGESTION_MAX_BYTES } from '@/lib/ingestion
 import {
   applySourceCheckMetadata,
   assertMachineAssistedSourceCheck,
+  assertNoClientProvenanceMutation,
   guardCreateNotMachinePublished,
   restoreProvenanceFromOriginal,
   stripForgedProvenanceMetadata,
@@ -26,6 +27,56 @@ describe('provenance (ADR-0012)', () => {
     expect(stripped.title).toBe('ok')
     expect(stripped.contentOrigin).toBeUndefined()
     expect(stripped.extractionRunId).toBeUndefined()
+  })
+
+  it('rejects client provenance mutations on update while allowing echoed or create values', () => {
+    expect(() =>
+      assertNoClientProvenanceMutation({
+        data: { title: 'x', contentOrigin: 'human_authored' },
+        originalDoc: { contentOrigin: 'machine_assisted' },
+        operation: 'update',
+      }),
+    ).toThrow(/cannot be modified by clients/i)
+
+    expect(() =>
+      assertNoClientProvenanceMutation({
+        data: { title: 'x', extractionProvider: null },
+        originalDoc: { extractionProvider: 'fixture-local' },
+        operation: 'update',
+      }),
+    ).toThrow(/extractionProvider/i)
+
+    expect(() =>
+      assertNoClientProvenanceMutation({
+        data: { title: 'x', contentOrigin: 'machine_assisted' },
+        originalDoc: { contentOrigin: 'machine_assisted' },
+        operation: 'update',
+      }),
+    ).not.toThrow()
+
+    expect(() =>
+      assertNoClientProvenanceMutation({
+        data: { title: 'x', contentOrigin: 'machine_assisted' },
+        operation: 'create',
+      }),
+    ).not.toThrow()
+
+    expect(() =>
+      assertNoClientProvenanceMutation({
+        data: { title: 'x' },
+        originalDoc: { contentOrigin: 'machine_assisted' },
+        operation: 'update',
+      }),
+    ).not.toThrow()
+
+    expect(() =>
+      assertNoClientProvenanceMutation({
+        data: { contentOrigin: 'human_authored' },
+        originalDoc: { contentOrigin: 'machine_assisted' },
+        operation: 'update',
+        allowServerProvenance: true,
+      }),
+    ).not.toThrow()
   })
 
   it('restores original machine origin and rejects downgrade', () => {
