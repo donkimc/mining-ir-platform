@@ -10,4 +10,4 @@ Build one platform serving multiple junior mining companies. Each company owns t
 
 ## Consequences
 
-Tenant scope and authorization are foundational. Aurora Gold is seed data, not a single-tenant runtime shortcut. Custom branding and templates remain configuration concerns.
+Tenant scope and authorization are foundational. Qelvarion Resource is seed data, not a single-tenant runtime shortcut. Custom branding and templates remain configuration concerns.

@@ -1,5 +1,7 @@
 # Sprint 3 Handoff — Production Hardening & Investor Readiness
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 ## Purpose
 
 Sprint 2 implementation is complete, but its independent review found release-blocking infrastructure and credential gaps. Sprint 3 closes those gaps before market data, analytics or investor-account features are started.

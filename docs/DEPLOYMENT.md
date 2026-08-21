@@ -55,7 +55,7 @@ Use a Supabase connection suitable for Vercel serverless runtime traffic. Keep s
 - [ ] Preview build succeeds with `npm run build`.
 - [ ] Preview variables point to Supabase Pro staging.
 - [ ] Staging schema is migrated.
-- [ ] Fictional Aurora Gold seed data exists.
+- [ ] Fictional Qelvarion Resource seed data exists.
 - [ ] No production secrets or local URLs are present.
 - [ ] Public Published-only reads work.
 - [ ] Dashboard authentication and tenant isolation work.
@@ -76,7 +76,7 @@ The Sprint 2 implementation may be complete while Production remains blocked. Be
 - [x] `DATABASE_SSL_CA` is configured and certificate verification is enabled in Preview and Production.
 - [x] `PAYLOAD_DATABASE_PUSH` is disabled outside local development and no undocumented override bypasses the guard.
 - [x] A controlled migration upgrades a copy of the prior Sprint 2 schema.
-- [x] A real fictional Aurora Gold file is uploaded to Supabase Storage and remains correctly protected after Preview deploy.
+- [x] A real fictional Qelvarion Resource file is uploaded to Supabase Storage and remains correctly protected after Preview deploy.
 - [x] Public API responses are explicitly minimized and do not reveal reviewer metadata.
 - [x] Backup restore/rollback runbook present; migration down/up rehearsed (dashboard PITR optional follow-up).
 - [x] The remediation changes are committed and the exact commit passes `npm run verify` plus migration-drift CI.

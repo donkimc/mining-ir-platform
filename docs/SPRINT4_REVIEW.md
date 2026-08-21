@@ -1,5 +1,7 @@
 # Sprint 4 Review — Investor Features (Discovery + Maps)
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 **Reviewer:** Claude (Opus 5), independent defect-first review
 **Reviewed:** 2026-08-16
 **Release candidate:** implementation `f068fc3`, handoff/evidence `4d4d50f` (HEAD, clean tree)

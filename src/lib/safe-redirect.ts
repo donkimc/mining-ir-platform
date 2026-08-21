@@ -1,5 +1,6 @@
 const ALLOWED_NEXT_PATHS = new Set([
   '/',
+  '/about',
   '/projects',
   '/news',
   '/documents',

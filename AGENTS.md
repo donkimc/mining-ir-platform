@@ -5,7 +5,7 @@ Build Mining IR Platform as a self-service, multi-tenant SaaS serving junior min
 
 Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes, mining-content workflows, human-review controls, private storage authorization, public API minimization and the public discovery/map surfaces. Do not call the product ready for customer content until the promotion gates below are satisfied.
 
-## Project Status (updated 2026-08-19)
+## Project Status (updated 2026-08-21)
 
 | Sprint | Scope | Status |
 | --- | --- | --- |
@@ -13,11 +13,12 @@ Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenan
 | 2 | Mining content — news, documents, people, share structure, exploration | ✅ Complete, reviewed |
 | 3 | Production hardening — private storage, secrets, TLS, migrations, guards | ✅ Complete, reviewed |
 | 4 | Investor features — public discovery, read-only maps, Sprint 3 carry-ins | ✅ Complete, reviewed |
-| 5 | Automation — ingestion, provenance, reviewer source checks (no external AI) | ▶ Implementation complete; independent review pending |
+| 5 | Automation — ingestion, provenance, reviewer source checks (no external AI) | ✅ Implementation complete; review Ship with conditions (remediations on main) |
+| 6 | Real-domain go-live, second tenant, summit template, marketing apex | ▶ Implementation in progress; DNS/cutover/review pending |
 
-**Review record:** `docs/SPRINT2_REVIEW.md`, `docs/SPRINT2_REREVIEW.md`, `docs/SPRINT2_CARRYFORWARD.md`, `docs/SPRINT3_REVIEW.md`, `docs/SPRINT4_REVIEW.md` (including its 2026-08-17 addendum). No Critical or High findings are open from Sprints 1–4. Sprint 5 review is pending (`docs/SPRINT5_HANDOFF.md`).
+**Review record:** Sprint 1–5 reviews closed for Critical/High (Sprint 5 remediations in `359a9ce`). Sprint 6 review pending (`docs/SPRINT6_HANDOFF.md`).
 
-**Verification command:** `npm run verify` = lint + typecheck + tests + migration-drift + `build:ci`. `npm run check:env` reports required environment variables per environment without printing values.
+**Verification command:** `npm run verify` = lint + typecheck + tests + migration-drift + retired-fixtures + `build:ci`.
 
 ### Deployment reality
 
@@ -61,7 +62,7 @@ Decisions recorded in ADR-0009 (investor-feature boundary), ADR-0010 (map provid
 - The anonymous serializer strips `reviewedBy`, `reviewedAt`, `publishedAt`, `tenant`, `websiteDomain`, `subdomain` and `templateKey`. Any collection with its own `afterRead` must compose the shared serializer, not replace it.
 - Maps are provider-neutral OpenStreetMap embeds with no API key. Third-party frames require an explicit CSP `frame-src` entry scoped to that origin — never a wildcard.
 - Coordinates render only for Published, same-tenant records with valid WGS84 values. Failure must degrade to text, never to a blank rectangle.
-- Every new public surface ships with a **negative-case fixture** — a Northern Copper record that must not appear. Two defects survived a full review cycle because no second-tenant record existed to leak.
+- Every new public surface ships with a **negative-case fixture** — a Zenthoriq Resource record that must not appear. Two defects survived a full review cycle because no second-tenant record existed to leak.
 
 ## Sprint 3 Baseline — Production Hardening (complete)
 
@@ -77,7 +78,7 @@ Close release-critical security and operations gaps before adding live market da
 - Rotate every credential that appeared in the review material, including the session signing secret, invalidate old sessions, and verify that no secret remains in Git, Notion, logs or build output.
 - Require verified PostgreSQL TLS with a configured CA in Preview and Production; remove or tightly quarantine the insecure certificate-verification escape hatch.
 - Test an incremental Payload migration against a database created from the prior Sprint 2 schema. Record upgrade, rollback/forward-recovery and drift results.
-- Upload at least one fictional Aurora Gold document to cloud staging and test Draft/Review denial, Published access, redeploy persistence and direct-object denial.
+- Upload at least one fictional Qelvarion Resource document to cloud staging and test Draft/Review denial, Published access, redeploy persistence and direct-object denial.
 - Expand security regression tests across every tenant-owned collection, including the four original collections and all Sprint 2 collections. Cover cross-tenant reads/writes, public serializers, reviewer metadata, API enumeration and related-record ownership.
 - Prevent production database guard waivers and schema auto-push. Production and Preview must fail closed when migration or required security configuration is missing.
 - Minimize anonymous API responses so they expose only intentionally public Published fields and never internal reviewer IDs, tenant enumeration or draft existence.
@@ -128,7 +129,7 @@ Sprint 2 proves this loop:
 2. Disclosure-sensitive content moves through Draft → Review → Published only after explicit human approval.
 3. Investors see only the tenant's Published mining content in the Explorer website.
 
-Use Aurora Gold as fictional demo data and Northern Copper as the isolation fixture. Demo claims must be clearly fictional and must not be presented as real investment advice.
+Use Qelvarion Resource as fictional demo data and Zenthoriq Resource as the isolation fixture. Demo claims must be clearly fictional and must not be presented as real investment advice.
 
 ## Sprint 2 Scope
 
@@ -145,7 +146,7 @@ Implement the narrowest complete mining-content workflow on top of Sprint 1.
 - Reviewer identity and review timestamp on approval.
 - Public Explorer sections for published News, Documents, Management, Share Structure and Exploration content.
 - Tenant isolation, role authorization, published-only reads and disclosure-review tests for every new collection.
-- Fictional Aurora Gold seed records and at least one unpublished record per sensitive content type.
+- Fictional Qelvarion Resource seed records and at least one unpublished record per sensitive content type.
 - Documentation and ADR updates for implementation choices.
 
 ### Sprint 2 Required Routes
@@ -175,7 +176,7 @@ Implement the narrowest complete mining-content workflow on top of Sprint 1.
 - Approval must be status-only against content already at rest; the same request must not both change disclosure fields and approve them.
 - Approval records reviewedBy, reviewedAt and publishedAt where applicable; reviewer values are server-derived.
 - Source URL or source document is required for technical claims, exploration results, share counts and material financial facts.
-- Use fictional, clearly labeled Aurora Gold data only. Do not copy real company claims into the demo seed.
+- Use fictional, clearly labeled Qelvarion Resource data only. Do not copy real company claims into the demo seed.
 
 ### Sprint 2 Content Fields
 
@@ -198,14 +199,14 @@ Minimum fields, adapted to existing code conventions:
 
 Sprint 1 proves this loop:
 
-1. Platform Admin provisions the fictional first tenant, Aurora Gold.
+1. Platform Admin provisions the fictional first tenant, Qelvarion Resource.
 2. Mining Company Admin edits tenant-scoped company and project data.
-3. Public Explorer website renders only published Aurora Gold data for Investors.
+3. Public Explorer website renders only published Qelvarion Resource data for Investors.
 
 ## Product Direction
 - Product: self-service investor relations website platform for junior mining companies.
 - Business model direction: multi-tenant SaaS, not one-off freelance sites.
-- First tenant: Aurora Gold, fictional demo mining company.
+- First tenant: Qelvarion Resource, fictional demo mining company.
 - First template: Explorer, optimized for junior exploration companies.
 - MVP personas:
   - Investor: public visitor, no login.
@@ -233,7 +234,7 @@ Implement the narrowest useful vertical slice.
 - Initialize the application and development tooling.
 - Add repository documentation structure.
 - Create tenant-aware Company/Tenant model.
-- Seed Aurora Gold as the first fictional tenant.
+- Seed Qelvarion Resource as the first fictional tenant.
 - Create Project model linked to Company/Tenant.
 - Render public Explorer homepage from tenant-scoped published data.
 - Render public project list and project detail pages.
@@ -269,8 +270,8 @@ The public Sprint 1 surface is limited to Home, Projects and Project Detail. New
 
 ## Architecture Rules
 - Every tenant-owned record must be scoped to a Company/Tenant.
-- Do not hard-code Aurora Gold as the only possible tenant.
-- Aurora Gold may be hard-coded only as seed/demo data.
+- Do not hard-code Qelvarion Resource as the only possible tenant.
+- Qelvarion Resource may be hard-coded only as seed/demo data.
 - Company Admins can access only their authorized tenant.
 - Platform Admins can manage all tenants.
 - Server-side authorization is mandatory. UI hiding is not authorization.
@@ -498,7 +499,7 @@ Build the Explorer public experience first.
 
 ### Homepage Requirements
 Show:
-- Aurora Gold identity.
+- Qelvarion Resource identity.
 - Ticker/exchange placeholder.
 - One-sentence company positioning.
 - Investment thesis.
@@ -557,7 +558,7 @@ Project editing should support:
 Build the minimum needed to preserve master-admin control:
 
 - View tenants.
-- Confirm Aurora Gold tenant settings.
+- Confirm Qelvarion Resource tenant settings.
 - Assign or represent user membership/role.
 - Keep Platform Admin access separate from Company Admin access.
 
@@ -572,7 +573,7 @@ Build the minimum needed to preserve master-admin control:
 - Published sensitive content cannot be silently rewritten without review.
 - Approval is a separate, server-validated status-only action with reviewer identity and timestamp.
 - Technical and material content has source-link or source-document affordances.
-- Aurora Gold seed content is fictional and clearly labeled where appropriate.
+- Qelvarion Resource seed content is fictional and clearly labeled where appropriate.
 - Tests cover own-tenant access, wrong-tenant access, role boundaries, published-only reads, review gates and public rendering.
 - Lint, typecheck, tests and production build pass.
 - README, architecture, data model, design, security, testing, roadmap, ADR and Sprint 2 handoff are updated.
@@ -632,7 +633,7 @@ Before marking Sprint 1 work complete:
 - App starts locally.
 - README explains setup and available scripts.
 - Tenant-owned data is scoped by Company/Tenant.
-- Aurora Gold seed data exists.
+- Qelvarion Resource seed data exists.
 - Public Explorer pages render from structured data.
 - Public pages show Published content only.
 - Company Admin dashboard can update tenant-scoped data.
@@ -653,7 +654,7 @@ When reviewing implementation, prioritize:
 - Tenant isolation bugs.
 - Server-side authorization gaps.
 - Public exposure of Draft or Review content.
-- Hard-coded Aurora Gold assumptions outside seed/demo data.
+- Hard-coded Qelvarion Resource assumptions outside seed/demo data.
 - Missing human approval guard for technical disclosure.
 - Incomplete dashboard-to-public-site data flow.
 - Broken responsive layouts on investor pages.
@@ -670,7 +671,7 @@ These are not style preferences. Each one is the direct product of a defect that
 
 3. **Schema changes require a generated migration in the same commit.** Local `push: true` masked a missing migration and broke staging. Drift CI now enforces this.
 
-4. **Isolation tests need a negative fixture.** A test with nothing to leak proves nothing. Seed the Northern Copper record that must not appear.
+4. **Isolation tests need a negative fixture.** A test with nothing to leak proves nothing. Seed the Zenthoriq Resource record that must not appear.
 
 5. **For race-shaped or timing-dependent behaviour, one successful observation is not evidence.** Repeat it. A map that worked once was removed on half of subsequent loads.
 

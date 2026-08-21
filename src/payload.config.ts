@@ -8,6 +8,7 @@ import sharp from 'sharp'
 
 import { Catalysts } from './collections/Catalysts'
 import { Companies } from './collections/Companies'
+import { CompanyListings } from './collections/CompanyListings'
 import { Documents } from './collections/Documents'
 import { ExplorationContents } from './collections/ExplorationContents'
 import { InvestmentHighlights } from './collections/InvestmentHighlights'
@@ -50,6 +51,7 @@ export default buildConfig({
   collections: [
     Users,
     Companies,
+    CompanyListings,
     TenantMemberships,
     Projects,
     InvestmentHighlights,

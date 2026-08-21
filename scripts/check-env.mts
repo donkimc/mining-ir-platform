@@ -20,7 +20,6 @@ const REQUIRED = [
   'DATABASE_SSL_CA',
   'PAYLOAD_SECRET',
   'NEXT_PUBLIC_SERVER_URL',
-  'DEFAULT_TENANT_SLUG',
   'PAYLOAD_DATABASE_PUSH',
   'S3_BUCKET',
   'S3_ACCESS_KEY_ID',
@@ -28,6 +27,9 @@ const REQUIRED = [
   'S3_REGION',
   'S3_ENDPOINT',
 ] as const
+
+/** Local/script-only (ADR-0016). Must be absent from Vercel Preview/Production. */
+const LOCAL_ONLY = ['DEFAULT_TENANT_SLUG'] as const
 
 function isPresent(value: string | undefined): boolean {
   return typeof value === 'string' && value.trim().length > 0
@@ -91,6 +93,22 @@ function main(): void {
     if (key === 'PAYLOAD_DATABASE_PUSH' && present && value?.trim() === 'true') {
       warnings.push(
         'PAYLOAD_DATABASE_PUSH is "true" — Preview/Production must keep this false or unset so schema push cannot run.',
+      )
+    }
+  }
+
+  for (const key of LOCAL_ONLY) {
+    const value = process.env[key]
+    const present = isPresent(value)
+    console.log(`${key}: ${present ? 'PRESENT' : 'MISSING'} (local/script-only)`)
+    if (
+      present &&
+      (process.env.VERCEL === '1' ||
+        process.env.VERCEL_ENV === 'preview' ||
+        process.env.VERCEL_ENV === 'production')
+    ) {
+      warnings.push(
+        `${key} must be absent from Vercel Preview/Production — hostname routing resolves tenants (ADR-0016).`,
       )
     }
   }

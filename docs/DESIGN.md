@@ -2,7 +2,7 @@
 
 ## Public Explorer
 
-Home communicates Aurora Gold's identity, positioning, investment thesis, highlights, flagship project and key metrics. Projects lists published projects with optional server-side search/filter. Project Detail presents summary, jurisdiction, commodity, stage, ownership, highlights, a read-only illustrative location map (OpenStreetMap embed when coordinates are valid, with always-visible text fallback), related published news/documents and source links for material technical claims.
+Home communicates Qelvarion Resource's identity, positioning, investment thesis, highlights, flagship project and key metrics. Projects lists published projects with optional server-side search/filter. Project Detail presents summary, jurisdiction, commodity, stage, ownership, highlights, a read-only illustrative location map (OpenStreetMap embed when coordinates are valid, with always-visible text fallback), related published news/documents and source links for material technical claims.
 
 ## Company Dashboard
 

@@ -18,7 +18,7 @@ npm run build
 
 | Scenario | Expected result |
 | --- | --- |
-| Public visitor opens Home | Published Aurora Gold data only |
+| Public visitor opens Home | Published Qelvarion Resource data only |
 | Public visitor opens Projects | Published projects for the resolved tenant only |
 | Public visitor opens draft project | Not found or excluded |
 | Unauthenticated user opens dashboard | Redirect to login or equivalent |
@@ -35,7 +35,7 @@ npm run build
 
 ## Manual Smoke Test
 
-1. Start the app with seeded Aurora Gold data.
+1. Start the app with seeded Qelvarion Resource data.
 2. Open Home, Projects and a Project Detail page on desktop and mobile widths.
 3. Log in as Company Admin and edit a profile field.
 4. Confirm the edit remains private until the defined publish action.
@@ -73,7 +73,7 @@ It records what shipped, local login credentials, commands run and results, ADR/
 
 ## Sprint 2 Manual Smoke Test
 
-1. Seed fictional Aurora Gold content, including at least one Draft News Release and one Draft Share Structure.
+1. Seed fictional Qelvarion Resource content, including at least one Draft News Release and one Draft Share Structure.
 2. Create and save a News Release, Document, Person, Share Structure and Exploration record as Company Admin.
 3. Confirm each remains private while Draft or Review.
 4. Approve content through the separate review action and confirm it appears publicly.
@@ -132,8 +132,8 @@ Record the command, commit SHA, environment class, deployment URL, Supabase proj
 | Scenario | Expected result |
 | --- | --- |
 | Anonymous `/api/companies` | Only resolved tenant; no `websiteDomain` / `subdomain` / `templateKey` |
-| Anonymous serializers | No `tenant`, reviewer fields or Northern poison strings |
-| Projects/News/Documents filters | Published Aurora matches only; Draft/Review/Archived/Northern absent |
+| Anonymous serializers | No `tenant`, reviewer fields or Zenthoriq poison strings |
+| Projects/News/Documents filters | Published Qelvarion matches only; Draft/Review/Archived/Zenthoriq absent |
 | Related project content | Same-tenant Published news/documents only |
 | Valid Published coordinates | Illustrative OSM embed + text fallback; no API key in HTML |
 | Invalid/missing/wrong-tenant coordinates | Text fallback only; no unauthorized marker |

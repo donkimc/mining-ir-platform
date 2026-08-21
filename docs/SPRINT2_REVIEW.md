@@ -1,5 +1,7 @@
 # Sprint 2 Code Review — Defect Report
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 **Reviewer:** Claude (Opus 5), defect-first review
 **Date:** 2026-08-12
 **Scope:** Sprint 2 mining content workflows, per `AGENTS.md` and `docs/SPRINT2_HANDOFF.md`

@@ -29,12 +29,12 @@ const TENANT_OWNED_COLLECTIONS = [
   'catalysts',
 ] as const
 
-const NORTHERN_POISON = [
-  'NORTHERN SECRET',
-  'NORTHERN CATALYST SECRET',
-  'Copper Ridge Isolation',
-  'copper-ridge-isolation',
-  'Northern Copper Isolation',
+const ZENTHORIQ_POISON = [
+  'ZENTHORIQ SECRET',
+  'ZENTHORIQ CATALYST SECRET',
+  'Hollowspire Isolation',
+  'hollowspire-isolation',
+  'Zenthoriq Resource Isolation',
   '54.123456',
   '-125.654321',
 ] as const
@@ -48,40 +48,40 @@ function tenantIdOf(doc: { tenant?: unknown }): string | null {
 
 function jsonHasPoison(value: unknown): boolean {
   const text = JSON.stringify(value)
-  return NORTHERN_POISON.some((poison) => text.includes(poison))
+  return ZENTHORIQ_POISON.some((poison) => text.includes(poison))
 }
 
 describe('Sprint 3/4 public API serializers and tenant isolation', () => {
   let payload: Payload
-  let auroraId: string | number
-  let northernId: string | number
+  let qelvarionId: string | number
+  let zenthoriqId: string | number
   let companyAdmin: { id: string | number }
   let platformAdmin: { id: string | number }
 
   beforeAll(async () => {
     payload = await getPayload({ config })
 
-    const aurora = await payload.find({
+    const qelvarion = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'aurora-gold' } },
+      where: { slug: { equals: 'qelvarion-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    const northern = await payload.find({
+    const zenthoriq = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'northern-copper' } },
+      where: { slug: { equals: 'zenthoriq-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    if (!aurora.docs[0] || !northern.docs[0]) {
+    if (!qelvarion.docs[0] || !zenthoriq.docs[0]) {
       throw new Error('Seed data missing. Run `npm run seed` before integration tests.')
     }
-    auroraId = aurora.docs[0].id
-    northernId = northern.docs[0].id
+    qelvarionId = qelvarion.docs[0].id
+    zenthoriqId = zenthoriq.docs[0].id
 
     const admins = await payload.find({
       collection: 'users',
-      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@auroragold.local' } },
+      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@qelvarion.local' } },
       limit: 1,
       overrideAccess: true,
     })
@@ -105,7 +105,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
       publishedAt: '2026-01-02',
       tenant: 42,
       websiteDomain: 'example.com',
-      subdomain: 'aurora',
+      subdomain: 'qelvarion',
       templateKey: 'explorer',
       status: 'published',
     })
@@ -115,7 +115,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
     }
   })
 
-  it('anonymous reads of every tenant-owned collection are published-only, strip internals, and exclude Northern poison', async () => {
+  it('anonymous reads of every tenant-owned collection are published-only, strip internals, and exclude Zenthoriq poison', async () => {
     for (const collection of TENANT_OWNED_COLLECTIONS) {
       const anon = await payload.find({
         collection,
@@ -144,7 +144,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
     })
     expect(anon.docs).toHaveLength(1)
     const company = anon.docs[0] as unknown as Record<string, unknown>
-    expect(company.slug).toBe(process.env.DEFAULT_TENANT_SLUG || 'aurora-gold')
+    expect(company.slug).toBe(process.env.DEFAULT_TENANT_SLUG || 'qelvarion-resource')
     expect(company.publicationStatus).toBe('published')
     for (const key of [...REVIEW_KEYS, ...PLATFORM_KEYS, 'tenant']) {
       expect(company).not.toHaveProperty(key)
@@ -174,7 +174,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
     const drafts = await payload.find({
       collection: 'news-releases',
       where: {
-        and: [{ tenant: { equals: auroraId } }, { status: { equals: 'draft' } }],
+        and: [{ tenant: { equals: qelvarionId } }, { status: { equals: 'draft' } }],
       },
       limit: 5,
       depth: 0,
@@ -182,7 +182,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
       user: companyAdmin,
     })
     expect(drafts.docs.length).toBeGreaterThan(0)
-    expect(drafts.docs.every((doc) => tenantIdOf(doc as { tenant?: unknown }) === String(auroraId))).toBe(true)
+    expect(drafts.docs.every((doc) => tenantIdOf(doc as { tenant?: unknown }) === String(qelvarionId))).toBe(true)
   })
 
   it('platform admin can read across tenants', async () => {
@@ -194,16 +194,16 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
       user: platformAdmin,
     })
     const tenants = new Set(highlights.docs.map((doc) => tenantIdOf(doc as { tenant?: unknown })))
-    expect(tenants.has(String(auroraId))).toBe(true)
-    expect(tenants.has(String(northernId))).toBe(true)
+    expect(tenants.has(String(qelvarionId))).toBe(true)
+    expect(tenants.has(String(zenthoriqId))).toBe(true)
   })
 
-  it('L-2: Northern Copper poison fixtures exist for projects, highlights and catalysts', async () => {
+  it('L-2: Zenthoriq Resource poison fixtures exist for projects, highlights and catalysts', async () => {
     const [projects, highlights, catalysts] = await Promise.all([
       payload.find({
         collection: 'projects',
         where: {
-          and: [{ tenant: { equals: northernId } }, { slug: { equals: 'copper-ridge-isolation' } }],
+          and: [{ tenant: { equals: zenthoriqId } }, { slug: { equals: 'hollowspire-isolation' } }],
         },
         limit: 1,
         overrideAccess: true,
@@ -211,7 +211,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
       payload.find({
         collection: 'investment-highlights',
         where: {
-          and: [{ tenant: { equals: northernId } }, { title: { equals: 'NORTHERN SECRET' } }],
+          and: [{ tenant: { equals: zenthoriqId } }, { title: { equals: 'ZENTHORIQ SECRET' } }],
         },
         limit: 1,
         overrideAccess: true,
@@ -220,8 +220,8 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
         collection: 'catalysts',
         where: {
           and: [
-            { tenant: { equals: northernId } },
-            { title: { equals: 'NORTHERN CATALYST SECRET' } },
+            { tenant: { equals: zenthoriqId } },
+            { title: { equals: 'ZENTHORIQ CATALYST SECRET' } },
           ],
         },
         limit: 1,
@@ -233,7 +233,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
     expect(catalysts.docs[0]).toBeTruthy()
   })
 
-  it('anonymous investment-highlights and catalysts never include Northern poison titles', async () => {
+  it('anonymous investment-highlights and catalysts never include Zenthoriq poison titles', async () => {
     const [highlights, catalysts] = await Promise.all([
       payload.find({
         collection: 'investment-highlights',
@@ -250,53 +250,53 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
         user: null,
       }),
     ])
-    expect(highlights.docs.some((doc) => (doc as { title?: string }).title === 'NORTHERN SECRET')).toBe(
+    expect(highlights.docs.some((doc) => (doc as { title?: string }).title === 'ZENTHORIQ SECRET')).toBe(
       false,
     )
     expect(
-      catalysts.docs.some((doc) => (doc as { title?: string }).title === 'NORTHERN CATALYST SECRET'),
+      catalysts.docs.some((doc) => (doc as { title?: string }).title === 'ZENTHORIQ CATALYST SECRET'),
     ).toBe(false)
   })
 
-  it('discovery queries return Published Aurora matches and exclude Draft/Northern poison', async () => {
-    const projects = await getPublishedProjects(auroraId, { q: 'Ridge' })
+  it('discovery queries return Published Qelvarion matches and exclude Draft/Zenthoriq poison', async () => {
+    const projects = await getPublishedProjects(qelvarionId, { q: 'Ridge' })
     expect(projects.length).toBeGreaterThan(0)
     expect(projects.every((p) => p.status === 'published')).toBe(true)
     expect(jsonHasPoison(projects)).toBe(false)
     expect(projects.every((p) => !Object.prototype.hasOwnProperty.call(p, 'tenant'))).toBe(true)
 
-    const empty = await getPublishedProjects(auroraId, { q: 'NORTHERN SECRET' })
+    const empty = await getPublishedProjects(qelvarionId, { q: 'ZENTHORIQ SECRET' })
     expect(empty).toHaveLength(0)
 
-    const news = await getPublishedNews(auroraId, { q: 'draft-should-not-match-zzz' })
+    const news = await getPublishedNews(qelvarionId, { q: 'draft-should-not-match-zzz' })
     expect(news).toHaveLength(0)
   })
 
   it('related published content stays same-tenant and published-only', async () => {
-    const auroraProjects = await payload.find({
+    const qelvarionProjects = await payload.find({
       collection: 'projects',
       where: {
-        and: [{ tenant: { equals: auroraId } }, { status: { equals: 'published' } }],
+        and: [{ tenant: { equals: qelvarionId } }, { status: { equals: 'published' } }],
       },
       limit: 1,
       overrideAccess: true,
     })
-    const project = auroraProjects.docs[0]
+    const project = qelvarionProjects.docs[0]
     expect(project).toBeTruthy()
-    const related = await getRelatedPublishedForProject(auroraId, project!.id)
+    const related = await getRelatedPublishedForProject(qelvarionId, project!.id)
     expect(jsonHasPoison(related)).toBe(false)
     expect(related.news.every((n) => n.status === 'published')).toBe(true)
     expect(related.documents.every((d) => d.status === 'published')).toBe(true)
 
-    const northernProjects = await payload.find({
+    const zenthoriqProjects = await payload.find({
       collection: 'projects',
-      where: { tenant: { equals: northernId } },
+      where: { tenant: { equals: zenthoriqId } },
       limit: 1,
       overrideAccess: true,
     })
-    const northernProject = northernProjects.docs[0]
-    expect(northernProject).toBeTruthy()
-    const cross = await getRelatedPublishedForProject(auroraId, northernProject!.id)
+    const zenthoriqProject = zenthoriqProjects.docs[0]
+    expect(zenthoriqProject).toBeTruthy()
+    const cross = await getRelatedPublishedForProject(qelvarionId, zenthoriqProject!.id)
     expect(cross.news).toHaveLength(0)
     expect(cross.documents).toHaveLength(0)
   })

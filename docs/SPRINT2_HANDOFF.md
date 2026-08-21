@@ -1,5 +1,7 @@
 # Sprint 2 Implementation Handoff
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 Cursor should read `AGENTS.md` and all files under `docs/` before implementation. Sprint 1 is the working baseline; preserve its routes, auth model, tenant isolation and tests.
 
 ## Goal

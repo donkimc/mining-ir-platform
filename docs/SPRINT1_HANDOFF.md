@@ -1,5 +1,7 @@
 # Sprint 1 Review Handoff
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 Hand-off for post-implementation review (Claude or human). Read this after running the app locally. Product/engineering contract remains `AGENTS.md`.
 
 **Status:** Sprint 1 vertical slice implemented and verified locally on 2026-08-11.

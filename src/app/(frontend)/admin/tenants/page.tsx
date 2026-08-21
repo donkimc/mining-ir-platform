@@ -18,7 +18,7 @@ export default async function AdminTenantsPage() {
       <div>
         <h1 className="display text-4xl text-white">Tenants</h1>
         <p className="mt-2 text-[#9db0bc]">
-          Platform-wide company list. Aurora Gold is the Sprint 1 demo tenant.
+          Platform-wide company list. Qelvarion Resource is the Sprint 1 demo tenant.
         </p>
       </div>
       <ul className="divide-y divide-white/10 border border-white/10">

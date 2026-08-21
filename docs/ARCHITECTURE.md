@@ -24,7 +24,7 @@ Recorded in [ADR-0005](decisions/ADR-0005-auth-tenant-resolution-cms-path.md):
 - Public routes: published investor-facing data only.
 - Company Admin routes: one active tenant membership only.
 - Platform Admin routes: cross-tenant management with an explicit platform role.
-- Seed scripts: create Aurora Gold and test memberships; they must not make Aurora Gold a global runtime assumption.
+- Seed scripts: create Qelvarion Resource and test memberships; they must not make Qelvarion Resource a global runtime assumption.
 
 ## Sprint 4 public discovery and maps
 

@@ -200,3 +200,29 @@ a {
   border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
   padding: 1.25rem;
 }
+
+/* Summit presentation template (ADR-0017) — denser corporate rhythm, shared tokens. */
+.template-summit {
+  --ink: #101820;
+  --ink-soft: #3a4650;
+  --paper: #f7f5f1;
+  --paper-deep: #e8e2d8;
+  --forest: #1a3344;
+  --forest-deep: #0c1a24;
+  --mineral: #b08d57;
+  --mineral-soft: #d2b88a;
+}
+
+.template-summit .display {
+  letter-spacing: -0.02em;
+}
+
+.summit-hero {
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--forest-deep) 88%, black), var(--forest)),
+    var(--forest-deep);
+}
+
+.marketing-hero {
+  min-height: 85vh;
+}

@@ -6,13 +6,13 @@ import { useEffect, useId, useState } from 'react'
 
 const links = [
   { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
   { href: '/projects', label: 'Projects' },
   { href: '/news', label: 'News' },
   { href: '/documents', label: 'Documents' },
   { href: '/management', label: 'Management' },
   { href: '/share-structure', label: 'Share structure' },
   { href: '/investors', label: 'Investors' },
-  { href: '/corporate', label: 'Corporate' },
   { href: '/contact', label: 'Contact' },
 ]
 

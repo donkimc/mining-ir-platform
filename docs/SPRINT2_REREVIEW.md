@@ -1,5 +1,7 @@
 # Sprint 2 Remediation Re-Review
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 **Reviewer:** Claude (Opus 5), defect-first re-review
 **Date:** 2026-08-12
 **Baseline:** [`SPRINT2_REVIEW.md`](./SPRINT2_REVIEW.md) — findings C1, H1, H2, H3, M1–M5, L1–L8

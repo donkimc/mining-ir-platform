@@ -12,7 +12,7 @@ Mining IR Platform is a self-service, multi-tenant SaaS that gives junior mining
 
 ## Sprint 1 Promise
 
-Prove the loop: provision Aurora Gold → Company Admin edits tenant data → Explorer public site renders Published data only.
+Prove the loop: provision Qelvarion Resource → Company Admin edits tenant data → Explorer public site renders Published data only.
 
 ## Sprint 1 Surface
 

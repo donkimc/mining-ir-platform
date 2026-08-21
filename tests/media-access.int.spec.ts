@@ -11,67 +11,67 @@ import config from '@payload-config'
 
 describe('media access control (C1)', () => {
   let payload: Payload
-  let auroraId: string | number
-  let northernId: string | number
-  let auroraAdmin: { id: string | number; email: string }
-  let northernAdmin: { id: string | number; email: string }
-  let northernMembershipId: string | number | null = null
+  let qelvarionId: string | number
+  let zenthoriqId: string | number
+  let qelvarionAdmin: { id: string | number; email: string }
+  let zenthoriqAdmin: { id: string | number; email: string }
+  let zenthoriqMembershipId: string | number | null = null
   const created: Array<{ collection: string; id: string | number }> = []
 
   beforeAll(async () => {
     payload = await getPayload({ config })
 
-    const aurora = await payload.find({
+    const qelvarion = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'aurora-gold' } },
+      where: { slug: { equals: 'qelvarion-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    const northern = await payload.find({
+    const zenthoriq = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'northern-copper' } },
+      where: { slug: { equals: 'zenthoriq-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    if (!aurora.docs[0] || !northern.docs[0]) {
+    if (!qelvarion.docs[0] || !zenthoriq.docs[0]) {
       throw new Error('Seed data missing. Run `npm run seed` before integration tests.')
     }
-    auroraId = aurora.docs[0].id
-    northernId = northern.docs[0].id
+    qelvarionId = qelvarion.docs[0].id
+    zenthoriqId = zenthoriq.docs[0].id
 
-    const auroraAdmins = await payload.find({
+    const qelvarionAdmins = await payload.find({
       collection: 'users',
-      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@auroragold.local' } },
+      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@qelvarion.local' } },
       limit: 1,
       overrideAccess: true,
     })
-    auroraAdmin = auroraAdmins.docs[0] as { id: string | number; email: string }
+    qelvarionAdmin = qelvarionAdmins.docs[0] as { id: string | number; email: string }
 
-    const northernEmail = `northern-media-admin-${randomUUID().slice(0, 8)}@example.local`
-    const northernUser = await payload.create({
+    const zenthoriqEmail = `zenthoriq-media-admin-${randomUUID().slice(0, 8)}@example.local`
+    const zenthoriqUser = await payload.create({
       collection: 'users',
       data: {
-        email: northernEmail,
-        password: 'TestNorthernMedia1!',
-        name: 'Northern Media Admin',
+        email: zenthoriqEmail,
+        password: 'TestZenthoriqMedia1!',
+        name: 'Zenthoriq Media Admin',
         status: 'active',
       },
       overrideAccess: true,
     })
-    northernAdmin = northernUser as { id: string | number; email: string }
-    created.push({ collection: 'users', id: northernUser.id })
+    zenthoriqAdmin = zenthoriqUser as { id: string | number; email: string }
+    created.push({ collection: 'users', id: zenthoriqUser.id })
 
     const membership = await payload.create({
       collection: 'tenant-memberships',
       data: {
-        user: northernUser.id,
-        tenant: northernId,
+        user: zenthoriqUser.id,
+        tenant: zenthoriqId,
         role: 'company_admin',
         status: 'active',
       },
       overrideAccess: true,
     })
-    northernMembershipId = membership.id
+    zenthoriqMembershipId = membership.id
     created.push({ collection: 'tenant-memberships', id: membership.id })
   })
 
@@ -79,8 +79,8 @@ describe('media access control (C1)', () => {
     while (created.length) {
       const item = created.pop()
       if (!item) break
-      if (item.collection === 'users' && String(item.id) === String(northernAdmin?.id)) continue
-      if (item.collection === 'tenant-memberships' && String(item.id) === String(northernMembershipId)) {
+      if (item.collection === 'users' && String(item.id) === String(zenthoriqAdmin?.id)) continue
+      if (item.collection === 'tenant-memberships' && String(item.id) === String(zenthoriqMembershipId)) {
         continue
       }
       try {
@@ -170,13 +170,13 @@ describe('media access control (C1)', () => {
 
   it('denies anonymous read of media attached to a REVIEW document', async () => {
     const media = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       originalName: 'review-only-technical-memo.pdf',
     })
     await createDocument({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       fileId: media.id,
       status: 'review',
       slug: `media-review-${randomUUID().slice(0, 8)}`,
@@ -194,13 +194,13 @@ describe('media access control (C1)', () => {
 
   it('denies anonymous read of media attached to a DRAFT document', async () => {
     const media = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       originalName: 'ni-43-101-technical-report.pdf',
     })
     await createDocument({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       fileId: media.id,
       status: 'draft',
       slug: `media-draft-${randomUUID().slice(0, 8)}`,
@@ -226,13 +226,13 @@ describe('media access control (C1)', () => {
 
   it('allows anonymous read of media attached to a PUBLISHED document', async () => {
     const media = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       originalName: 'published-investor-deck.pdf',
     })
     await createDocument({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       fileId: media.id,
       status: 'published',
       slug: `media-published-${randomUUID().slice(0, 8)}`,
@@ -250,34 +250,34 @@ describe('media access control (C1)', () => {
     expect(String(anon.docs[0].url || '')).not.toMatch(/storage\.supabase\.co\/storage\/v1\/object\/public/)
   })
 
-  it('denies another tenant Company Admin from reading Aurora media (draft or published)', async () => {
+  it('denies another tenant Company Admin from reading Qelvarion media (draft or published)', async () => {
     const draftMedia = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
-      originalName: 'aurora-draft-only.pdf',
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
+      originalName: 'qelvarion-draft-only.pdf',
     })
     await createDocument({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       fileId: draftMedia.id,
       status: 'draft',
       slug: `media-xtenant-draft-${randomUUID().slice(0, 8)}`,
     })
 
     const publishedMedia = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
-      originalName: 'aurora-published-only.pdf',
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
+      originalName: 'qelvarion-published-only.pdf',
     })
     await createDocument({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       fileId: publishedMedia.id,
       status: 'published',
       slug: `media-xtenant-published-${randomUUID().slice(0, 8)}`,
     })
 
-    const northernRead = await payload.find({
+    const zenthoriqRead = await payload.find({
       collection: 'media',
       where: {
         id: {
@@ -286,17 +286,17 @@ describe('media access control (C1)', () => {
       },
       limit: 10,
       depth: 0,
-      user: northernAdmin,
+      user: zenthoriqAdmin,
       overrideAccess: false,
     })
-    expect(northernRead.docs).toHaveLength(0)
+    expect(zenthoriqRead.docs).toHaveLength(0)
   })
 
   it('stores randomized object keys while retaining the original display name', async () => {
     const originalName = 'ni-43-101-technical-report.pdf'
     const media = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       originalName,
     })
 
@@ -312,8 +312,8 @@ describe('media access control (C1)', () => {
   it('sanitizes spaces and unicode in object keys while keeping display name', async () => {
     const originalName = 'Dario Amodei — Machines of Loving Grace.pdf'
     const media = await createMedia({
-      tenantId: auroraId,
-      user: auroraAdmin,
+      tenantId: qelvarionId,
+      user: qelvarionAdmin,
       originalName,
     })
 
@@ -329,7 +329,7 @@ describe('media access control (C1)', () => {
       collection: 'documents',
       where: {
         and: [
-          { tenant: { equals: auroraId } },
+          { tenant: { equals: qelvarionId } },
           { slug: { equals: 'draft-technical-memo-upload' } },
           { status: { equals: 'draft' } },
         ],

@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     companies: Company;
+    'company-listings': CompanyListing;
     'tenant-memberships': TenantMembership;
     projects: Project;
     'investment-highlights': InvestmentHighlight;
@@ -88,6 +89,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     companies: CompaniesSelect<false> | CompaniesSelect<true>;
+    'company-listings': CompanyListingsSelect<false> | CompanyListingsSelect<true>;
     'tenant-memberships': TenantMembershipsSelect<false> | TenantMembershipsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     'investment-highlights': InvestmentHighlightsSelect<false> | InvestmentHighlightsSelect<true>;
@@ -185,12 +187,15 @@ export interface Company {
    * Public website shows company profile only when Published.
    */
   publicationStatus: 'draft' | 'review' | 'published' | 'archived';
-  templateKey: 'explorer';
+  templateKey: 'explorer' | 'summit';
   primaryCommodity?: string | null;
   jurisdiction?: string | null;
   tickerSymbol?: string | null;
   exchange?: string | null;
   websiteDomain?: string | null;
+  /**
+   * Exact tenant label for <subdomain>.nrlaunch.com. Platform Admin only.
+   */
   subdomain?: string | null;
   brandColors?: {
     primary?: string | null;
@@ -261,158 +266,23 @@ export interface Company {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tenant-memberships".
+ * via the `definition` "company-listings".
  */
-export interface TenantMembership {
-  id: number;
-  user: number | User;
-  tenant: number | Company;
-  role: 'platform_admin' | 'company_admin' | 'editor' | 'viewer';
-  status: 'active' | 'invited' | 'revoked';
-  invitedAt?: string | null;
-  acceptedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "projects".
- */
-export interface Project {
+export interface CompanyListing {
   id: number;
   tenant: number | Company;
-  name: string;
-  slug: string;
-  /**
-   * Public pages render Published records only.
-   */
-  status: 'draft' | 'review' | 'published' | 'archived';
-  isFlagship?: boolean | null;
-  commodity?: string | null;
-  jurisdiction?: string | null;
-  locationSummary?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  ownershipPercent?: number | null;
-  stage?: ('early_exploration' | 'advanced_exploration' | 'resource_definition' | 'development' | 'production') | null;
-  summary?: string | null;
-  highlights?:
-    | {
-        item: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Material technical claims require Review before Published.
-   */
-  technicalSummary?: string | null;
-  /**
-   * Source links for material technical claims.
-   */
-  sourceLinks?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  displayOrder?: number | null;
-  /**
-   * Set automatically when a Review record is approved to Published.
-   */
-  reviewedBy?: (number | null) | User;
-  reviewedAt?: string | null;
-  publishedAt?: string | null;
-  /**
-   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
-   */
-  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
-  originLockedAt?: string | null;
-  /**
-   * Page/section/region locator for machine-assisted claims (not public).
-   */
-  sourceLocation?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Claim-to-source references for reviewers (not public).
-   */
-  provenanceClaims?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  extractionRunId?: string | null;
-  extractionProvider?: string | null;
-  extractionModel?: string | null;
-  extractionModelVersion?: string | null;
-  extractedAt?: string | null;
-  /**
-   * Set when a reviewer acknowledges source context on approval.
-   */
-  reviewerSourceCheckBy?: (number | null) | User;
-  reviewerSourceCheckAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "investment-highlights".
- */
-export interface InvestmentHighlight {
-  id: number;
-  tenant: number | Company;
-  title: string;
-  summary: string;
+  symbol: string;
+  exchange: string;
+  market?: string | null;
+  listingType?: ('equity' | 'otc' | 'other') | null;
+  quoteCurrency?: string | null;
+  isPrimary?: boolean | null;
   displayOrder?: number | null;
   /**
    * Public pages render Published records only.
    */
   status: 'draft' | 'review' | 'published' | 'archived';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "catalysts".
- */
-export interface Catalyst {
-  id: number;
-  tenant: number | Company;
-  title: string;
-  expectedTiming?: string | null;
-  summary?: string | null;
-  displayOrder?: number | null;
-  /**
-   * Public pages render Published records only.
-   */
-  status: 'draft' | 'review' | 'published' | 'archived';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "news-releases".
- */
-export interface NewsRelease {
-  id: number;
-  tenant: number | Company;
-  title: string;
-  slug: string;
-  project?: (number | null) | Project;
-  releaseDate: string;
-  excerpt: string;
-  body: string;
+  disclosureLevel: 'none' | 'standard' | 'technical';
   /**
    * http(s) source for material claims when no source document is linked.
    */
@@ -421,11 +291,6 @@ export interface NewsRelease {
    * Optional tenant document used as the source reference.
    */
   sourceDocument?: (number | null) | Document;
-  disclosureLevel: 'none' | 'standard' | 'technical';
-  /**
-   * Public pages render Published records only.
-   */
-  status: 'draft' | 'review' | 'published' | 'archived';
   /**
    * Set automatically when a Review record is approved to Published.
    */
@@ -575,6 +440,221 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  tenant: number | Company;
+  name: string;
+  slug: string;
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  isFlagship?: boolean | null;
+  commodity?: string | null;
+  jurisdiction?: string | null;
+  locationSummary?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  ownershipPercent?: number | null;
+  stage?: ('early_exploration' | 'advanced_exploration' | 'resource_definition' | 'development' | 'production') | null;
+  summary?: string | null;
+  highlights?:
+    | {
+        item: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Material technical claims require Review before Published.
+   */
+  technicalSummary?: string | null;
+  /**
+   * Source links for material technical claims.
+   */
+  sourceLinks?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  displayOrder?: number | null;
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenant-memberships".
+ */
+export interface TenantMembership {
+  id: number;
+  user: number | User;
+  tenant: number | Company;
+  role: 'platform_admin' | 'company_admin' | 'editor' | 'viewer';
+  status: 'active' | 'invited' | 'revoked';
+  invitedAt?: string | null;
+  acceptedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "investment-highlights".
+ */
+export interface InvestmentHighlight {
+  id: number;
+  tenant: number | Company;
+  title: string;
+  summary: string;
+  displayOrder?: number | null;
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "catalysts".
+ */
+export interface Catalyst {
+  id: number;
+  tenant: number | Company;
+  title: string;
+  expectedTiming?: string | null;
+  summary?: string | null;
+  displayOrder?: number | null;
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news-releases".
+ */
+export interface NewsRelease {
+  id: number;
+  tenant: number | Company;
+  title: string;
+  slug: string;
+  project?: (number | null) | Project;
+  releaseDate: string;
+  excerpt: string;
+  body: string;
+  /**
+   * http(s) source for material claims when no source document is linked.
+   */
+  sourceUrl?: string | null;
+  /**
+   * Optional tenant document used as the source reference.
+   */
+  sourceDocument?: (number | null) | Document;
+  disclosureLevel: 'none' | 'standard' | 'technical';
+  /**
+   * Public pages render Published records only.
+   */
+  status: 'draft' | 'review' | 'published' | 'archived';
+  /**
+   * Set automatically when a Review record is approved to Published.
+   */
+  reviewedBy?: (number | null) | User;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
+  /**
+   * Server-controlled. Company Admins cannot change origin. Defaults to human_authored.
+   */
+  contentOrigin?: ('human_authored' | 'machine_assisted') | null;
+  originLockedAt?: string | null;
+  /**
+   * Page/section/region locator for machine-assisted claims (not public).
+   */
+  sourceLocation?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Claim-to-source references for reviewers (not public).
+   */
+  provenanceClaims?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  extractionRunId?: string | null;
+  extractionProvider?: string | null;
+  extractionModel?: string | null;
+  extractionModelVersion?: string | null;
+  extractedAt?: string | null;
+  /**
+   * Set when a reviewer acknowledges source context on approval.
+   */
+  reviewerSourceCheckBy?: (number | null) | User;
+  reviewerSourceCheckAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -827,6 +907,10 @@ export interface PayloadLockedDocument {
         value: number | Company;
       } | null)
     | ({
+        relationTo: 'company-listings';
+        value: number | CompanyListing;
+      } | null)
+    | ({
         relationTo: 'tenant-memberships';
         value: number | TenantMembership;
       } | null)
@@ -971,6 +1055,40 @@ export interface CompaniesSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  reviewedBy?: T;
+  reviewedAt?: T;
+  publishedAt?: T;
+  contentOrigin?: T;
+  originLockedAt?: T;
+  sourceLocation?: T;
+  provenanceClaims?: T;
+  extractionRunId?: T;
+  extractionProvider?: T;
+  extractionModel?: T;
+  extractionModelVersion?: T;
+  extractedAt?: T;
+  reviewerSourceCheckBy?: T;
+  reviewerSourceCheckAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "company-listings_select".
+ */
+export interface CompanyListingsSelect<T extends boolean = true> {
+  tenant?: T;
+  symbol?: T;
+  exchange?: T;
+  market?: T;
+  listingType?: T;
+  quoteCurrency?: T;
+  isPrimary?: T;
+  displayOrder?: T;
+  status?: T;
+  disclosureLevel?: T;
+  sourceUrl?: T;
+  sourceDocument?: T;
   reviewedBy?: T;
   reviewedAt?: T;
   publishedAt?: T;

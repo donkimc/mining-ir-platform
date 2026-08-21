@@ -83,7 +83,7 @@ describe('ProjectLocationMap load watchdog (S4-6)', () => {
     await act(async () => {
       root.render(
         createElement(ProjectLocationMap, {
-          projectName: 'North Ridge',
+          projectName: 'Northridge Belt',
           latitude: 53.12,
           longitude: -121.58,
           locationSummary: 'Cariboo',
@@ -115,7 +115,7 @@ describe('ProjectLocationMap load watchdog (S4-6)', () => {
     await act(async () => {
       root.render(
         createElement(ProjectLocationMap, {
-          projectName: 'North Ridge',
+          projectName: 'Northridge Belt',
           latitude: 53.12,
           longitude: -121.58,
         }),

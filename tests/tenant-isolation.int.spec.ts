@@ -14,8 +14,8 @@ import { projectContentSchema } from '@/lib/schemas/project'
 
 describe('tenant isolation and published-only reads', () => {
   let payload: Payload
-  let auroraId: string | number
-  let northernId: string | number
+  let qelvarionId: string | number
+  let zenthoriqId: string | number
   let companyAdminId: string | number
   let platformAdminId: string | number
   const createdProjectIds: Array<string | number> = []
@@ -23,21 +23,21 @@ describe('tenant isolation and published-only reads', () => {
   beforeAll(async () => {
     payload = await getPayload({ config })
 
-    const aurora = await payload.find({
+    const qelvarion = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'aurora-gold' } },
+      where: { slug: { equals: 'qelvarion-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    const northern = await payload.find({
+    const zenthoriq = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'northern-copper' } },
+      where: { slug: { equals: 'zenthoriq-resource' } },
       limit: 1,
       overrideAccess: true,
     })
     const companyAdmin = await payload.find({
       collection: 'users',
-      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@auroragold.local' } },
+      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@qelvarion.local' } },
       limit: 1,
       overrideAccess: true,
     })
@@ -48,12 +48,12 @@ describe('tenant isolation and published-only reads', () => {
       overrideAccess: true,
     })
 
-    if (!aurora.docs[0] || !northern.docs[0] || !companyAdmin.docs[0] || !platformAdmin.docs[0]) {
+    if (!qelvarion.docs[0] || !zenthoriq.docs[0] || !companyAdmin.docs[0] || !platformAdmin.docs[0]) {
       throw new Error('Seed data missing. Run `npm run seed` before integration tests.')
     }
 
-    auroraId = aurora.docs[0].id
-    northernId = northern.docs[0].id
+    qelvarionId = qelvarion.docs[0].id
+    zenthoriqId = zenthoriq.docs[0].id
     companyAdminId = companyAdmin.docs[0].id
     platformAdminId = platformAdmin.docs[0].id
 
@@ -84,22 +84,22 @@ describe('tenant isolation and published-only reads', () => {
     createdProjectIds.length = 0
   })
 
-  it('public project helpers return only published aurora projects', async () => {
-    const published = await getPublishedProjects(auroraId)
+  it('public project helpers return only published qelvarion projects', async () => {
+    const published = await getPublishedProjects(qelvarionId)
 
     expect(published.length).toBeGreaterThan(0)
     expect(published.every((doc) => doc.status === 'published')).toBe(true)
-    expect(published.some((doc) => doc.slug === 'hidden-lake')).toBe(false)
+    expect(published.some((doc) => doc.slug === 'mistfall-hollow')).toBe(false)
   })
 
   it('draft project slug is not returned by getPublishedProjectBySlug', async () => {
-    const draft = await getPublishedProjectBySlug(auroraId, 'hidden-lake')
+    const draft = await getPublishedProjectBySlug(qelvarionId, 'mistfall-hollow')
     expect(draft).toBeNull()
   })
 
   it('getPublishedCompanyBySlug returns only published active tenants', async () => {
-    const company = await getPublishedCompanyBySlug('aurora-gold')
-    expect(company?.slug).toBe('aurora-gold')
+    const company = await getPublishedCompanyBySlug('qelvarion-resource')
+    expect(company?.slug).toBe('qelvarion-resource')
     expect(company?.publicationStatus).toBe('published')
   })
 
@@ -113,8 +113,8 @@ describe('tenant isolation and published-only reads', () => {
 
     expect(anon.docs.length).toBeGreaterThan(0)
     expect(anon.docs.every((doc) => doc.status === 'published')).toBe(true)
-    expect(anon.docs.some((doc) => doc.slug === 'hidden-lake')).toBe(false)
-    expect(anon.docs.some((doc) => doc.slug === 'copper-ridge-isolation')).toBe(false)
+    expect(anon.docs.some((doc) => doc.slug === 'mistfall-hollow')).toBe(false)
+    expect(anon.docs.some((doc) => doc.slug === 'hollowspire-isolation')).toBe(false)
     // L-1: tenant relation IDs are not part of the anonymous public contract.
     expect(anon.docs.every((doc) => !('tenant' in doc && doc.tenant != null))).toBe(true)
     expect(
@@ -141,14 +141,14 @@ describe('tenant isolation and published-only reads', () => {
     expect(
       own.docs.every(
         (doc) =>
-          String(typeof doc.tenant === 'object' ? doc.tenant.id : doc.tenant) === String(auroraId),
+          String(typeof doc.tenant === 'object' ? doc.tenant.id : doc.tenant) === String(qelvarionId),
       ),
     ).toBe(true)
 
     await expect(
       payload.update({
         collection: 'companies',
-        id: northernId,
+        id: zenthoriqId,
         user: companyAdmin,
         overrideAccess: false,
         data: {
@@ -165,34 +165,34 @@ describe('tenant isolation and published-only reads', () => {
       overrideAccess: true,
     })
 
-    let northernProject = (
+    let zenthoriqProject = (
       await payload.find({
         collection: 'projects',
-        where: { tenant: { equals: northernId } },
+        where: { tenant: { equals: zenthoriqId } },
         limit: 1,
         overrideAccess: true,
       })
     ).docs[0]
 
-    if (!northernProject) {
-      northernProject = await payload.create({
+    if (!zenthoriqProject) {
+      zenthoriqProject = await payload.create({
         collection: 'projects',
         overrideAccess: true,
         data: {
-          tenant: Number(northernId),
-          name: 'Northern Fixture',
-          slug: `northern-fixture-${Date.now()}`,
+          tenant: Number(zenthoriqId),
+          name: 'Zenthoriq Fixture',
+          slug: `zenthoriq-fixture-${Date.now()}`,
           status: 'draft',
           summary: 'Isolation write fixture',
         },
       })
-      createdProjectIds.push(northernProject.id)
+      createdProjectIds.push(zenthoriqProject.id)
     }
 
     await expect(
       payload.update({
         collection: 'projects',
-        id: northernProject.id,
+        id: zenthoriqProject.id,
         user: companyAdmin,
         overrideAccess: false,
         data: { name: 'Hijacked' },
@@ -215,8 +215,8 @@ describe('tenant isolation and published-only reads', () => {
     })
 
     const slugs = tenants.docs.map((doc) => doc.slug)
-    expect(slugs).toContain('aurora-gold')
-    expect(slugs).toContain('northern-copper')
+    expect(slugs).toContain('qelvarion-resource')
+    expect(slugs).toContain('zenthoriq-resource')
   })
 
   it('invalid profile/project form schemas reject without partial mutation', () => {
@@ -248,7 +248,7 @@ describe('tenant isolation and published-only reads', () => {
         collection: 'projects',
         user: companyAdmin,
         data: {
-          tenant: Number(auroraId),
+          tenant: Number(qelvarionId),
           name: 'Test Public Flow',
           slug,
           status: 'draft',
@@ -285,7 +285,7 @@ describe('tenant isolation and published-only reads', () => {
       expect(published.reviewedBy).toBeTruthy()
       expect(published.reviewedAt).toBeTruthy()
 
-      const publicRead = await getPublishedProjectBySlug(auroraId, slug)
+      const publicRead = await getPublishedProjectBySlug(qelvarionId, slug)
       expect(publicRead?.id).toBe(created.id)
     } finally {
       if (createdId != null) {
@@ -317,7 +317,7 @@ describe('tenant isolation and published-only reads', () => {
         collection: 'projects',
         user: companyAdmin,
         data: {
-          tenant: Number(auroraId),
+          tenant: Number(qelvarionId),
           name: 'C1 Regression Project',
           slug,
           status: 'draft',
@@ -364,7 +364,7 @@ describe('tenant isolation and published-only reads', () => {
         }),
       ).rejects.toThrow()
 
-      const publicRead = await getPublishedProjectBySlug(auroraId, slug)
+      const publicRead = await getPublishedProjectBySlug(qelvarionId, slug)
       expect(publicRead?.technicalSummary).toBe(originalSummary)
     } finally {
       if (createdId != null) {

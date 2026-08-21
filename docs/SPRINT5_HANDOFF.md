@@ -1,5 +1,7 @@
 # Sprint 5 Handoff — Automation
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 ## Status
 
 Implementation complete on `main` through `ff90259`; staging and **real Production** (`bwftfsfbiyzgwztwtqmh`) schemas include Sprint 5 provenance migrations. Sprint 5 is **not Done** until independent review closes Critical/High findings and the Product Director accepts remaining Not-verified items (full deployed `check:env` readability, Preview env repair if still broken, optional fictional Production smoke seed). Vercel Production alias remains on **staging** DB `jthotkkremiesvocfsmr` until an explicit cutover.
@@ -357,7 +359,7 @@ Use this request:
 
 Cursor or the implementing engineer must append evidence here before Sprint 5 is marked complete:
 
-- Product Director scope and data-egress decision: **Assumed recommended narrower Sprint 5** (ingestion + provenance + review; no external AI egress per ADR-0013). Explicit Product Director sign-off still required for Done. **Production migrate decision (2026-08-19):** in-scope — migrate empty `bwftfsfbiyzgwztwtqmh` now; do not defer.
+- Product Director scope and data-egress decision: **DECIDED 2026-08-20 — recommended narrower Sprint 5 accepted.** Ingestion + provenance + reviewer context are in scope; **no external AI egress** (ADR-0013, Accepted 2026-08-18). Unpublished tenant documents do not leave the tenant boundary in Sprint 5. Any future extraction provider requires an ADR-0013 amendment plus a separate security/privacy review before implementation. **Production migrate decision (2026-08-19):** in-scope — migrate empty `bwftfsfbiyzgwztwtqmh` now; do not defer.
 - Commit SHA (implementation tip): `ff90259` on `origin/main` (includes provenance/ingestion through PDF open hardening). Earlier RC markers: `95e6666`, staging migrate note `0ebd168`.
 - Changed files: ADRs 0012–0015; provenance fields/hooks/migrations; Media pagination (S4-3); document PDF attach + sanitized object keys; session-streamed dashboard PDF open (no shareable signed URL); MachineOriginReviewPanel; fixture extraction adapter; S4-5 docs/env cleanup; ADR-0010/SECURITY updates; unit + integration tests.
 - Migration files and drift result: `20260818_sprint5_provenance.ts` (no companion `.json` by design — latest snapshot is `20260819_sprint5_content_origin_enums.json`; documented in migration comment, S5-4), `20260819_sprint5_content_origin_enums.ts` (+ `.json`). `npm run check:migration-drift` **pass**.

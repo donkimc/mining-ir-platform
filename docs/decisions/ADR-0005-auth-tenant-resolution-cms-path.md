@@ -19,4 +19,4 @@ Sprint 1 needs authenticated Company Admin and Platform Admin surfaces, tenant-s
 
 ## Consequences
 
-Local demo depends on `DEFAULT_TENANT_SLUG=aurora-gold`. Custom domains and multi-tenant host routing remain later work. Company Admins never trust browser-supplied tenant IDs for writes.
+`DEFAULT_TENANT_SLUG` is a **local/Preview-only** fallback (currently `qelvarion-resource`). Production hostname routing must not use it — see ADR-0016. Custom domains and multi-tenant host routing are separate. Company Admins never trust browser-supplied tenant IDs for writes.

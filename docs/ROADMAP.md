@@ -6,7 +6,7 @@ Product direction, MVP boundary, personas, IA, UX, architecture, data model, sec
 
 ## Sprint 1 — Vertical Slice
 
-Aurora Gold tenant, Explorer Home/Projects/Project Detail, Company Admin editing, minimal Platform Admin control, publication rules, tenant isolation and repository documentation.
+Qelvarion Resource tenant, Explorer Home/Projects/Project Detail, Company Admin editing, minimal Platform Admin control, publication rules, tenant isolation and repository documentation.
 
 ## Sprint 2 — Mining Content
 
@@ -15,7 +15,7 @@ News releases, documents, presentations, management, share structure, exploratio
 ### Sprint 2 Exit Criteria
 
 - All five content workflows are usable by Company Admin.
-- Published-only public Explorer sections work for Aurora Gold.
+- Published-only public Explorer sections work for Qelvarion Resource.
 - Cross-tenant and review-gate tests cover every collection.
 - Source context is visible for material claims.
 - Sprint 1 regression suite remains green.
@@ -44,7 +44,7 @@ Market data, analytics and subscriptions were assessed and deliberately deferred
 
 - Anonymous `/api/companies` returns only the resolved tenant, with no platform-internal fields.
 - The public serializer strips reviewer metadata and tenant IDs across every tenant-owned collection.
-- Northern Copper negative fixtures exist and never appear in Aurora HTML, JSON, metadata or maps.
+- Zenthoriq Resource negative fixtures exist and never appear in Qelvarion HTML, JSON, metadata or maps.
 - Published-only discovery: search, filters, empty states and related content exclude Draft, Review, Archived and other tenants.
 - Maps render only for Published, same-tenant records with valid coordinates; failure degrades to accessible text; no map API keys in client output.
 - Staging restore rehearsal performed and recorded.

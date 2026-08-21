@@ -26,7 +26,8 @@
     "seed:reset": "cross-env NODE_OPTIONS=--no-deprecation SEED_RESET=true tsx src/seed/index.ts",
     "test": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:watch": "cross-env NODE_OPTIONS=--no-deprecation vitest --config ./vitest.config.mts",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run check:migration-drift && npm run build:ci",
+    "check:retired-fixtures": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/check-retired-fixtures.mts",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run check:migration-drift && npm run check:retired-fixtures && npm run build:ci",
     "build:ci": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" PAYLOAD_DATABASE_PUSH=false next build"
   },
   "dependencies": {

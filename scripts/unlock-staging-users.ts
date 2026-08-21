@@ -20,7 +20,7 @@ import { existsSync } from 'fs'
 import path from 'path'
 
 const TARGETS = [
-  { email: 'admin@auroragold.staging', label: 'Company Admin' },
+  { email: 'admin@qelvarion.staging', label: 'Company Admin' },
   { email: 'platform@mining-ir.staging', label: 'Platform Admin' },
 ] as const
 

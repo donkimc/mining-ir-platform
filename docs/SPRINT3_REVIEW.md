@@ -1,5 +1,7 @@
 # Sprint 3 Review — Production Hardening
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 **Reviewer:** Claude (Opus 5), defect-first independent review
 **Reviewed:** 2026-08-16 · release candidate `9617c16` (hardening `e209229`, evidence `0476ac4`)
 **Environments:** `https://mining-ir-platform.vercel.app` (Vercel Production alias, Supabase staging project `jthotkkremiesvocfsmr`) + local

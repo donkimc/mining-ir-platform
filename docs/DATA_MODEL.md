@@ -24,7 +24,7 @@ Publishable records use `Draft`, `Review`, `Published` and `Archived`. Disclosur
 
 ## Seed Data
 
-Seed Aurora Gold with one active Company Admin membership and at least one published flagship Project. Include a second tenant fixture in tests to prove isolation.
+Seed Qelvarion Resource with one active Company Admin membership and at least one published flagship Project. Include a second tenant fixture in tests to prove isolation.
 
 ## Integrity Rules
 

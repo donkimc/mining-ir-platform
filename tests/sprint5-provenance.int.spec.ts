@@ -15,27 +15,27 @@ import { getDefaultExtractionAdapter } from '@/lib/extraction/adapter'
 
 describe('sprint5 provenance + media authorization', () => {
   let payload: Payload
-  let auroraId: string | number
-  let auroraAdmin: { id: string | number }
+  let qelvarionId: string | number
+  let qelvarionAdmin: { id: string | number }
   const created: Array<{ collection: string; id: string | number }> = []
 
   beforeAll(async () => {
     payload = await getPayload({ config })
-    const aurora = await payload.find({
+    const qelvarion = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'aurora-gold' } },
+      where: { slug: { equals: 'qelvarion-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    if (!aurora.docs[0]) throw new Error('Seed Aurora missing')
-    auroraId = aurora.docs[0].id
+    if (!qelvarion.docs[0]) throw new Error('Seed Qelvarion missing')
+    qelvarionId = qelvarion.docs[0].id
     const admins = await payload.find({
       collection: 'users',
-      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@auroragold.local' } },
+      where: { email: { equals: process.env.SEED_COMPANY_ADMIN_EMAIL || 'admin@qelvarion.local' } },
       limit: 1,
       overrideAccess: true,
     })
-    auroraAdmin = admins.docs[0] as { id: string | number }
+    qelvarionAdmin = admins.docs[0] as { id: string | number }
   })
 
   afterEach(async () => {
@@ -64,18 +64,18 @@ describe('sprint5 provenance + media authorization', () => {
     const project = await payload.find({
       collection: 'projects',
       where: {
-        and: [{ tenant: { equals: auroraId } }, { status: { equals: 'published' } }],
+        and: [{ tenant: { equals: qelvarionId } }, { status: { equals: 'published' } }],
       },
       limit: 1,
       overrideAccess: true,
     })
-    if (!project.docs[0]) throw new Error('Need a published Aurora project')
+    if (!project.docs[0]) throw new Error('Need a published Qelvarion project')
 
     const createdDoc = await payload.create({
       collection: 'exploration-contents',
       overrideAccess: true,
       data: {
-        tenant: auroraId as number,
+        tenant: qelvarionId as number,
         project: project.docs[0].id as number,
         title: proposal.title,
         contentDate: '2026-01-15',
@@ -108,7 +108,7 @@ describe('sprint5 provenance + media authorization', () => {
       payload.update({
         collection: 'exploration-contents',
         id: createdDoc.id,
-        user: auroraAdmin as never,
+        user: qelvarionAdmin as never,
         overrideAccess: false,
         data: {
           contentOrigin: 'human_authored',
@@ -131,7 +131,7 @@ describe('sprint5 provenance + media authorization', () => {
     const edited = await payload.update({
       collection: 'exploration-contents',
       id: createdDoc.id,
-      user: auroraAdmin as never,
+      user: qelvarionAdmin as never,
       overrideAccess: false,
       data: {
         summary: `${createdDoc.summary} edited`,
@@ -152,7 +152,7 @@ describe('sprint5 provenance + media authorization', () => {
       payload.update({
         collection: 'exploration-contents',
         id: createdDoc.id,
-        user: auroraAdmin as never,
+        user: qelvarionAdmin as never,
         overrideAccess: false,
         data: { status: 'published' },
         context: { skipPublicSerializer: true, sourceCheckAcknowledged: false },
@@ -162,7 +162,7 @@ describe('sprint5 provenance + media authorization', () => {
     const approved = await payload.update({
       collection: 'exploration-contents',
       id: createdDoc.id,
-      user: auroraAdmin as never,
+      user: qelvarionAdmin as never,
       overrideAccess: false,
       data: { status: 'published' },
       context: { skipPublicSerializer: true, sourceCheckAcknowledged: true },
@@ -175,7 +175,7 @@ describe('sprint5 provenance + media authorization', () => {
       collection: 'exploration-contents',
       overrideAccess: true,
       data: {
-        tenant: auroraId as number,
+        tenant: qelvarionId as number,
         project: project.docs[0].id as number,
         title: `Rejected ${randomUUID().slice(0, 8)}`,
         contentDate: '2026-01-16',
@@ -210,7 +210,7 @@ describe('sprint5 provenance + media authorization', () => {
     await payload.update({
       collection: 'exploration-contents',
       id: rejected.id,
-      user: auroraAdmin as never,
+      user: qelvarionAdmin as never,
       overrideAccess: false,
       data: { status: 'draft' },
     })
@@ -218,7 +218,7 @@ describe('sprint5 provenance + media authorization', () => {
     const publicList = await payload.find({
       collection: 'exploration-contents',
       where: {
-        and: [{ tenant: { equals: auroraId } }, { status: { equals: 'published' } }],
+        and: [{ tenant: { equals: qelvarionId } }, { status: { equals: 'published' } }],
       },
       overrideAccess: true,
       limit: 100,

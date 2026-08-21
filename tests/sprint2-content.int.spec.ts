@@ -30,34 +30,34 @@ function asProjectId(id: string | number): number {
 
 describe('Sprint 2 mining content', () => {
   let payload: Payload
-  let auroraId: string | number
-  let northernId: string | number
+  let qelvarionId: string | number
+  let zenthoriqId: string | number
   let companyAdmin: { id: string | number; email: string }
   let platformAdmin: { id: string | number }
-  let auroraProjectId: string | number
+  let qelvarionProjectId: string | number
   const createdIds: Array<{ collection: string; id: string | number }> = []
 
   beforeAll(async () => {
     payload = await getPayload({ config })
 
-    const aurora = await payload.find({
+    const qelvarion = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'aurora-gold' } },
+      where: { slug: { equals: 'qelvarion-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    const northern = await payload.find({
+    const zenthoriq = await payload.find({
       collection: 'companies',
-      where: { slug: { equals: 'northern-copper' } },
+      where: { slug: { equals: 'zenthoriq-resource' } },
       limit: 1,
       overrideAccess: true,
     })
-    auroraId = aurora.docs[0].id
-    northernId = northern.docs[0].id
+    qelvarionId = qelvarion.docs[0].id
+    zenthoriqId = zenthoriq.docs[0].id
 
     const admins = await payload.find({
       collection: 'users',
-      where: { email: { equals: 'admin@auroragold.local' } },
+      where: { email: { equals: 'admin@qelvarion.local' } },
       limit: 1,
       overrideAccess: true,
     })
@@ -74,12 +74,12 @@ describe('Sprint 2 mining content', () => {
     const project = await payload.find({
       collection: 'projects',
       where: {
-        and: [{ tenant: { equals: auroraId } }, { slug: { equals: 'north-ridge' } }],
+        and: [{ tenant: { equals: qelvarionId } }, { slug: { equals: 'northridge-belt' } }],
       },
       limit: 1,
       overrideAccess: true,
     })
-    auroraProjectId = project.docs[0].id
+    qelvarionProjectId = project.docs[0].id
   })
 
   afterEach(async () => {
@@ -104,7 +104,7 @@ describe('Sprint 2 mining content', () => {
       user: companyAdmin,
       overrideAccess: false,
       data: {
-        tenant: asTenantId(auroraId),
+        tenant: asTenantId(qelvarionId),
         title: 'Own Tenant Draft News',
         slug: `own-news-${Date.now()}`,
         releaseDate: '2026-08-12',
@@ -126,7 +126,7 @@ describe('Sprint 2 mining content', () => {
         user: companyAdmin,
         overrideAccess: false,
         data: {
-          tenant: asTenantId(northernId),
+          tenant: asTenantId(zenthoriqId),
           title: 'Wrong Tenant News',
           slug: `wrong-news-${Date.now()}`,
           releaseDate: '2026-08-12',
@@ -141,17 +141,17 @@ describe('Sprint 2 mining content', () => {
   })
 
   it('rejects relating a project from another tenant', async () => {
-    const northernProject = await payload.create({
+    const zenthoriqProject = await payload.create({
       collection: 'projects',
       overrideAccess: true,
       data: {
-        tenant: asTenantId(northernId),
-        name: 'Northern Isolation Project',
-        slug: `northern-proj-${Date.now()}`,
+        tenant: asTenantId(zenthoriqId),
+        name: 'Zenthoriq Isolation Project',
+        slug: `zenthoriq-proj-${Date.now()}`,
         status: 'draft',
       },
     })
-    createdIds.push({ collection: 'projects', id: northernProject.id })
+    createdIds.push({ collection: 'projects', id: zenthoriqProject.id })
 
     await expect(
       payload.create({
@@ -159,10 +159,10 @@ describe('Sprint 2 mining content', () => {
         user: companyAdmin,
         overrideAccess: false,
         data: {
-          tenant: asTenantId(auroraId),
+          tenant: asTenantId(qelvarionId),
           title: 'Cross Tenant Project News',
           slug: `cross-proj-${Date.now()}`,
-          project: asProjectId(northernProject.id),
+          project: asProjectId(zenthoriqProject.id),
           releaseDate: '2026-08-12',
           excerpt: 'Should reject cross-tenant project relation.',
           body: 'Should reject cross-tenant project relation body.',
@@ -180,7 +180,7 @@ describe('Sprint 2 mining content', () => {
       collection: 'news-releases',
       overrideAccess: true,
       data: {
-        tenant: asTenantId(auroraId),
+        tenant: asTenantId(qelvarionId),
         title: 'Public Filter Draft',
         slug: `${slug}-draft`,
         releaseDate: '2026-08-12',
@@ -197,7 +197,7 @@ describe('Sprint 2 mining content', () => {
       collection: 'news-releases',
       overrideAccess: true,
       data: {
-        tenant: asTenantId(auroraId),
+        tenant: asTenantId(qelvarionId),
         title: 'Public Filter Published',
         slug,
         releaseDate: '2026-08-12',
@@ -224,14 +224,14 @@ describe('Sprint 2 mining content', () => {
       user: platformAdmin,
     })
 
-    const list = await getPublishedNews(auroraId)
+    const list = await getPublishedNews(qelvarionId)
     expect(list.some((item) => item.slug === slug)).toBe(true)
     expect(list.some((item) => item.slug === `${slug}-draft`)).toBe(false)
     expect(list.every((item) => !('reviewedBy' in item && item.reviewedBy))).toBe(true)
 
-    const detail = await getPublishedNewsBySlug(auroraId, slug)
+    const detail = await getPublishedNewsBySlug(qelvarionId, slug)
     expect(detail?.title).toBe('Public Filter Published')
-    const draftDetail = await getPublishedNewsBySlug(auroraId, `${slug}-draft`)
+    const draftDetail = await getPublishedNewsBySlug(qelvarionId, `${slug}-draft`)
     expect(draftDetail).toBeNull()
   })
 
@@ -246,7 +246,7 @@ describe('Sprint 2 mining content', () => {
     expect(anon.docs.length).toBeGreaterThan(0)
     // L-1: tenant relation IDs are stripped from anonymous public docs.
     expect(anon.docs.every((doc) => !('tenant' in doc && doc.tenant != null))).toBe(true)
-    expect(anon.docs.some((doc) => doc.slug === 'northern-isolation-release')).toBe(false)
+    expect(anon.docs.some((doc) => doc.slug === 'zenthoriq-isolation-release')).toBe(false)
     expect(
       anon.docs.every(
         (doc) =>
@@ -256,25 +256,25 @@ describe('Sprint 2 mining content', () => {
   })
 
   it('scopes anonymous Sprint 1 collection reads and strips review metadata', async () => {
-    // Ensure the Northern Copper fixture exists — its absence hid this leak previously.
-    const northernHighlight = await payload.find({
+    // Ensure the Zenthoriq Resource fixture exists — its absence hid this leak previously.
+    const zenthoriqHighlight = await payload.find({
       collection: 'investment-highlights',
       where: {
         and: [
-          { tenant: { equals: northernId } },
-          { title: { equals: 'NORTHERN SECRET' } },
+          { tenant: { equals: zenthoriqId } },
+          { title: { equals: 'ZENTHORIQ SECRET' } },
         ],
       },
       limit: 1,
       overrideAccess: true,
     })
-    if (northernHighlight.totalDocs === 0) {
+    if (zenthoriqHighlight.totalDocs === 0) {
       const created = await payload.create({
         collection: 'investment-highlights',
         overrideAccess: true,
         data: {
-          tenant: asTenantId(northernId),
-          title: 'NORTHERN SECRET',
+          tenant: asTenantId(zenthoriqId),
+          title: 'ZENTHORIQ SECRET',
           summary: 'Isolation fixture highlight for anonymous tenant-scope tests.',
           displayOrder: 99,
           status: 'published',
@@ -291,7 +291,7 @@ describe('Sprint 2 mining content', () => {
         overrideAccess: false,
       })
       expect(anon.docs.length).toBeGreaterThan(0)
-      // L-1: tenant IDs stripped; isolation proven by published-only + no Northern poison.
+      // L-1: tenant IDs stripped; isolation proven by published-only + no Zenthoriq poison.
       expect(anon.docs.every((doc) => !('tenant' in doc && doc.tenant != null))).toBe(true)
       expect(anon.docs.every((doc) => doc.status === 'published')).toBe(true)
       expect(
@@ -310,7 +310,7 @@ describe('Sprint 2 mining content', () => {
       depth: 0,
       overrideAccess: false,
     })
-    expect(highlights.docs.some((doc) => doc.title === 'NORTHERN SECRET')).toBe(false)
+    expect(highlights.docs.some((doc) => doc.title === 'ZENTHORIQ SECRET')).toBe(false)
 
     const companies = await payload.find({
       collection: 'companies',
@@ -319,7 +319,7 @@ describe('Sprint 2 mining content', () => {
       overrideAccess: false,
     })
     expect(companies.docs).toHaveLength(1)
-    expect((companies.docs[0] as { slug?: string }).slug).toBe('aurora-gold')
+    expect((companies.docs[0] as { slug?: string }).slug).toBe('qelvarion-resource')
     expect(
       companies.docs.every(
         (doc) =>
@@ -347,7 +347,7 @@ describe('Sprint 2 mining content', () => {
       limit: 100,
       depth: 0,
     })
-    expect(adminProjects.docs.every((doc) => tenantIdOf(doc) === String(auroraId))).toBe(true)
+    expect(adminProjects.docs.every((doc) => tenantIdOf(doc) === String(qelvarionId))).toBe(true)
 
     const platformProjects = await payload.find({
       collection: 'projects',
@@ -356,7 +356,7 @@ describe('Sprint 2 mining content', () => {
       limit: 100,
       depth: 0,
     })
-    expect(platformProjects.docs.some((doc) => tenantIdOf(doc) === String(northernId))).toBe(true)
+    expect(platformProjects.docs.some((doc) => tenantIdOf(doc) === String(zenthoriqId))).toBe(true)
   })
 
   it('rejects published disclosure edits and content-plus-approve', () => {
@@ -407,7 +407,7 @@ describe('Sprint 2 mining content', () => {
       collection: 'news-releases',
       overrideAccess: true,
       data: {
-        tenant: asTenantId(auroraId),
+        tenant: asTenantId(qelvarionId),
         title: 'Approval Path News',
         slug: `approve-news-${Date.now()}`,
         releaseDate: '2026-08-12',
@@ -447,25 +447,25 @@ describe('Sprint 2 mining content', () => {
   })
 
   it('publishes documents and people helpers exclude drafts', async () => {
-    const docs = await getPublishedDocuments(auroraId)
-    const people = await getPublishedPeople(auroraId)
+    const docs = await getPublishedDocuments(qelvarionId)
+    const people = await getPublishedPeople(qelvarionId)
     expect(docs.every((doc) => doc.status === 'published')).toBe(true)
     expect(people.every((person) => person.status === 'published')).toBe(true)
     expect(docs.some((doc) => doc.slug === 'draft-technical-memo')).toBe(false)
   })
 
   it('rejects exploration content with wrong-tenant project', async () => {
-    const northernProject = await payload.create({
+    const zenthoriqProject = await payload.create({
       collection: 'projects',
       overrideAccess: true,
       data: {
-        tenant: asTenantId(northernId),
-        name: 'Northern Exploration Host',
-        slug: `northern-exp-host-${Date.now()}`,
+        tenant: asTenantId(zenthoriqId),
+        name: 'Zenthoriq Exploration Host',
+        slug: `zenthoriq-exp-host-${Date.now()}`,
         status: 'draft',
       },
     })
-    createdIds.push({ collection: 'projects', id: northernProject.id })
+    createdIds.push({ collection: 'projects', id: zenthoriqProject.id })
 
     await expect(
       payload.create({
@@ -473,8 +473,8 @@ describe('Sprint 2 mining content', () => {
         user: companyAdmin,
         overrideAccess: false,
         data: {
-          tenant: asTenantId(auroraId),
-          project: asProjectId(northernProject.id),
+          tenant: asTenantId(qelvarionId),
+          project: asProjectId(zenthoriqProject.id),
           title: 'Bad Exploration Link',
           contentDate: '2026-08-12',
           summary: 'Should fail because project tenant differs.',
@@ -493,8 +493,8 @@ describe('Sprint 2 mining content', () => {
       user: companyAdmin,
       overrideAccess: false,
       data: {
-        tenant: asTenantId(auroraId),
-        project: asProjectId(auroraProjectId),
+        tenant: asTenantId(qelvarionId),
+        project: asProjectId(qelvarionProjectId),
         title: 'Own Exploration Note',
         contentDate: '2026-08-12',
         summary: 'Own tenant exploration summary for tests.',

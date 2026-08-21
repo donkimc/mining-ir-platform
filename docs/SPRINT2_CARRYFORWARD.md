@@ -1,5 +1,7 @@
 # Sprint 2 — Review Sign-off and Carry-Forward
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 **Reviewer:** Claude (Opus 5)
 **Final pass:** 2026-08-15 (third-pass re-review)
 **Review chain:** [`SPRINT2_REVIEW.md`](./SPRINT2_REVIEW.md) → [`SPRINT2_REREVIEW.md`](./SPRINT2_REREVIEW.md) → this document

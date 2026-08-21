@@ -3,6 +3,7 @@ import { serializeAnonymousPublicDoc } from '@/lib/collection-hooks'
 import type {
   Catalyst,
   Company,
+  CompanyListing,
   Document,
   ExplorationContent,
   InvestmentHighlight,
@@ -311,6 +312,21 @@ export async function getRelatedPublishedForProject(
   }
 }
 
+export async function getPublishedListings(tenantId: string | number): Promise<CompanyListing[]> {
+  const payload = await getPayloadClient()
+  const result = await payload.find({
+    collection: 'company-listings',
+    where: {
+      and: [{ tenant: { equals: tenantId } }, { status: { equals: 'published' } }],
+    },
+    sort: 'displayOrder',
+    limit: 20,
+    depth: 0,
+    overrideAccess: true,
+  })
+  return (result.docs as CompanyListing[]).map((doc) => toPublicDoc(doc))
+}
+
 export type PublicHomeData = {
   company: Company
   projects: Project[]
@@ -320,10 +336,11 @@ export type PublicHomeData = {
   shareStructure: ShareStructure | null
   recentNews: NewsRelease[]
   documents: Document[]
+  listings: CompanyListing[]
 }
 
 export async function getPublicHomeData(company: Company): Promise<PublicHomeData> {
-  const [projects, highlights, catalysts, shareStructure, recentNews, documents] =
+  const [projects, highlights, catalysts, shareStructure, recentNews, documents, listings] =
     await Promise.all([
       getPublishedProjects(company.id),
       getPublishedHighlights(company.id),
@@ -331,6 +348,7 @@ export async function getPublicHomeData(company: Company): Promise<PublicHomeDat
       getPublishedShareStructure(company.id),
       getPublishedNews(company.id),
       getPublishedDocuments(company.id),
+      getPublishedListings(company.id),
     ])
 
   const flagship = projects.find((project) => project.isFlagship) ?? projects[0] ?? null
@@ -344,5 +362,6 @@ export async function getPublicHomeData(company: Company): Promise<PublicHomeDat
     shareStructure,
     recentNews: recentNews.slice(0, 3),
     documents: documents.slice(0, 3),
+    listings,
   }
 }

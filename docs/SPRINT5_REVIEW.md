@@ -1,5 +1,7 @@
 # Sprint 5 Review — Automation (Ingestion, Provenance, Reviewer Context)
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 **Reviewer:** Claude (Opus 5), independent defect-first review
 **Reviewed:** 2026-08-19
 **Release candidate:** evidence/handoff `050fe52`; implementation tip `ff90259`; earlier markers `95e6666`, `0ebd168`

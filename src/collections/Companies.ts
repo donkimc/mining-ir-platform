@@ -123,7 +123,10 @@ export const Companies: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'explorer',
-      options: [{ label: 'Explorer', value: 'explorer' }],
+      options: [
+        { label: 'Explorer', value: 'explorer' },
+        { label: 'Summit', value: 'summit' },
+      ],
       access: {
         update: ({ req }) => isPlatformAdmin(req.user),
       },
@@ -142,8 +145,13 @@ export const Companies: CollectionConfig = {
     {
       name: 'subdomain',
       type: 'text',
+      unique: true,
+      index: true,
       access: {
         update: ({ req }) => isPlatformAdmin(req.user),
+      },
+      admin: {
+        description: 'Exact tenant label for <subdomain>.nrlaunch.com. Platform Admin only.',
       },
     },
     {

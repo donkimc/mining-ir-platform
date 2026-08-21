@@ -1,12 +1,26 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
 
+import { MarketingHome } from '@/components/marketing/MarketingHome'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublicHomeData } from '@/lib/public-data'
-import { requirePublishedTenant } from '@/lib/tenant'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
+import { requirePublishedTenant, resolveRequestTenant } from '@/lib/tenant'
 
 export async function generateMetadata(): Promise<Metadata> {
+  const resolution = await resolveRequestTenant()
+  if (resolution.kind === 'marketing') {
+    return {
+      title: 'Mining IR Platform',
+      description:
+        'Self-service investor relations websites for junior mining companies — tenant isolation, human approval and private media.',
+    }
+  }
+  if (resolution.kind !== 'tenant') {
+    return { title: 'Mining IR Platform' }
+  }
   const company = await requirePublishedTenant()
   return {
     title: company.displayName,
@@ -20,16 +34,31 @@ function formatShares(value?: number | null) {
 }
 
 export default async function HomePage() {
+  const resolution = await resolveRequestTenant()
+  if (resolution.kind === 'marketing') {
+    return <MarketingHome />
+  }
+  if (resolution.kind === 'admin') {
+    redirect('/login')
+  }
+  if (resolution.kind !== 'tenant') {
+    notFound()
+  }
+
   const company = await requirePublishedTenant()
   const data = await getPublicHomeData(company)
-  const ticker =
-    company.tickerSymbol && company.exchange
+  const template = resolveTemplateKey(company)
+  const primaryListing =
+    data.listings.find((listing) => listing.isPrimary) ?? data.listings[0] ?? null
+  const ticker = primaryListing
+    ? `${primaryListing.symbol}:${primaryListing.exchange}`
+    : company.tickerSymbol && company.exchange
       ? `${company.tickerSymbol}:${company.exchange}`
       : company.tickerSymbol || 'Ticker placeholder'
 
   return (
-    <main>
-      <div className="hero-plane">
+    <main className={templateShellClass(template)}>
+      <div className={`hero-plane ${template === 'summit' ? 'summit-hero' : ''}`}>
         <SiteHeader companyName={company.displayName} tone="dark" />
         <div
           id="main-content"
@@ -49,8 +78,8 @@ export default async function HomePage() {
             <Link href="/projects" className="btn btn-primary no-underline">
               View projects
             </Link>
-            <Link href="/contact" className="btn btn-secondary no-underline">
-              Contact IR
+            <Link href="/about" className="btn btn-secondary no-underline">
+              About
             </Link>
           </div>
         </div>

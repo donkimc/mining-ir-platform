@@ -1,5 +1,7 @@
 # Sprint 4 Handoff — Investor Features
 
+> Historical terminology note: this document predates the Sprint 6 fixture identity rename. Quoted Aurora Gold/Northern Copper names, poison strings and slugs refer to retired fictional test fixtures and are preserved as historical evidence; they are not current tenants or Production identities.
+
 ## Status
 
 **Implementation complete on commit `f068fc3` — not marked Done.** Local `npm run verify` passed. Staging-backed Vercel alias shows Sprint 4 behavior. Independent review and L-3 live PITR UI evidence are still required before Sprint 4 is marked complete or real customer content is loaded.

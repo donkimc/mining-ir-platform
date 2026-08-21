@@ -216,7 +216,7 @@ describe('platform deployment hosts', () => {
   })
 
   it('treats custom tenant subdomains as not platform hosts', () => {
-    expect(isPlatformDeploymentHost('aurora-gold.example.com')).toBe(false)
+    expect(isPlatformDeploymentHost('qelvarion-resource.example.com')).toBe(false)
     expect(isPlatformDeploymentHost('www.example.com')).toBe(false)
   })
 })

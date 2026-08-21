@@ -36,7 +36,7 @@ News releases, documents/presentations, management profiles, share structure and
 
 Sprint 1 proves the first complete loop:
 
-1. A Platform Admin provisions Aurora Gold.
+1. A Platform Admin provisions Qelvarion Resource.
 2. A Company Admin edits tenant-scoped company and project data.
 3. Investors see published data through the Explorer website.
 
@@ -71,7 +71,7 @@ createdb mining_ir
 # 4. Push schema (Payload postgres push is enabled for Sprint 1)
 # Starting the app or running seed will initialize collections.
 
-# 5. Seed Aurora Gold + local admins
+# 5. Seed Qelvarion Resource + local admins
 npm run seed
 
 # Reset seed data if needed:
@@ -90,7 +90,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `DATABASE_URI` | PostgreSQL connection string |
 | `PAYLOAD_SECRET` | Payload encryption/session secret |
 | `NEXT_PUBLIC_SERVER_URL` | Public site origin (`http://localhost:3000`) |
-| `DEFAULT_TENANT_SLUG` | Local public tenant slug (`aurora-gold`) |
+| `DEFAULT_TENANT_SLUG` | Local public tenant slug (`qelvarion-resource`) |
 | `PAYLOAD_DATABASE_PUSH` | Opt-in schema push (`true` locally). Missing/false elsewhere; **forbidden** in `NODE_ENV=production` |
 | `DATABASE_SSL_CA` | PEM CA for Postgres TLS (required on Preview/Production). Prefer over disabling verification |
 | `DATABASE_SSL_REJECT_UNAUTHORIZED` | Non-production only fallback (`false` disables cert verify and logs a warning) |
@@ -109,7 +109,7 @@ After `npm run seed`:
 | Role | Email | Password |
 | --- | --- | --- |
 | Platform Admin | value of `SEED_PLATFORM_EMAIL` | value of `SEED_PLATFORM_PASSWORD` |
-| Company Admin (Aurora Gold) | value of `SEED_COMPANY_ADMIN_EMAIL` | value of `SEED_COMPANY_ADMIN_PASSWORD` |
+| Company Admin (Qelvarion Resource) | value of `SEED_COMPANY_ADMIN_EMAIL` | value of `SEED_COMPANY_ADMIN_PASSWORD` |
 
 Both are read from your local `.env.local` (gitignored) by `npm run seed`. Change them there, not here — literal credentials are never published in this repository, including for local development.
 
