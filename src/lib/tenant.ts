@@ -138,6 +138,9 @@ export async function getPublishedCompanyBySlug(slug: string): Promise<Company |
     limit: 1,
     depth: 0,
     overrideAccess: true,
+    // Keep templateKey/subdomain for SSR shell + host routing (ADR-0017). Anonymous
+    // API responses still strip these via collection afterRead / public-data.
+    context: { skipPublicSerializer: true },
   })
 
   return (result.docs[0] as Company | undefined) ?? null
@@ -160,6 +163,7 @@ export async function getPublishedCompanyBySubdomain(subdomain: string): Promise
     limit: 1,
     depth: 0,
     overrideAccess: true,
+    context: { skipPublicSerializer: true },
   })
 
   return (result.docs[0] as Company | undefined) ?? null
