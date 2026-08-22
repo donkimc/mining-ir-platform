@@ -5,21 +5,17 @@ import { classifyHost, PLATFORM_ROOT_DOMAIN } from '@/lib/host'
 
 /**
  * Edge routing for nrlaunch.com hosts (ADR-0016 / ADR-0018).
- * - www → apex redirect
  * - Authenticated surfaces only on admin / local / preview hosts
  * - Public tenant/marketing hosts reject /dashboard, /admin, /cms
+ *
+ * www → apex is owned by Vercel Domains (307). Do not also redirect here —
+ * a second hop fights Vercel/DNS and causes ERR_TOO_MANY_REDIRECTS. Both
+ * hosts already resolve as marketing in resolveRequestTenant().
  */
 export function middleware(request: NextRequest) {
   const hostHeader = request.headers.get('host') || ''
   const host = classifyHost(hostHeader)
   const { pathname } = request.nextUrl
-
-  if (host.kind === 'www') {
-    const url = request.nextUrl.clone()
-    url.hostname = PLATFORM_ROOT_DOMAIN
-    url.protocol = 'https:'
-    return NextResponse.redirect(url, 308)
-  }
 
   const isAuthSurface =
     pathname.startsWith('/dashboard') ||

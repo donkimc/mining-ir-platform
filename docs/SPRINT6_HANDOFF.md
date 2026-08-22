@@ -531,7 +531,7 @@ Cursor or the implementing engineer must append evidence here before Sprint 6 is
 - ADRs created: ADR-0016, ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0021
 - Migration: `20260821_030052_sprint6_company_listings` (+ `.json` snapshot); local migrate applied 2026-08-21
 - Fixture rename: Qelvarion / Zenthoriq / Veylithra; `npm run check:retired-fixtures` wired into `npm run verify`
-- Hostname: fail-closed classifier in `src/lib/host.ts`; middleware www→apex and auth-surface redirect to `admin.nrlaunch.com`
+- Hostname: fail-closed classifier in `src/lib/host.ts`; www→apex owned by Vercel Domains (not middleware); auth-surface redirect to `admin.nrlaunch.com`
 - Templates: `explorer` + `summit` via `templateKey`; shared serializers unchanged
 - Marketing: apex `MarketingHome` (no tenant resolution)
 - Routes: `/about` added; `/investors` and `/contact` wired to Published data; `/corporate` → `/about`
