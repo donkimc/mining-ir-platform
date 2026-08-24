@@ -64,3 +64,5 @@ Carried in and addressed in implementation: schema migrate of `bwftfsfbiyzgwztwt
 ## Later
 
 Billing, custom domains, provisioning automation, regulatory integrations and investor assistant features.
+
+**Role-separated disclosure approval (Editor vs Company Admin publish):** behavioral notes for an upcoming sprint — `docs/SPRINT7_FEATURE_NOTES.md` (not a plan; for planners to pick up).
