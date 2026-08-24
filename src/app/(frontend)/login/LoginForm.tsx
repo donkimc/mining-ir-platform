@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 
 import { FormMessage } from '@/components/ui/FormMessage'
 import { safeRedirectPath } from '@/lib/safe-redirect'
@@ -18,10 +18,13 @@ export function LoginForm() {
   const unauthorized = searchParams.get('error') === 'unauthorized'
   const multiTenant = searchParams.get('error') === 'multi-tenant'
   const [error, setError] = useState<string | undefined>()
-  const [pending, startTransition] = useTransition()
+  // useTransition does not stay pending across await; keep an explicit flag until
+  // full-page navigation (or reset only on failure).
+  const [submitting, setSubmitting] = useState(false)
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
     setError(undefined)
 
     const form = event.currentTarget
@@ -34,37 +37,39 @@ export function LoginForm() {
       return
     }
 
-    startTransition(async () => {
-      try {
-        const response = await fetch('/api/users/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email, password }),
-        })
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      })
 
-        const data = (await response.json().catch(() => null)) as {
-          message?: string
-          user?: { platformRole?: string | null }
-          errors?: Array<{ message?: string }>
-        } | null
+      const data = (await response.json().catch(() => null)) as {
+        message?: string
+        user?: { platformRole?: string | null }
+        errors?: Array<{ message?: string }>
+      } | null
 
-        if (!response.ok) {
-          setError(data?.errors?.[0]?.message || 'Invalid credentials or inactive account.')
-          return
-        }
-
-        const isPlatform = data?.user?.platformRole === 'platform_admin'
-        const destination = safeRedirectPath(
-          next,
-          isPlatform ? '/admin/tenants' : '/dashboard',
-        )
-        // Full page load so layouts authenticate with the committed cookie.
-        window.location.href = destination
-      } catch {
-        setError('Invalid credentials or inactive account.')
+      if (!response.ok) {
+        setError(data?.errors?.[0]?.message || 'Invalid credentials or inactive account.')
+        setSubmitting(false)
+        return
       }
-    })
+
+      const isPlatform = data?.user?.platformRole === 'platform_admin'
+      const destination = safeRedirectPath(
+        next,
+        isPlatform ? '/admin/tenants' : '/dashboard',
+      )
+      // Full page load so layouts authenticate with the committed cookie.
+      // Leave submitting=true until unload so the button does not flash "Sign in".
+      window.location.assign(destination)
+    } catch {
+      setError('Invalid credentials or inactive account.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -91,6 +96,7 @@ export function LoginForm() {
           autoComplete="username"
           required
           className="input"
+          disabled={submitting}
         />
       </div>
       <div>
@@ -104,10 +110,11 @@ export function LoginForm() {
           autoComplete="current-password"
           required
           className="input"
+          disabled={submitting}
         />
       </div>
-      <button type="submit" className="btn btn-dark w-full" disabled={pending}>
-        {pending ? 'Signing in…' : 'Sign in'}
+      <button type="submit" className="btn btn-dark w-full" disabled={submitting}>
+        {submitting ? 'Signing in…' : 'Sign in'}
       </button>
       <p className="text-sm text-[var(--ink-soft)]">
         <Link href="/">Back to public site</Link>
