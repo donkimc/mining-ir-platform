@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { getPayloadClient, requireCompanyAdmin } from '@/lib/auth'
 import { assertOwnedRecord } from '@/lib/dashboard-crud'
+import { clearableString, optionalString } from '@/lib/form-strings'
 import { assertAllowedIngestionFile } from '@/lib/ingestion'
 import { assertPublicationTransition, guardCreateNotPublished } from '@/lib/publishing'
 import {
@@ -15,10 +16,6 @@ import {
 import { documentContentSchema } from '@/lib/schemas/document'
 
 export type DocumentFormState = ContentFormState
-
-function optionalString(value?: string) {
-  return value?.trim() ? value.trim() : undefined
-}
 
 function optionalProjectId(value?: string): string | undefined {
   return optionalString(value)
@@ -131,8 +128,8 @@ export async function updateDocumentContentAction(
         slug: parsed.data.slug,
         category: parsed.data.category,
         publicationDate: parsed.data.publicationDate,
-        externalUrl: optionalString(parsed.data.externalUrl),
-        sourceUrl: optionalString(parsed.data.sourceUrl),
+        externalUrl: clearableString(parsed.data.externalUrl),
+        sourceUrl: clearableString(parsed.data.sourceUrl),
         project: projectId as unknown as number | undefined,
         disclosureLevel: parsed.data.disclosureLevel,
       },
