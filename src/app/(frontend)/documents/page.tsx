@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { PublicDiscoveryFilters } from '@/components/public/PublicDiscoveryFilters'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
+import { publicDocumentOpenHref } from '@/lib/document-links'
 import { getPublishedDocuments } from '@/lib/public-data'
 import { buildTenantMetadata } from '@/lib/seo'
 import { requirePublishedTenant } from '@/lib/tenant'
@@ -134,18 +135,28 @@ export default async function DocumentsPage({ searchParams }: Props) {
                         <dd className="mt-1">{formatDate(doc.publicationDate)}</dd>
                       </dl>
                       <div className="self-center">
-                        {doc.externalUrl ? (
-                          <a
-                            href={doc.externalUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn btn-dark no-underline"
-                          >
-                            Open document
-                          </a>
-                        ) : (
-                          <span className="text-sm text-[var(--ink-soft)]">Link unavailable</span>
-                        )}
+                        {(() => {
+                          const href = publicDocumentOpenHref(doc)
+                          if (href) {
+                            return (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-dark no-underline"
+                              >
+                                Open document
+                              </a>
+                            )
+                          }
+                          return (
+                            <span className="text-sm text-[var(--ink-soft)]">
+                              {doc.externalUrl
+                                ? 'Demo source placeholder (no downloadable file)'
+                                : 'Link unavailable'}
+                            </span>
+                          )
+                        })()}
                       </div>
                     </li>
                   ))}

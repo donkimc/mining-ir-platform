@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { ProjectLocationMap } from '@/components/public/ProjectLocationMap'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
+import { publicDocumentOpenHref } from '@/lib/document-links'
 import {
   getPublishedExplorationForProject,
   getPublishedProjectBySlug,
@@ -223,18 +224,21 @@ export default async function ProjectDetailPage({ params }: Props) {
                       <span className="text-[var(--ink-soft)]"> · News</span>
                     </li>
                   ))}
-                  {related.documents.map((doc) => (
-                    <li key={`doc-${doc.id}`}>
-                      {doc.externalUrl ? (
-                        <a href={doc.externalUrl} target="_blank" rel="noreferrer">
-                          {doc.title}
-                        </a>
-                      ) : (
-                        <span>{doc.title}</span>
-                      )}
-                      <span className="text-[var(--ink-soft)]"> · Document</span>
-                    </li>
-                  ))}
+                  {related.documents.map((doc) => {
+                    const href = publicDocumentOpenHref(doc)
+                    return (
+                      <li key={`doc-${doc.id}`}>
+                        {href ? (
+                          <a href={href} target="_blank" rel="noreferrer">
+                            {doc.title}
+                          </a>
+                        ) : (
+                          <span>{doc.title}</span>
+                        )}
+                        <span className="text-[var(--ink-soft)]"> · Document</span>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
               <ul className="mt-6 space-y-2 text-sm text-[var(--ink-soft)]">

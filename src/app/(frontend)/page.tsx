@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import { MarketingHome } from '@/components/marketing/MarketingHome'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
+import { publicDocumentOpenHref } from '@/lib/document-links'
 import { getPublicHomeData } from '@/lib/public-data'
 import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant, resolveRequestTenant } from '@/lib/tenant'
@@ -224,17 +225,20 @@ export default async function HomePage() {
                 </p>
               ) : (
                 <ul className="mt-4 space-y-2">
-                  {data.documents.map((doc) => (
-                    <li key={doc.id}>
-                      {doc.externalUrl ? (
-                        <a href={doc.externalUrl} target="_blank" rel="noreferrer">
-                          {doc.title}
-                        </a>
-                      ) : (
-                        <span>{doc.title}</span>
-                      )}
-                    </li>
-                  ))}
+                  {data.documents.map((doc) => {
+                    const href = publicDocumentOpenHref(doc)
+                    return (
+                      <li key={doc.id}>
+                        {href ? (
+                          <a href={href} target="_blank" rel="noreferrer">
+                            {doc.title}
+                          </a>
+                        ) : (
+                          <span>{doc.title}</span>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
               <p className="mt-4 text-[var(--ink-soft)]">

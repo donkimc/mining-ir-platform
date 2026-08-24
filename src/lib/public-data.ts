@@ -219,7 +219,8 @@ export async function getPublishedDocuments(
     where: { and },
     sort: '-publicationDate',
     limit: 100,
-    depth: 0,
+    // depth 1 so public pages can open uploaded PDFs via /api/media/file/*
+    depth: 1,
     overrideAccess: true,
   })
   return (result.docs as Document[]).map((doc) => toPublicDoc(doc))
@@ -301,7 +302,7 @@ export async function getRelatedPublishedForProject(
       },
       sort: '-publicationDate',
       limit: 10,
-      depth: 0,
+      depth: 1,
       overrideAccess: true,
     }),
   ])
