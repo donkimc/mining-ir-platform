@@ -3,9 +3,9 @@
 ## Mission
 Build Mining IR Platform as a self-service, multi-tenant SaaS serving junior mining companies.
 
-Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenant isolation, Payload authentication, Explorer routes, Company Admin dashboard, Platform Admin routes, mining-content workflows, human-review controls, private storage authorization, public API minimization and the public discovery/map surfaces. Do not call the product ready for customer content until the promotion gates below are satisfied.
+Sprints 1–6 are the completed, independently reviewed baseline. Preserve tenant isolation, host-based tenant resolution, the admin-host session boundary, Payload authentication, Explorer and Summit templates, Company Admin dashboard, Platform Admin routes, mining-content workflows, human-review and provenance controls, private storage authorization, and public API minimization. Do not call the product ready for customer content until the promotion gates below are satisfied.
 
-## Project Status (updated 2026-08-21)
+## Project Status (updated 2026-08-24)
 
 | Sprint | Scope | Status |
 | --- | --- | --- |
@@ -13,34 +13,92 @@ Sprints 1–4 are the completed, independently reviewed baseline. Preserve tenan
 | 2 | Mining content — news, documents, people, share structure, exploration | ✅ Complete, reviewed |
 | 3 | Production hardening — private storage, secrets, TLS, migrations, guards | ✅ Complete, reviewed |
 | 4 | Investor features — public discovery, read-only maps, Sprint 3 carry-ins | ✅ Complete, reviewed |
-| 5 | Automation — ingestion, provenance, reviewer source checks (no external AI) | ✅ Implementation complete; review Ship with conditions (remediations on main) |
-| 6 | Real-domain go-live, second tenant, summit template, marketing apex | ▶ Implementation in progress; DNS/cutover/review pending |
+| 5 | Automation — ingestion, provenance, reviewer source checks (no external AI) | ✅ Complete, reviewed; remediations in `359a9ce` |
+| 6 | Real-domain go-live, second tenant, summit template, marketing apex | ✅ Complete, reviewed — **Ship with conditions** (`docs/SPRINT6_REVIEW.md`) |
+| 7 | Next sprint — scope not yet defined | ▶ Planning |
 
-**Review record:** Sprint 1–5 reviews closed for Critical/High (Sprint 5 remediations in `359a9ce`). Sprint 6 review pending (`docs/SPRINT6_HANDOFF.md`).
+**Review record:** Sprint 1–5 reviews carry 0 open Critical/High. Sprint 6 review
+(`docs/SPRINT6_REVIEW.md`, 2026-08-24) returned Ship with conditions. Remediations on 2026-08-25 closed
+**S6-7 / S6-1 / S6-2 / S6-3**; **S6-4 / S6-5 / S6-6** remain open. Nothing leaks tenant data. See
+"Sprint 6 open findings" below.
 
-**Verification command:** `npm run verify` = lint + typecheck + tests + migration-drift + retired-fixtures + `build:ci`.
+**Verification command:** `npm run verify` = lint + typecheck + tests + migration-drift +
+retired-fixtures + `build:ci`. 125 tests across 21 files. Sprint 6 review remediations closed
+**S6-7 / S6-1 / S6-2 / S6-3** (2026-08-25); S6-4/5/6 remain open.
 
-### Deployment reality
+### Deployment reality (verified live 2026-08-24)
 
-- Vercel **Production** alias `https://mining-ir-platform.vercel.app` is backed by the Supabase **staging** project `jthotkkremiesvocfsmr`. "Vercel Production" and "Supabase Production" are not the same thing.
-- The real production Supabase project `bwftfsfbiyzgwztwtqmh` has been **schema-migrated** (Sprint 2–5 migrations present as of 2026-08-19). It is still **empty of customer content**. Vercel Production alias remains on staging until an explicit cutover. Do not run `seed:reset` against Production.
-- Vercel environment variables are **per-environment**. A variable set only for Preview does not reach a Production build. This has cost two debugging cycles.
+- **`nrlaunch.com` is the live platform domain.** Hostname routing is per ADR-0016:
+  - `nrlaunch.com` → platform marketing shell. **Not a tenant.**
+  - `www.nrlaunch.com` → 307 to apex, single hop (Vercel Domains owns the redirect; do not add a
+    second hop in middleware — that caused a redirect loop, fixed in `c8c7780`).
+  - `<tenant-slug>.nrlaunch.com` → tenant IR site.
+  - `admin.nrlaunch.com` → all authenticated surfaces (login, dashboard, `/admin/*`, `/cms`).
+  - Reserved labels, unknown labels and `*.vercel.app` → **404, fail-closed**. `DEFAULT_TENANT_SLUG`
+    is never used on production-like hosts.
+- **Production cutover is done.** Vercel Production serves from Supabase Production
+  `bwftfsfbiyzgwztwtqmh` (verified: Qelvarion is company `id 1` live versus `id 24` locally).
+  `jthotkkremiesvocfsmr` remains as the staging/history project — do not confuse the two.
+- **Three fictional tenants are live:** `qelvarion-resource` (explorer template, primary demo),
+  `veylithra-tungsten` (summit template), `zenthoriq-resource` (isolation/poison fixture).
+- Production storage bucket is **private**; direct Supabase object URLs return `400 Bucket not found`
+  on both host forms. Cross-tenant media requests return **403**.
+- Vercel environment variables are **per-environment**. A variable set only for Preview does not reach
+  a Production build. This has cost two debugging cycles.
+- Never run `seed:reset` against Production.
 
-### Open promotion gates — customer content and real Production go-live
+### Open promotion gates — customer content
 
-1. ~~Migrate `bwftfsfbiyzgwztwtqmh` with `npm run migrate`~~ **Done 2026-08-19** (schema only; no `seed:reset`). Still require project-specific `DATABASE_SSL_CA` on any Vercel env that points at this DB, `PAYLOAD_DATABASE_PUSH=false` or absent, and fictional smoke before customer content. Explicit Vercel cutover from staging is separate.
-2. Observe `DATABASE_SSL_CA` and `PAYLOAD_DATABASE_PUSH` from the **deployed** environment rather than assuming Sprint 3 configuration. Use `npm run check:env` / Vercel UI (Sensitive pulls may redact).
-3. Never run `seed:reset` against the production project.
+Customer content is **not** yet approved. Before Product Director promotion:
 
-Staging restore rehearsal (L-3) is **complete and evidenced** — restored in place from a scheduled backup with smoke checks passing.
+1. Close remaining Sprint 6 Medium/Low backlog items if Product Director requires them for demos:
+   **S6-4**, **S6-5**, **S6-6**. (S6-7 / S6-1 / S6-2 / S6-3 closed 2026-08-25.)
+2. Perform the **Production** backup/restore rehearsal per ADR-0020. The staging rehearsal is
+   evidenced; Production is not.
+3. Record a **deployed-environment** observation of `DATABASE_SSL_CA` and `PAYLOAD_DATABASE_PUSH`
+   rather than relying on guard inference. The fail-closed guards in `src/lib/database-guards.ts` mean
+   a serving deployment implies CA present and push not `true`, but that proves neither the PEM
+   contents nor `false` versus absent.
+4. Exercise rollback via redeploy (never a destructive migration reverse).
+5. After the remediation deploy: re-run the live host / isolation / media regression matrix from
+   `docs/SPRINT6_REVIEW.md`.
 
-### Deferred low-severity findings from Sprint 4 (addressed in Sprint 5 implementation)
+### Sprint 6 open findings (carry into Sprint 7)
 
-- **S4-3:** anonymous media authorization materializes up to 1000 IDs and silently caps. → pagination fix + fixtures in Sprint 5 (pending independent review).
-- **S4-4:** ADR-0010 records no CSP or visitor-privacy analysis for the OSM embed. → ADR-0010 / SECURITY updated in Sprint 5 (pending independent review).
-- **S4-5:** `README.md` and `docs/SPRINT1_HANDOFF.md` publish a local seed password that no longer works. → literal passwords removed from tracked docs in Sprint 5 (pending independent review).
+| ID | Severity | Summary |
+| --- | --- | --- |
+| **S6-4** | Medium | The `summit` template is a **colour-token variant** of explorer, not a distinct shell: identical section class signature, pixel-equivalent layout, 9 colour declarations + 1 letter-spacing rule. Conforms to ADR-0017 as written; the ADR and the originating design intent diverge. |
+| **S6-5** | Low | `company_listings` (ADR-0019) has only single-listing fixtures. The multi-listing case that motivated it is untested. |
+| **S6-6** | Low | A live tenant's published document `externalUrl` points at an unrelated third-party site. |
 
-## Current Sprint: Sprint 5 — Automation
+Closed in the 2026-08-25 remediation pass: **S6-7** (retired-fixture self-match), **S6-1** (API 500 on non-tenant hosts), **S6-2** (importMap S3 handler stripped by `npm run dev`), **S6-3** (admin-host unauth `/dashboard` 404 via `not-found.tsx` → `requirePublishedTenant`).
+
+## Current Sprint: Sprint 7 — scope not yet defined
+
+Sprint 7 is unplanned. Candidate inputs: the Sprint 6 open findings above,
+`docs/SPRINT7_FEATURE_NOTES.md` (role-separated disclosure approval — Editor vs Approver), and the
+deferred customer-content promotion gates.
+
+## Sprint 6 Baseline — Go-Live (complete)
+
+Delivered: `nrlaunch.com` hostname routing with fail-closed unknown/reserved hosts (ADR-0016), a second
+presentation template (ADR-0017), an admin-host session boundary (ADR-0018), a `company_listings`
+collection preserving legacy ticker fields (ADR-0019), Production cutover and smoke gate (ADR-0020),
+and the fixture identity rename with a CI guard (ADR-0021).
+
+**Rules established in Sprint 6 that apply to all future work:**
+
+- Tenant identity comes from the **host**, never from a fallback. `DEFAULT_TENANT_SLUG` is local/dev
+  only and must never resolve on a production-like host.
+- Authenticated surfaces live only on the admin host; tenant hosts redirect to it. Session cookies are
+  host-only — no parent-domain `Domain=` attribute.
+- Fixture tenant names must be coined and registry-checked. `npm run check:retired-fixtures` guards
+  the retired identities; historical review documents carry the ADR-0021 terminology note instead of
+  being rewritten.
+- A new presentation template is a **presentation layer only**: it reuses tenant resolution, published
+  helpers, serializers, the disclosure gate and media authorization. Unknown `templateKey` fails closed.
+
+## Sprint 5 Baseline — Automation
 
 Document ingestion, AI-assisted extraction and human approval workflow improvements. See `docs/ROADMAP.md`.
 
@@ -661,7 +719,7 @@ When reviewing implementation, prioritize:
 - Missing source-link affordances near material technical claims.
 - Provenance of machine-generated content, once automation exists.
 
-## Evidence Rules (learned across four review cycles)
+## Evidence Rules (learned across six review cycles)
 
 These are not style preferences. Each one is the direct product of a defect that shipped.
 
@@ -678,3 +736,5 @@ These are not style preferences. Each one is the direct product of a defect that
 6. **Fix the class, not the instance.** Remediations that fixed only the named file produced follow-up findings in three consecutive sprints. After each fix ask: *what else has this shape?*
 
 7. **Report what you could not verify.** "Not verified" is a valid and useful result. A completion report that claims a passing check which does not pass costs a full review cycle.
+
+8. **Paths that should behave identically must be verified together.** Sprint 6's findings were not wrong-layer evidence — they were *inconsistency*: HTML 404s while the API 500s; an unknown subdomain behaves differently from a reserved one; localhost redirects while the admin host 404s; nine collections share an access helper while two do not. When two code paths are meant to produce the same outcome, exercise both, not just the one you wrote.

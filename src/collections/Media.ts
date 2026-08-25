@@ -37,15 +37,14 @@ export async function publishedReferencedMediaWhere(
   req: PayloadRequest,
   options?: { pageSize?: number },
 ): Promise<Where> {
-  let companyId: string | number | null = null
-  try {
-    const { getPublishedCompanyBySlug, resolveTenantSlug } = await import('@/lib/tenant')
-    const slug = await resolveTenantSlug()
-    const company = await getPublishedCompanyBySlug(slug)
-    companyId = company?.id ?? null
-  } catch {
+  // Use resolveRequestTenant — never resolveTenantSlug()/notFound() inside access (S6-1).
+  const { getPublishedCompanyBySlug, resolveRequestTenant } = await import('@/lib/tenant')
+  const resolution = await resolveRequestTenant()
+  if (resolution.kind !== 'tenant') {
     return { id: { in: [] } }
   }
+  const company = await getPublishedCompanyBySlug(resolution.slug)
+  const companyId = company?.id ?? null
 
   if (companyId == null) {
     return { id: { in: [] } }

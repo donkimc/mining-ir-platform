@@ -63,9 +63,15 @@ export function publishedOnlyOrTenantScopedRead(): CollectionConfig['access'] {
     read: async ({ req }) => {
       if (!req.user) {
         // Lazy import avoids loading Payload config when collections are imported for static checks.
-        const { getPublishedCompanyBySlug, resolveTenantSlug } = await import('@/lib/tenant')
-        const slug = await resolveTenantSlug()
-        const company = await getPublishedCompanyBySlug(slug)
+        // Use resolveRequestTenant — never resolveTenantSlug()/notFound() inside access (S6-1).
+        const { getPublishedCompanyBySlug, resolveRequestTenant } = await import('@/lib/tenant')
+        const resolution = await resolveRequestTenant()
+        if (resolution.kind !== 'tenant') {
+          return {
+            id: { in: [] },
+          }
+        }
+        const company = await getPublishedCompanyBySlug(resolution.slug)
         if (!company) {
           return {
             id: { in: [] },

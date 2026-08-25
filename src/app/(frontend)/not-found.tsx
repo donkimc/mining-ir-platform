@@ -3,21 +3,28 @@ import Link from 'next/link'
 
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
-import { requirePublishedTenant } from '@/lib/tenant'
+import { getPublishedCompanyBySlug, resolveRequestTenant } from '@/lib/tenant'
 
 export const metadata: Metadata = {
   title: 'Not found',
 }
 
+/**
+ * Must not call requirePublishedTenant()/notFound() here (S6-3).
+ * Next prepares this segment as the layout notFound UI; calling notFound() again on
+ * admin/marketing hosts can win over an auth redirect and surface a dead 404.
+ */
 export default async function NotFound() {
   let companyName = 'Mining IR'
   let irEmail: string | null = null
-  try {
-    const company = await requirePublishedTenant()
-    companyName = company.displayName
-    irEmail = company.irContactEmail || null
-  } catch {
-    // Tenant may be unpublished during local setup.
+
+  const resolution = await resolveRequestTenant()
+  if (resolution.kind === 'tenant') {
+    const company = await getPublishedCompanyBySlug(resolution.slug)
+    if (company) {
+      companyName = company.displayName
+      irEmail = company.irContactEmail || null
+    }
   }
 
   return (

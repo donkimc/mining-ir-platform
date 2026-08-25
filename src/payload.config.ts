@@ -24,13 +24,42 @@ import { resolveDatabaseSsl, resolveEnableDatabasePush } from './lib/database-gu
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const useS3Storage = Boolean(
+const hasS3Credentials = Boolean(
   process.env.S3_BUCKET &&
     process.env.S3_ACCESS_KEY_ID &&
     process.env.S3_SECRET_ACCESS_KEY &&
     process.env.S3_REGION &&
     process.env.S3_ENDPOINT,
 )
+
+/**
+ * Always register `@payloadcms/storage-s3` so `generate:importmap` / next-dev regeneration
+ * keeps `S3ClientUploadHandler` in `cms/importMap.js` (S6-2). When credentials are absent,
+ * `enabled: false` leaves local filesystem media alone; the plugin still registers the
+ * client handler in `admin.dependencies` for a stable import map.
+ */
+const s3StoragePlugin = s3Storage({
+  enabled: hasS3Credentials,
+  collections: {
+    // Keep Payload access control; never emit public bucket URLs.
+    // Do not enable signedDownloads for media: short-lived signed URLs are still
+    // bearer tokens and must not be used for Draft/Review disclosure files.
+    media: {
+      generateFileURL: ({ filename }) =>
+        `/api/media/file/${encodeURIComponent(filename)}`,
+    },
+  },
+  bucket: process.env.S3_BUCKET || 'media',
+  config: {
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID || 'local-importmap-placeholder',
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || 'local-importmap-placeholder',
+    },
+    region: process.env.S3_REGION || 'us-east-1',
+    endpoint: process.env.S3_ENDPOINT || 'http://127.0.0.1:9',
+    forcePathStyle: true,
+  },
+})
 
 const enableDatabasePush = resolveEnableDatabasePush()
 
@@ -80,31 +109,5 @@ export default buildConfig({
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
-  plugins: [
-    ...(useS3Storage
-      ? [
-          s3Storage({
-            collections: {
-              // Keep Payload access control; never emit public bucket URLs.
-              // Do not enable signedDownloads for media: short-lived signed URLs are still
-              // bearer tokens and must not be used for Draft/Review disclosure files.
-              media: {
-                generateFileURL: ({ filename }) =>
-                  `/api/media/file/${encodeURIComponent(filename)}`,
-              },
-            },
-            bucket: process.env.S3_BUCKET as string,
-            config: {
-              credentials: {
-                accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-                secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
-              },
-              region: process.env.S3_REGION as string,
-              endpoint: process.env.S3_ENDPOINT as string,
-              forcePathStyle: true,
-            },
-          }),
-        ]
-      : []),
-  ],
+  plugins: [s3StoragePlugin],
 })

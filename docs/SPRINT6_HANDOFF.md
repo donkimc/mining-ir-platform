@@ -535,7 +535,27 @@ Cursor or the implementing engineer must append evidence here before Sprint 6 is
 - Templates: `explorer` + `summit` via `templateKey`; shared serializers unchanged
 - Marketing: apex `MarketingHome` (no tenant resolution)
 - Routes: `/about` added; `/investors` and `/contact` wired to Published data; `/corporate` → `/about`
-- Commit SHA: *(fill after commit)*
-- Preview / Production URLs, DNS/TLS, Supabase cutover: **Not verified in this implementation session** — requires operator Vercel/DNS work per go-live runbook
-- Independent review: **Pending**
-- Known limitations: Production cutover, wildcard TLS, staging/Production seed populate, and deployed browser matrix remain operator steps; do not mark Sprint 6 Done without them
+- Production cutover: Vercel Production → Supabase Production `bwftfsfbiyzgwztwtqmh`; live hosts verified in `docs/SPRINT6_REVIEW.md` (2026-08-24)
+- Independent review: **Ship with conditions** — `docs/SPRINT6_REVIEW.md` (0 Critical, 1 High S6-7, four Medium, two Low)
+- Commit SHA (Sprint 6 code RC reviewed): `50c2c0f` (docs tip `255fff6`)
+
+### Sprint 6 review remediations (2026-08-25) — S6-7, S6-1, S6-2, S6-3
+
+**Not fixed in this pass (remain open):** S6-4 (summit theme vs shell), S6-5 (multi-listing fixture), S6-6 (third-party document URL).
+
+| ID | Status | What changed |
+| --- | --- | --- |
+| **S6-7** | Fixed | `scripts/check-retired-fixtures.ts` excludes its own path (`SELF_EXCLUDE`). Bidirectional test in `tests/retired-fixtures.spec.ts`. Before: exit 1 matching `/\baurora\b/i` on the guard file. After: `check:retired-fixtures` exit **0**; `npm run verify` reaches `build:ci`. |
+| **S6-1** | Fixed | Anonymous access no longer calls `resolveTenantSlug()`/`notFound()`. Shared helper, `companiesReadAccess`, and `publishedReferencedMediaWhere` use `resolveRequestTenant()` and return `{ id: { in: [] } }` when `kind !== 'tenant'`. Test: `tests/anon-api-non-tenant-hosts.int.spec.ts`. |
+| **S6-2** | Fixed | Always register `@payloadcms/storage-s3` with `enabled: hasS3Credentials` so `generate:importmap` / `next dev` keep `S3ClientUploadHandler` via `admin.dependencies` even when S3 env vars are unset. Guard test retained. |
+| **S6-3** | Fixed | **Cause:** `(frontend)/not-found.tsx` called `requirePublishedTenant()`, which throws `notFound()` on admin/marketing hosts. Next prepares that layout `notFound` UI during auth-surface renders; on `admin.nrlaunch.com` the nested `notFound()` wins over `requireUser()`’s `redirect('/login?next=…')`, producing a dead 404. On localhost, `DEFAULT_TENANT_SLUG` lets the not-found UI resolve a tenant, so the redirect survives (307). **Fix:** not-found loads company only when `resolveRequestTenant().kind === 'tenant'` — never calls `notFound()`. |
+
+**`resolveTenantSlug()` audit (non-page callers):** previously used from `publishedOnlyOrTenantScopedRead`, `companiesReadAccess`, and `Media.publishedReferencedMediaWhere`. All three now use `resolveRequestTenant()`. Remaining `notFound()` usage is page-path only (`resolveTenantSlug` / `requirePublishedTenant` for public HTML).
+
+**`npm run verify` (corrected):** exit **0** on the remediation candidate after S6-7 — lint, typecheck, **125** tests / 21 files, migration-drift, retired-fixtures PASS, and **`build:ci` executes and exits 0**. (Review’s earlier “verify PASS” was wrong; this is the corrected observation.)
+
+**Local host matrix:** intended cells documented above. Full `next start` matrix against localhost was blocked in this session by `.env.production.local` re-injecting Production TLS settings when `NODE_ENV=production` (Payload init failures → 500s that are not the S6-1/S6-3 defects). S6-1 is proven by `tests/anon-api-non-tenant-hosts.int.spec.ts`. S6-3 cause/fix is code-level (not-found vs redirect). **Re-run the host matrix after deploy** (and optionally with a local start that does not load Production SSL CA).
+
+**Live regression after deploy:** still required on Production — three tenant hosts Published-only with stripped keys; reserved/unknown 404; cross-tenant media 403; direct Supabase object 400. Record after the remediation deploy.
+
+**Customer-content gates still open:** Production backup/restore rehearsal (ADR-0020); deployed observation of `DATABASE_SSL_CA` / `PAYLOAD_DATABASE_PUSH`; S6-4/5/6 backlog.
