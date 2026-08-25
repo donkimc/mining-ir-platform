@@ -93,7 +93,7 @@ export const tenantScopedCompanyAdminWrite: Access = async ({ req }) => {
 export const companiesReadAccess: Access = async ({ req }) => {
   if (!req.user) {
     // M-1: anonymous callers see only the resolved published tenant, never a multi-tenant directory.
-    // Use resolveRequestTenant — never resolveTenantSlug()/notFound() inside access (S6-1).
+    // Use resolveRequestTenant — never notFound() inside access (S6-1).
     const { getPublishedCompanyBySlug, resolveRequestTenant } = await import('@/lib/tenant')
     const resolution = await resolveRequestTenant()
     if (resolution.kind !== 'tenant') {

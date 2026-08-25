@@ -65,13 +65,15 @@ async function publishViaReview(
   })
 }
 
-async function ensurePrimaryListing(
+async function ensureListing(
   payload: Awaited<ReturnType<typeof import('payload').getPayload>>,
   args: {
     tenantId: string | number
     symbol: string
     exchange: string
     reviewer: { id: string | number }
+    isPrimary?: boolean
+    displayOrder?: number
   },
 ) {
   const existing = await payload.find({
@@ -98,8 +100,8 @@ async function ensurePrimaryListing(
       tenant: args.tenantId as number,
       symbol: args.symbol,
       exchange: args.exchange,
-      isPrimary: true,
-      displayOrder: 0,
+      isPrimary: args.isPrimary ?? true,
+      displayOrder: args.displayOrder ?? 0,
       status: 'draft',
       disclosureLevel: 'standard',
       sourceUrl: 'https://example.invalid/fictional-listing-source',
@@ -266,7 +268,7 @@ async function seed() {
     })
   }
 
-  await ensurePrimaryListing(payload, {
+  await ensureListing(payload, {
     tenantId: qelvarion.id,
     symbol: 'QVRN',
     exchange: 'TSXV',
@@ -320,7 +322,7 @@ async function seed() {
     })
   }
 
-  await ensurePrimaryListing(payload, {
+  await ensureListing(payload, {
     tenantId: zenthoriq.id,
     symbol: 'ZQRI',
     exchange: 'TSXV',
@@ -392,11 +394,22 @@ async function seed() {
     })
   }
 
-  await ensurePrimaryListing(payload, {
+  await ensureListing(payload, {
     tenantId: veylithra.id,
     symbol: 'VYTH',
     exchange: 'CSE',
     reviewer: platformAdmin,
+    isPrimary: true,
+    displayOrder: 0,
+  })
+  // S6-5: second listing so multi-row listing paths are exercised (non-primary).
+  await ensureListing(payload, {
+    tenantId: veylithra.id,
+    symbol: 'VYTH',
+    exchange: 'OTCQB',
+    reviewer: platformAdmin,
+    isPrimary: false,
+    displayOrder: 1,
   })
 
   const qelvarionMemberships = await payload.find({
@@ -708,7 +721,6 @@ async function seed() {
         slug: 'corporate-presentation',
         category: 'presentation',
         publicationDate: '2026-07-15',
-        externalUrl: 'https://example.com/qelvarion-resource-corporate-presentation.pdf',
         disclosureLevel: 'standard',
         status: 'draft',
       },
@@ -725,7 +737,6 @@ async function seed() {
         slug: 'draft-technical-memo',
         category: 'technical_report',
         publicationDate: '2026-08-01',
-        externalUrl: 'https://example.com/qelvarion-resource-draft-memo.pdf',
         disclosureLevel: 'technical',
         status: 'draft',
       },
@@ -1065,7 +1076,6 @@ async function seed() {
         slug: 'zenthoriq-isolation-doc',
         category: 'other',
         publicationDate: '2026-01-01',
-        externalUrl: 'https://example.com/zenthoriq-resource-doc',
         disclosureLevel: 'standard',
         status: 'draft',
       },
@@ -1340,7 +1350,6 @@ async function seed() {
         slug: 'corporate-presentation',
         category: 'presentation',
         publicationDate: '2026-07-18',
-        externalUrl: 'https://example.com/veylithra-tungsten-corporate-presentation.pdf',
         disclosureLevel: 'standard',
         status: 'draft',
       },
@@ -1356,7 +1365,6 @@ async function seed() {
         slug: 'draft-tungsten-memo',
         category: 'technical_report',
         publicationDate: '2026-08-02',
-        externalUrl: 'https://example.com/veylithra-tungsten-draft-memo.pdf',
         disclosureLevel: 'technical',
         status: 'draft',
       },

@@ -117,13 +117,6 @@ export async function resolveRequestTenant(): Promise<TenantResolution> {
   }
 }
 
-/** Sprint 1-compatible slug helper used by public pages that expect a tenant. */
-export async function resolveTenantSlug(): Promise<string> {
-  const resolution = await resolveRequestTenant()
-  if (resolution.kind === 'tenant') return resolution.slug
-  notFound()
-}
-
 export async function getPublishedCompanyBySlug(slug: string): Promise<Company | null> {
   const payload = await getPayloadClient()
   const result = await payload.find({

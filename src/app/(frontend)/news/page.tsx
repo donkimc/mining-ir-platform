@@ -6,6 +6,7 @@ import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedNews } from '@/lib/public-data'
 import { buildTenantMetadata } from '@/lib/seo'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant } from '@/lib/tenant'
 
 type Props = {
@@ -26,13 +27,14 @@ function formatDate(value?: string | null) {
 
 export default async function NewsPage({ searchParams }: Props) {
   const company = await requirePublishedTenant()
+  const template = resolveTemplateKey(company)
   const filters = await searchParams
   const news = await getPublishedNews(company.id, { q: filters.q })
   const hasFilters = Boolean(filters.q?.trim())
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={company.displayName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
+      <SiteHeader companyName={company.displayName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">News</p>
         <h1 className="display mt-3 text-5xl md:text-6xl">News releases</h1>

@@ -201,7 +201,7 @@ a {
   padding: 1.25rem;
 }
 
-/* Summit presentation template (ADR-0017) — denser corporate rhythm, shared tokens. */
+/* Summit presentation template (ADR-0017 / S6-4) — distinct shell, not colour-only. */
 .template-summit {
   --ink: #101820;
   --ink-soft: #3a4650;
@@ -213,14 +213,100 @@ a {
   --mineral-soft: #d2b88a;
 }
 
-.template-summit .display {
-  letter-spacing: -0.02em;
+.template-summit .section-shell {
+  width: min(980px, calc(100% - 2rem));
 }
 
-.summit-hero {
+.template-summit .display {
+  letter-spacing: 0.01em;
+  font-weight: 600;
+}
+
+.template-summit .summit-hero {
+  min-height: 78svh;
   background:
-    linear-gradient(135deg, color-mix(in oklab, var(--forest-deep) 88%, black), var(--forest)),
+    linear-gradient(160deg, color-mix(in oklab, var(--forest-deep) 92%, black), var(--forest) 55%, #243848),
     var(--forest-deep);
+}
+
+.template-summit .summit-hero::before {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 28px,
+      rgba(247, 245, 241, 0.035) 28px,
+      rgba(247, 245, 241, 0.035) 29px
+    );
+}
+
+.template-summit .summit-ticker-bar {
+  border-bottom: 1px solid color-mix(in oklab, var(--paper) 16%, transparent);
+  background: color-mix(in oklab, var(--forest-deep) 70%, black);
+}
+
+.template-summit .summit-metric-rail {
+  margin-top: auto;
+  border-top: 1px solid color-mix(in oklab, var(--paper) 18%, transparent);
+  background: color-mix(in oklab, var(--forest-deep) 55%, transparent);
+  color: var(--paper);
+}
+
+.template-summit .summit-section-rule {
+  width: 3.5rem;
+  height: 2px;
+  background: var(--mineral);
+}
+
+.template-summit .summit-highlight-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.template-summit .summit-highlight-item {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  gap: 1rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.template-summit .summit-highlight-item:last-child {
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.template-summit .summit-highlight-index {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  color: var(--mineral);
+}
+
+.template-summit .summit-thesis-body {
+  border-left: 2px solid var(--mineral);
+  padding-left: 1.25rem;
+}
+
+.template-summit .summit-feed-row {
+  padding: 1rem 0;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.template-summit .summit-feed-row:last-child {
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+}
+
+.template-summit .summit-doc-rail {
+  border-top: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  padding-top: 1.5rem;
+}
+
+.template-summit .summit-contact .btn {
+  min-width: 10rem;
 }
 
 .marketing-hero {

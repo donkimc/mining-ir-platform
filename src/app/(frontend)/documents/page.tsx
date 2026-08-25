@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/public/SiteHeader'
 import { publicDocumentOpenHref } from '@/lib/document-links'
 import { getPublishedDocuments } from '@/lib/public-data'
 import { buildTenantMetadata } from '@/lib/seo'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant } from '@/lib/tenant'
 import type { Document } from '@/payload-types'
 
@@ -57,6 +58,7 @@ function groupDocuments(documents: Document[]) {
 
 export default async function DocumentsPage({ searchParams }: Props) {
   const company = await requirePublishedTenant()
+  const template = resolveTemplateKey(company)
   const filters = await searchParams
   const documents = await getPublishedDocuments(company.id, {
     q: filters.q,
@@ -66,8 +68,8 @@ export default async function DocumentsPage({ searchParams }: Props) {
   const hasFilters = Boolean(filters.q?.trim() || filters.category?.trim())
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={company.displayName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
+      <SiteHeader companyName={company.displayName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">Documents</p>
         <h1 className="display mt-3 text-5xl md:text-6xl">Investor documents</h1>

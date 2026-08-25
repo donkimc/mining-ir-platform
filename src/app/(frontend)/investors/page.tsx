@@ -32,7 +32,7 @@ export default async function InvestorsPage() {
 
   return (
     <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
-      <SiteHeader companyName={company.displayName} />
+      <SiteHeader companyName={company.displayName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-20">
         <h1 className="display text-5xl">Investors</h1>
         <p className="mt-4 max-w-2xl text-lg text-[var(--ink-soft)]">

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /**
- * Fail if retired Sprint 1–5 fixture terms appear outside the historical allowlist (ADR-0021).
+ * Fail if retired Sprint 1–5 fixture terms appear outside historical evidence paths (ADR-0021).
+ *
+ * Exemption is by *class* (sprint evidence / clearance ADR / this guard), not a hand-maintained
+ * per-file list — new SPRINT*_REVIEW.md files must not re-break the gate (S6-7).
  */
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -9,25 +12,22 @@ import { fileURLToPath } from 'node:url'
 
 const root = process.cwd()
 
-/** Only these tracked historical evidence files may contain retired terms. */
-export const HISTORICAL_ALLOWLIST = new Set([
-  'docs/SPRINT1_HANDOFF.md',
-  'docs/SPRINT1_REVIEW.md',
-  'docs/SPRINT2_HANDOFF.md',
-  'docs/SPRINT2_REVIEW.md',
-  'docs/SPRINT2_REREVIEW.md',
-  'docs/SPRINT2_CARRYFORWARD.md',
-  'docs/SPRINT3_HANDOFF.md',
-  'docs/SPRINT3_REVIEW.md',
-  'docs/SPRINT4_HANDOFF.md',
-  'docs/SPRINT4_REVIEW.md',
-  'docs/SPRINT5_HANDOFF.md',
-  'docs/SPRINT5_REVIEW.md',
-  // Clearance ADR intentionally records the retired → new mapping.
-  'docs/decisions/ADR-0021-fixture-identity-clearance.md',
-])
+/**
+ * Paths whose job is to record retired identities (or the clearance mapping).
+ * Keep any extra exact paths that these globs do not cover in EXTRA_ALLOWLIST.
+ */
+export const HISTORICAL_PATH_PATTERNS: RegExp[] = [
+  /^docs\/SPRINT\d+_HANDOFF\.md$/,
+  /^docs\/SPRINT\d+_REVIEW\.md$/,
+  /^docs\/SPRINT\d+_REREVIEW\.md$/,
+  /^docs\/SPRINT\d+_CARRYFORWARD\.md$/,
+  /^docs\/decisions\/ADR-0021-.*\.md$/,
+]
 
-/** Guard source lists the patterns; exclude it from the scan (S6-7). */
+/** Exact paths not covered by HISTORICAL_PATH_PATTERNS (currently none). */
+export const EXTRA_ALLOWLIST = new Set<string>([])
+
+/** Guard source lists the patterns; exclude it from the scan. */
 export const SELF_EXCLUDE = new Set([
   'scripts/check-retired-fixtures.ts',
 ])
@@ -54,8 +54,15 @@ export function isBinaryPath(file: string): boolean {
   return /\.(png|jpg|jpeg|gif|webp|ico|pdf|woff2?|zip|gz)$/i.test(file)
 }
 
+export function isHistoricalEvidencePath(file: string): boolean {
+  if (EXTRA_ALLOWLIST.has(file)) return true
+  return HISTORICAL_PATH_PATTERNS.some((pattern) => pattern.test(file))
+}
+
 export function isExcludedFromScan(file: string): boolean {
-  return HISTORICAL_ALLOWLIST.has(file) || SELF_EXCLUDE.has(file) || isBinaryPath(file)
+  return (
+    isHistoricalEvidencePath(file) || SELF_EXCLUDE.has(file) || isBinaryPath(file)
+  )
 }
 
 export function scanRetiredFixtures(args?: {
@@ -110,7 +117,11 @@ if (isMainModule()) {
   }
 
   console.log('check:retired-fixtures PASS')
-  console.log(`Allowlist (${HISTORICAL_ALLOWLIST.size} files):`)
-  for (const file of [...HISTORICAL_ALLOWLIST].sort()) console.log(`  - ${file}`)
+  console.log('Historical path patterns:')
+  for (const pattern of HISTORICAL_PATH_PATTERNS) console.log(`  - ${pattern}`)
+  if (EXTRA_ALLOWLIST.size > 0) {
+    console.log(`Extra allowlist (${EXTRA_ALLOWLIST.size}):`)
+    for (const file of [...EXTRA_ALLOWLIST].sort()) console.log(`  - ${file}`)
+  }
   console.log(`Self-exclude: ${[...SELF_EXCLUDE].join(', ')}`)
 }

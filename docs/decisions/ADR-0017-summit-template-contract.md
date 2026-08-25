@@ -20,3 +20,12 @@ ADR-0002 chose Explorer first. It did not require Explorer to remain the only te
 
 - Template selection happens after tenant resolution and published checks.
 - Shared data helpers remain the single public-read path for both templates.
+
+## Clarification (2026-08-25) — S6-4 Product Director direction
+
+Product Director chose option **(a)**: `summit` must have real layout/typography differences in
+template components, not be reclassified as a colour-token theme of Explorer. Point 5 already places
+layout differences that cannot be expressed as tokens in template components; a tokens-only ship is
+incomplete against that intent. Implementation lives under `src/components/templates/` (Explorer vs
+Summit homepage shells, summit nav order, and summit-specific CSS structure). Do not amend this ADR
+to call summit a theme variant.

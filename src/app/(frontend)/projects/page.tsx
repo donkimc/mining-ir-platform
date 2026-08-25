@@ -5,6 +5,7 @@ import { PublicDiscoveryFilters } from '@/components/public/PublicDiscoveryFilte
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedProjects } from '@/lib/public-data'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant } from '@/lib/tenant'
 
 type Props = {
@@ -30,6 +31,7 @@ const STAGE_OPTIONS = [
 
 export default async function ProjectsPage({ searchParams }: Props) {
   const company = await requirePublishedTenant()
+  const template = resolveTemplateKey(company)
   const filters = await searchParams
   const projects = await getPublishedProjects(company.id, {
     q: filters.q,
@@ -39,8 +41,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const hasFilters = Boolean(filters.q?.trim() || filters.commodity?.trim() || filters.stage?.trim())
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={company.displayName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
+      <SiteHeader companyName={company.displayName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">Projects</p>
         <h1 className="display mt-3 text-5xl md:text-6xl">Exploration portfolio</h1>

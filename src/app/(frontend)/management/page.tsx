@@ -4,6 +4,7 @@ import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedPeople } from '@/lib/public-data'
 import { buildTenantMetadata } from '@/lib/seo'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant } from '@/lib/tenant'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,11 +21,12 @@ function formatGroup(group?: string | null) {
 
 export default async function ManagementPage() {
   const company = await requirePublishedTenant()
+  const template = resolveTemplateKey(company)
   const people = await getPublishedPeople(company.id)
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={company.displayName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
+      <SiteHeader companyName={company.displayName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">Management</p>
         <h1 className="display mt-3 text-5xl md:text-6xl">Leadership team</h1>

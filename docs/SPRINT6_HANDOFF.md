@@ -541,7 +541,7 @@ Cursor or the implementing engineer must append evidence here before Sprint 6 is
 
 ### Sprint 6 review remediations (2026-08-25) — S6-7, S6-1, S6-2, S6-3
 
-**Not fixed in this pass (remain open):** S6-4 (summit theme vs shell), S6-5 (multi-listing fixture), S6-6 (third-party document URL).
+**Not fixed in this pass (at the time):** S6-4 (summit theme vs shell), S6-5 (multi-listing fixture), S6-6 (third-party document URL). Post-`93bf908`: S6-5, seed-side S6-6, and S6-4 (Product Director chose real layout differences) closed; live S6-6 remains an operator task.
 
 | ID | Status | What changed |
 | --- | --- | --- |
@@ -550,7 +550,7 @@ Cursor or the implementing engineer must append evidence here before Sprint 6 is
 | **S6-2** | Fixed | Always register `@payloadcms/storage-s3` with `enabled: hasS3Credentials` so `generate:importmap` / `next dev` keep `S3ClientUploadHandler` via `admin.dependencies` even when S3 env vars are unset. Guard test retained. |
 | **S6-3** | Fixed | **Cause:** `(frontend)/not-found.tsx` called `requirePublishedTenant()`, which throws `notFound()` on admin/marketing hosts. Next prepares that layout `notFound` UI during auth-surface renders; on `admin.nrlaunch.com` the nested `notFound()` wins over `requireUser()`’s `redirect('/login?next=…')`, producing a dead 404. On localhost, `DEFAULT_TENANT_SLUG` lets the not-found UI resolve a tenant, so the redirect survives (307). **Fix:** not-found loads company only when `resolveRequestTenant().kind === 'tenant'` — never calls `notFound()`. |
 
-**`resolveTenantSlug()` audit (non-page callers):** previously used from `publishedOnlyOrTenantScopedRead`, `companiesReadAccess`, and `Media.publishedReferencedMediaWhere`. All three now use `resolveRequestTenant()`. Remaining `notFound()` usage is page-path only (`resolveTenantSlug` / `requirePublishedTenant` for public HTML).
+**`resolveTenantSlug()` audit (non-page callers):** previously used from `publishedOnlyOrTenantScopedRead`, `companiesReadAccess`, and `Media.publishedReferencedMediaWhere`. All three now use `resolveRequestTenant()`. The helper was later deleted (N-1); page paths use `requirePublishedTenant()` / `resolveRequestTenant()` only.
 
 **`npm run verify` (corrected):** exit **0** on the remediation candidate after S6-7 — lint, typecheck, **125** tests / 21 files, migration-drift, retired-fixtures PASS, and **`build:ci` executes and exits 0**. (Review’s earlier “verify PASS” was wrong; this is the corrected observation.)
 
@@ -558,4 +558,33 @@ Cursor or the implementing engineer must append evidence here before Sprint 6 is
 
 **Live regression after deploy:** still required on Production — three tenant hosts Published-only with stripped keys; reserved/unknown 404; cross-tenant media 403; direct Supabase object 400. Record after the remediation deploy.
 
-**Customer-content gates still open:** Production backup/restore rehearsal (ADR-0020); deployed observation of `DATABASE_SSL_CA` / `PAYLOAD_DATABASE_PUSH`; S6-4/5/6 backlog.
+**Customer-content gates still open:** Production backup/restore rehearsal (ADR-0020); deployed observation of `DATABASE_SSL_CA` / `PAYLOAD_DATABASE_PUSH`. S6-4 closed by Product Director choice (a) in the post-`93bf908` pass.
+
+### Sprint 6 re-review remediations (2026-08-25, post-`93bf908`) — S6-7 / N-1 / S6-5 / S6-6 seed / S6-4
+
+Independent re-review (`docs/SPRINT6_REREVIEW.md`) confirmed S6-1/S6-2/S6-3 **closed**; **S6-7 remained High** because `git ls-files` only sees tracked files — the prior verify-green observation was on an unstaged tree.
+
+| ID | Status | What changed |
+| --- | --- | --- |
+| **S6-7** | Fixed (class) | Pattern-based historical exemption (`SPRINT*_HANDOFF/REVIEW/REREVIEW/CARRYFORWARD`, `ADR-0021-*`) replaces the per-file Set. Guard source self-excluded. Test poison string synthesised via `String.fromCharCode` so the test file holds no literal retired term. Third test asserts `docs/SPRINT9_REVIEW.md` is exempt while `src/anything.ts` is not. |
+| **N-1** | Fixed | **Deleted** unused `resolveTenantSlug()` — it was unreferenced and reintroduced the S6-1 `notFound()` primitive. Prefer deletion over `@deprecated` so the landmine cannot be reimported. Page paths continue to use `requirePublishedTenant()` / `resolveRequestTenant()`. |
+| **S6-5** | Fixed (seed + test) | Veylithra gets a second published listing (`VYTH` / `OTCQB`, non-primary). Test asserts ≥2 published listings without tenant/reviewer internals. |
+| **S6-6** | Seed fixed; **live still open** | Removed `externalUrl` from the five seed document creates; uploaded-media path remains the public open path. **Operator task:** on `admin.nrlaunch.com`, clear/replace Veylithra `corporate-presentation` live `externalUrl` (`https://dario-amodei-machines-of-loving-grace.tiiny.site`) — seed does not mutate Production CMS edits. |
+| **S6-4** | Fixed (Product Director chose **a**) | Distinct Summit shell under `src/components/templates/`: ticker masthead, shorter top-aligned hero, metric rail, flagship-first section order, numbered highlights, single-column thesis, IR-first nav labels/order, summit CSS structure beyond colour tokens. ADR-0017 clarified 2026-08-25 (not amended to theme-variant). |
+| **S6-5** | Fixed (seed + test) | Veylithra gets a second published listing (`VYTH` / `OTCQB`, non-primary). Test asserts ≥2 published listings without tenant/reviewer internals. |
+| **S6-6** | Seed fixed; **live still open** | Removed `externalUrl` from the five seed document creates; uploaded-media path remains the public open path. **Operator task:** on `admin.nrlaunch.com`, clear/replace Veylithra `corporate-presentation` live `externalUrl` (`https://dario-amodei-machines-of-loving-grace.tiiny.site`) — seed does not mutate Production CMS edits. |
+
+**Verify (measured after `git add -A` — mandatory because the gate reads `git ls-files`):**
+
+| Step | Exit | Evidence |
+| --- | --- | --- |
+| `npm run check:retired-fixtures` (staged tree) | **0** | clean scan |
+| Inject retired term into `src/_retired-guard-probe.ts`, re-check | **1** | guard still bites |
+| Remove probe, re-check | **0** | restored |
+| `npm run verify` (full, after S6-4 layout pass) | **0** | lint → typecheck → **130** tests / **22** files → migration-drift → retired-fixtures → **`build:ci`** |
+| `build:ci` lines | — | `✓ Compiled successfully in 34.0s`; `✓ Generating static pages (17/17)` |
+| `npm run generate:importmap` then `git status --porcelain` | clean for importMap | `No new imports found, skipping writing import map`; `S3ClientUploadHandler` count **2** (S6-2 regression check) |
+
+**Not marked fixed:** live S6-6 Production document URL (operator on `admin.nrlaunch.com`).
+
+**Live host matrix after deploy (still required):** apex, www, admin, reserved label, unknown label, and all three tenant subdomains — `/`, unauth `/dashboard`, `/api/projects`, `/api/companies`. Expect no 5xx; cross-tenant media still 403. Confirm summit vs explorer homepage shells differ in the browser on `veylithra-tungsten` vs `qelvarion-resource`.

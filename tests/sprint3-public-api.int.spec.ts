@@ -9,6 +9,7 @@ import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 import { serializeAnonymousPublicDoc } from '@/lib/collection-hooks'
 import {
+  getPublishedListings,
   getPublishedNews,
   getPublishedProjects,
   getRelatedPublishedForProject,
@@ -55,6 +56,7 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
   let payload: Payload
   let qelvarionId: string | number
   let zenthoriqId: string | number
+  let veylithraId: string | number
   let companyAdmin: { id: string | number }
   let platformAdmin: { id: string | number }
 
@@ -73,11 +75,18 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
       limit: 1,
       overrideAccess: true,
     })
-    if (!qelvarion.docs[0] || !zenthoriq.docs[0]) {
+    const veylithra = await payload.find({
+      collection: 'companies',
+      where: { slug: { equals: 'veylithra-tungsten' } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (!qelvarion.docs[0] || !zenthoriq.docs[0] || !veylithra.docs[0]) {
       throw new Error('Seed data missing. Run `npm run seed` before integration tests.')
     }
     qelvarionId = qelvarion.docs[0].id
     zenthoriqId = zenthoriq.docs[0].id
+    veylithraId = veylithra.docs[0].id
 
     const admins = await payload.find({
       collection: 'users',
@@ -307,5 +316,22 @@ describe('Sprint 3/4 public API serializers and tenant isolation', () => {
     expect(isValidMapCoordinate(91, 0)).toBe(false)
     expect(isValidMapCoordinate(0, 181)).toBe(false)
     expect(isValidMapCoordinate(Number.NaN, 0)).toBe(false)
+  })
+
+  it('multi-listed tenant returns both published listings without tenant internals (S6-5)', async () => {
+    const listings = await getPublishedListings(veylithraId)
+    expect(listings.length).toBeGreaterThanOrEqual(2)
+    const exchanges = listings.map((listing) => listing.exchange)
+    expect(exchanges).toContain('CSE')
+    expect(exchanges).toContain('OTCQB')
+    expect(listings.some((listing) => listing.isPrimary === true)).toBe(true)
+    expect(listings.some((listing) => listing.isPrimary === false)).toBe(true)
+    for (const listing of listings) {
+      expect(listing.status).toBe('published')
+      expect(listing).not.toHaveProperty('tenant')
+      for (const key of REVIEW_KEYS) {
+        expect(listing).not.toHaveProperty(key)
+      }
+    }
   })
 })

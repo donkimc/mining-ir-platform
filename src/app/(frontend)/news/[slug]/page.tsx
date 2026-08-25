@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
 import { getPublishedNewsBySlug, getPublishedProjects } from '@/lib/public-data'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant } from '@/lib/tenant'
 
 type Props = {
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NewsDetailPage({ params }: Props) {
   const { slug } = await params
   const company = await requirePublishedTenant()
+  const template = resolveTemplateKey(company)
   const news = await getPublishedNewsBySlug(company.id, slug)
   if (!news) notFound()
 
@@ -44,8 +46,8 @@ export default async function NewsDetailPage({ params }: Props) {
       : null
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={company.displayName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
+      <SiteHeader companyName={company.displayName} variant={template} />
       <article id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">
           <Link href="/news">News</Link> / {news.slug}

@@ -19,7 +19,7 @@ export default async function AboutPage() {
 
   return (
     <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
-      <SiteHeader companyName={company.displayName} />
+      <SiteHeader companyName={company.displayName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-20">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">About</p>
         <h1 className="display mt-3 text-5xl md:text-6xl">{company.displayName}</h1>

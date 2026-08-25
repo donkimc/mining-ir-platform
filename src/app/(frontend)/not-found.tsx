@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import { SiteFooter } from '@/components/public/SiteFooter'
 import { SiteHeader } from '@/components/public/SiteHeader'
+import { resolveTemplateKey, templateShellClass, type TemplateKey } from '@/lib/templates'
 import { getPublishedCompanyBySlug, resolveRequestTenant } from '@/lib/tenant'
 
 export const metadata: Metadata = {
@@ -17,6 +18,8 @@ export const metadata: Metadata = {
 export default async function NotFound() {
   let companyName = 'Mining IR'
   let irEmail: string | null = null
+  let template: TemplateKey = 'explorer'
+  let shellClass = ''
 
   const resolution = await resolveRequestTenant()
   if (resolution.kind === 'tenant') {
@@ -24,12 +27,14 @@ export default async function NotFound() {
     if (company) {
       companyName = company.displayName
       irEmail = company.irContactEmail || null
+      template = resolveTemplateKey(company)
+      shellClass = templateShellClass(template)
     }
   }
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={companyName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${shellClass}`}>
+      <SiteHeader companyName={companyName} variant={template} />
       <div id="main-content" tabIndex={-1} className="section-shell py-24">
         <h1 className="display text-5xl">Page not found</h1>
         <p className="mt-4 max-w-xl text-[var(--ink-soft)]">

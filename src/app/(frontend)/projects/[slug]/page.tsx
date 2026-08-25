@@ -11,6 +11,7 @@ import {
   getPublishedProjectBySlug,
   getRelatedPublishedForProject,
 } from '@/lib/public-data'
+import { resolveTemplateKey, templateShellClass } from '@/lib/templates'
 import { requirePublishedTenant } from '@/lib/tenant'
 
 type Props = {
@@ -38,6 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProjectDetailPage({ params }: Props) {
   const { slug } = await params
   const company = await requirePublishedTenant()
+  const template = resolveTemplateKey(company)
   const project = await getPublishedProjectBySlug(company.id, slug)
   if (!project) notFound()
 
@@ -47,8 +49,8 @@ export default async function ProjectDetailPage({ params }: Props) {
   ])
 
   return (
-    <main className="min-h-screen bg-[var(--paper)]">
-      <SiteHeader companyName={company.displayName} />
+    <main className={`min-h-screen bg-[var(--paper)] ${templateShellClass(template)}`}>
+      <SiteHeader companyName={company.displayName} variant={template} />
       <article id="main-content" tabIndex={-1} className="section-shell py-16">
         <p className="text-sm uppercase tracking-[0.18em] text-[var(--ink-soft)]">
           <Link href="/projects">Projects</Link> / {project.slug}
