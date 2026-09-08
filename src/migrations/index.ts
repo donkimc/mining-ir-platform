@@ -3,6 +3,8 @@ import * as migration_20260812_132324_media_original_filename from './20260812_1
 import * as migration_20260818_sprint5_provenance from './20260818_sprint5_provenance';
 import * as migration_20260819_sprint5_content_origin_enums from './20260819_sprint5_content_origin_enums';
 import * as migration_20260821_030052_sprint6_company_listings from './20260821_030052_sprint6_company_listings';
+import * as migration_20260826_postgrest_rls_revoke from './20260826_postgrest_rls_revoke';
+import * as migration_20260908_company_listings_primary_uidx from './20260908_company_listings_primary_uidx';
 
 export const migrations = [
   {
@@ -28,6 +30,16 @@ export const migrations = [
   {
     up: migration_20260821_030052_sprint6_company_listings.up,
     down: migration_20260821_030052_sprint6_company_listings.down,
-    name: '20260821_030052_sprint6_company_listings'
+    name: '20260821_030052_sprint6_company_listings',
+  },
+  {
+    up: migration_20260826_postgrest_rls_revoke.up,
+    down: migration_20260826_postgrest_rls_revoke.down,
+    name: '20260826_postgrest_rls_revoke',
+  },
+  {
+    up: migration_20260908_company_listings_primary_uidx.up,
+    down: migration_20260908_company_listings_primary_uidx.down,
+    name: '20260908_company_listings_primary_uidx',
   },
 ];

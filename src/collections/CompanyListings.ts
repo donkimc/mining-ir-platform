@@ -48,6 +48,7 @@ export const CompanyListings: CollectionConfig = {
             ? (originalDoc.tenant as { id: number | string }).id
             : originalDoc?.tenant)
 
+        // App-level check; DB also enforces via company_listings_one_primary_per_tenant_uidx.
         if (data.isPrimary && tenantId != null && req.payload) {
           const others = await req.payload.find({
             collection: 'company-listings',

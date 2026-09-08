@@ -5,9 +5,10 @@ import { redirect } from 'next/navigation'
 
 import { isPlatformAdmin, type AuthUser } from '@/access'
 
-let payloadPromise: Promise<ReturnType<typeof getPayload>> | null = null
+/** Cached Payload init. `getPayload` already returns `Promise<BasePayload>` — do not wrap again. */
+let payloadPromise: ReturnType<typeof getPayload> | null = null
 
-export async function getPayloadClient() {
+export async function getPayloadClient(): Promise<Awaited<ReturnType<typeof getPayload>>> {
   if (!payloadPromise) {
     payloadPromise = getPayload({ config })
   }

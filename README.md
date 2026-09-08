@@ -136,6 +136,7 @@ Both are read from your local `.env.local` (gitignored) by `npm run seed`. Chang
 | `npm run check:migration-drift` | Fail if a collection field has no corresponding migration |
 | `npm run check:storage-privacy` | Probe that a Supabase Storage object is not anonymously downloadable |
 | `npm run test:incremental-migration` | Rehearse an incremental migration on a disposable database |
+| `npm run test:postgrest-rls` | ADR-0022 disposable rehearsal: RLS enabled, anon/authenticated revoked |
 | `npm run generate:types` | Regenerate `src/payload-types.ts` |
 | `npm run generate:importmap` | Regenerate Payload import map |
 

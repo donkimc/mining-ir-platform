@@ -79,6 +79,40 @@ Sprint 7 is unplanned. Candidate inputs: the Sprint 6 open findings above,
 `docs/SPRINT7_FEATURE_NOTES.md` (role-separated disclosure approval — Editor vs Approver), and the
 deferred customer-content promotion gates.
 
+**Role-separated approval remains a Sprint 7 planning item.** Do not half-implement Editor/Approver
+publish gates in drive-by fixes. Until that sprint lands, Company Admin paths remain the only
+dashboard authority that can publish; membership roles Editor/Viewer are modeled but not enforced
+on status transitions.
+
+### Second-review carry-ins (2026-09-08) — remediation status
+
+A Codex second-opinion review on 2026-09-08 found no evidence of a catastrophic tenant-isolation or
+private-media leak in the sampled paths. Findings below were remediated or explicitly deferred:
+
+1. **High — `npm run verify` typecheck (closed).** `payloadPromise` in `src/lib/auth.ts` is typed as
+   `ReturnType<typeof getPayload> | null` (not a nested `Promise<…>`). `getPayloadClient()` returns
+   `Promise<Awaited<ReturnType<typeof getPayload>>>`. Do not mark any candidate ready until
+   `npm run typecheck` and full `npm run verify` pass, including `build:ci`.
+2. **Medium — role-separated disclosure approval (deferred — Sprint 7 planning).** `Editor` and
+   `Viewer` roles exist, but dashboard actions and collection writes still gate publishing through
+   Company Admin paths. **Do not half-implement.** Scope remains `docs/SPRINT7_FEATURE_NOTES.md` /
+   `docs/SPRINT7_PLANNING_PROMPT.md`. Until that sprint lands, treat Company Admin as the only
+   dashboard publish authority; do not assume Editor cannot publish.
+3. **Low/Medium — ADR-0022 PostgREST/RLS verification (strengthened).** Static checks remain in
+   `tests/postgrest-rls-migration.spec.ts`. Disposable-database evidence:
+   `POSTGREST_RLS_DATABASE_URI=… npm run test:postgrest-rls` (see ADR-0022 / `docs/OPERATIONS.md`).
+4. **Low — primary company-listing uniqueness (closed).** Partial unique index
+   `company_listings_one_primary_per_tenant_uidx` on `(tenant_id) WHERE is_primary = true`
+   (migration `20260908_company_listings_primary_uidx`) complements the collection hook.
+5. **Low — CSP is broad globally (partially closed).** Public routes use
+   `PUBLIC_CONTENT_SECURITY_POLICY` without `'unsafe-eval'`; Payload `/cms` keeps
+   `ADMIN_CONTENT_SECURITY_POLICY` with `'unsafe-eval'`. Residual: `'unsafe-inline'` remains on
+   public pages pending a nonce pipeline (`docs/SECURITY.md`).
+
+Focused verification from that review passed:
+`tests/postgrest-rls-migration.spec.ts`, `tests/host.spec.ts`, and `tests/publishing.spec.ts`
+reported 29 passing tests. Full verification must pass `npm run verify` after the typecheck fix.
+
 ## Sprint 6 Baseline — Go-Live (complete)
 
 Delivered: `nrlaunch.com` hostname routing with fail-closed unknown/reserved hosts (ADR-0016), a second

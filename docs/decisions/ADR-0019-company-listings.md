@@ -11,7 +11,10 @@ Company records currently store a single `tickerSymbol` and `exchange`. Real jun
 ## Decision
 
 1. Add tenant-scoped `company-listings` with: `tenant`, `symbol` (uppercase), `exchange`, optional `market` / `listingType` / `quoteCurrency`, `isPrimary`, `displayOrder`, publication status, source URL/document where material, and review metadata per the existing disclosure model.
-2. Unique constraint on `(tenant, symbol, exchange)`. At most one primary listing per tenant.
+2. Unique constraint on `(tenant, symbol, exchange)`. At most one primary listing per tenant —
+   enforced in the collection hook **and** by partial unique index
+   `company_listings_one_primary_per_tenant_uidx` on `(tenant_id) WHERE is_primary = true`
+   (migration `20260908_company_listings_primary_uidx`).
 3. Migrate existing Company ticker/exchange into one primary Published listing per active tenant.
 4. Keep legacy Company ticker/exchange fields temporarily as read-only compatibility until code-wide consumers move to listings.
 5. Public serializers expose only Published listings for the resolved tenant.

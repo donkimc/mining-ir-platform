@@ -1,8 +1,15 @@
 /**
- * Content-Security-Policy value applied to all routes via next.config.ts.
- * Exported for regression tests (S4-1 frame-src for the OSM map embed).
+ * Content-Security-Policy values applied via next.config.ts.
+ *
+ * Public / dashboard routes use a stricter policy (no `'unsafe-eval'`).
+ * Payload CMS (`/cms`) keeps `'unsafe-eval'` for admin tooling compatibility.
+ *
+ * Residual risk: both policies still allow `'unsafe-inline'` for script/style
+ * because this app does not yet ship a nonce-based CSP pipeline for Next.js
+ * App Router inline bootstraps. See docs/SECURITY.md.
  */
-export const CONTENT_SECURITY_POLICY = [
+
+const SHARED_DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
@@ -12,7 +19,24 @@ export const CONTENT_SECURITY_POLICY = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "connect-src 'self' https:",
   "object-src 'none'",
+] as const
+
+/** Stricter CSP for public tenant pages and non-CMS app routes. */
+export const PUBLIC_CONTENT_SECURITY_POLICY = [
+  ...SHARED_DIRECTIVES,
+  "script-src 'self' 'unsafe-inline'",
 ].join('; ')
+
+/** Broader CSP for Payload CMS admin UI (`/cms`). */
+export const ADMIN_CONTENT_SECURITY_POLICY = [
+  ...SHARED_DIRECTIVES,
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+].join('; ')
+
+/**
+ * @deprecated Prefer PUBLIC_CONTENT_SECURITY_POLICY or ADMIN_CONTENT_SECURITY_POLICY.
+ * Retained as the public (default) policy for existing regression imports.
+ */
+export const CONTENT_SECURITY_POLICY = PUBLIC_CONTENT_SECURITY_POLICY

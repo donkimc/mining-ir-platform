@@ -119,6 +119,7 @@ The matrix must cover Company, Project, News, Document, Person, Share Structure,
 
 - Private bucket probe: `npm run check:storage-privacy` (requires a real object key or public URL).
 - Incremental upgrade rehearsal: `INCREMENTAL_MIGRATION_DATABASE_URI=postgres://…/disposable npm run test:incremental-migration`.
+- PostgREST RLS fail-closed rehearsal (ADR-0022): `POSTGREST_RLS_DATABASE_URI=postgres://…/disposable npm run test:postgrest-rls`.
 - Public API serializer coverage: `tests/sprint3-public-api.int.spec.ts` (all tenant-owned collections).
 - Production TLS/push guards: `tests/database-guards.spec.ts` (no insecure production hatch).
 - Operations: [OPERATIONS.md](./OPERATIONS.md) for rotation, restore, rollback and storage recovery.

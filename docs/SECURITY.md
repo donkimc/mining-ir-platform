@@ -20,9 +20,26 @@ Public queries filter by tenant and `Published` status. Draft, Review and Archiv
 
 Technical mining disclosure cannot move directly from draft or AI-assisted content to Published. A server-validated review action records reviewer identity and timestamp. Machine-assisted drafts (ADR-0012) additionally require source-verification acknowledgement. Sprint 5 does not send unpublished documents to external AI providers (ADR-0013).
 
+Role-separated disclosure approval (Editor may submit for review; only Company Admin may publish) is **planned Sprint 7 work** (`docs/SPRINT7_FEATURE_NOTES.md`). Until implemented, dashboard publish actions remain Company Admin–gated; do not treat Editor/Viewer membership as an enforced publish boundary.
+
 ## Maps and third-party requests
 
 The OpenStreetMap embed requires CSP `frame-src https://www.openstreetmap.org`. Loading the embed discloses the visitor’s IP/request metadata to OSM operators; see ADR-0010. Text location remains available without the iframe.
+
+## Content-Security-Policy split
+
+`next.config.ts` applies two policies from `src/lib/content-security-policy.ts`:
+
+| Surface | Policy | `script-src` |
+| --- | --- | --- |
+| Public tenant pages, dashboard, login, APIs | `PUBLIC_CONTENT_SECURITY_POLICY` | `'self' 'unsafe-inline'` (no `'unsafe-eval'`) |
+| Payload CMS (`/cms`) | `ADMIN_CONTENT_SECURITY_POLICY` | `'self' 'unsafe-inline' 'unsafe-eval'` |
+
+**Residual risk:** `'unsafe-inline'` remains on public pages because this repo does not yet
+ship a nonce/hash CSP pipeline for Next.js App Router inline bootstraps. Removing
+`'unsafe-inline'` without nonces would break public and dashboard rendering. A future
+hardening sprint can introduce nonces if Product Director prioritizes it; do not loosen
+`frame-src` or restore global `'unsafe-eval'` on public routes.
 
 ## Secrets and Data
 
@@ -62,6 +79,13 @@ Test wrong-tenant IDs, wrong-tenant related projects/documents, forged reviewer 
 - Anonymous media reads require a Published Document `file` or Person `headshot` on a published active tenant.
 - Do not emit public Supabase object URLs. Keep the storage bucket private.
 - Object keys are UUID-prefixed; `originalFilename` is for display only.
+
+## Database boundary (Supabase / PostgREST)
+
+Authorization lives in Payload, not in Supabase Auth. Tables live in `public` for Payload, but the
+Supabase Data API is **not** a public API for this product. Every `public` base table has row level
+security enabled, and `anon` / `authenticated` are revoked (ADR-0022). Do not publish the
+`service_role` key. Do not add permissive RLS policies that re-open PostgREST reads.
 
 ## Sprint 3 Release Hardening
 

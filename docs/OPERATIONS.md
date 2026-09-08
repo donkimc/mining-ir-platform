@@ -45,6 +45,8 @@ Rotate any credential that appeared in review packets, chat, logs or shared docs
 
 - Production/Preview: `PAYLOAD_DATABASE_PUSH=false`. Push enabled in those environments throws at startup.
 - After collection schema changes: `npm run migrate:create`, review additive SQL, commit migration files, apply with `npm run migrate` on staging.
+- PostgREST / RLS: apply `20260826_postgrest_rls_revoke` (ADR-0022) on staging then Production with `PAYLOAD_DATABASE_PUSH=false npm run migrate`. Confirm the Supabase linter `rls_disabled_in_public` clears and anon REST reads return no rows. Do not `FORCE ROW LEVEL SECURITY`.
+- PostgREST / RLS disposable rehearsal: `POSTGREST_RLS_DATABASE_URI=… npm run test:postgrest-rls` (creates fixture roles/tables, applies migration SQL, asserts RLS + revoked `anon`/`authenticated` privileges). Never against Production.
 - CI: `npm run check:migration-drift` (wired into `npm run verify`).
 - Incremental upgrade rehearsal: `INCREMENTAL_MIGRATION_DATABASE_URI=… npm run test:incremental-migration` against a disposable database only.
 

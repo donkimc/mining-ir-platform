@@ -18,6 +18,7 @@ Recorded in [ADR-0005](decisions/ADR-0005-auth-tenant-resolution-cms-path.md):
 - Payload CMS UI mounted at `/cms` to leave `/admin/*` for product Platform Admin routes
 - Schema sync: Postgres adapter `push: true` for local Sprint 1 speed; Sprint 2 gates push with `PAYLOAD_DATABASE_PUSH` and adds checked-in migrations for staging
 - Media: local filesystem by default; Supabase Storage via `@payloadcms/storage-s3` when `S3_*` env vars are set ([ADR-0007](decisions/ADR-0007-supabase-storage-and-migrations.md))
+- Database: Payload owns authorization; PostgREST is fail-closed with RLS + revoke of `anon`/`authenticated` ([ADR-0022](decisions/ADR-0022-postgrest-rls-fail-closed.md))
 
 ## Boundaries
 
