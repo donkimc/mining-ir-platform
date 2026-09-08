@@ -5,8 +5,13 @@ import { redirect } from 'next/navigation'
 
 import { isPlatformAdmin, type AuthUser } from '@/access'
 
+let payloadPromise: Promise<ReturnType<typeof getPayload>> | null = null
+
 export async function getPayloadClient() {
-  return getPayload({ config })
+  if (!payloadPromise) {
+    payloadPromise = getPayload({ config })
+  }
+  return payloadPromise
 }
 
 /**
