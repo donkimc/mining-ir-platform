@@ -90,6 +90,14 @@ async function ensureListing(
   })
   if (existing.docs[0]) {
     if (existing.docs[0].status !== 'published') {
+      if (!existing.docs[0].sourceUrl && !existing.docs[0].sourceDocument) {
+        await payload.update({
+          collection: 'company-listings',
+          id: existing.docs[0].id,
+          data: { sourceUrl: 'https://example.invalid/fictional-listing-source' },
+          overrideAccess: true,
+        })
+      }
       await publishViaReview(payload, 'company-listings', existing.docs[0].id, args.reviewer)
     }
     return existing.docs[0]
@@ -722,6 +730,7 @@ async function seed() {
         category: 'presentation',
         publicationDate: '2026-07-15',
         disclosureLevel: 'standard',
+        sourceUrl: 'https://example.invalid/qelvarion-resource-corporate-presentation',
         status: 'draft',
       },
       overrideAccess: true,
@@ -738,6 +747,7 @@ async function seed() {
         category: 'technical_report',
         publicationDate: '2026-08-01',
         disclosureLevel: 'technical',
+        sourceUrl: 'https://example.invalid/qelvarion-resource-draft-technical-memo',
         status: 'draft',
       },
       overrideAccess: true,
@@ -1077,6 +1087,7 @@ async function seed() {
         category: 'other',
         publicationDate: '2026-01-01',
         disclosureLevel: 'standard',
+        sourceUrl: 'https://example.invalid/zenthoriq-resource-isolation-doc',
         status: 'draft',
       },
       overrideAccess: true,
@@ -1351,6 +1362,7 @@ async function seed() {
         category: 'presentation',
         publicationDate: '2026-07-18',
         disclosureLevel: 'standard',
+        sourceUrl: 'https://example.invalid/veylithra-tungsten-corporate-presentation',
         status: 'draft',
       },
       overrideAccess: true,
@@ -1366,6 +1378,7 @@ async function seed() {
         category: 'technical_report',
         publicationDate: '2026-08-02',
         disclosureLevel: 'technical',
+        sourceUrl: 'https://example.invalid/veylithra-tungsten-draft-memo',
         status: 'draft',
       },
       overrideAccess: true,
