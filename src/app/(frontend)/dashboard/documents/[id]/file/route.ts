@@ -5,6 +5,7 @@ import { sanitizeFilename } from 'payload/shared'
 
 import { getCurrentUser, getPayloadClient } from '@/lib/auth'
 import { relationId } from '@/lib/publishing'
+import { absoluteAppUrl } from '@/lib/request-url'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,7 @@ export async function GET(request: Request, context: RouteContext) {
   const user = await getCurrentUser()
   if (!user || user.status !== 'active') {
     return NextResponse.redirect(
-      new URL(`/login?next=/dashboard/documents/${id}/file`, request.url),
+      absoluteAppUrl(request, `/login?next=/dashboard/documents/${id}/file`),
     )
   }
 
@@ -53,7 +54,7 @@ export async function GET(request: Request, context: RouteContext) {
   })
 
   if (memberships.docs.length !== 1) {
-    return NextResponse.redirect(new URL('/login?error=unauthorized', request.url))
+    return NextResponse.redirect(absoluteAppUrl(request, '/login?error=unauthorized'))
   }
 
   const tenant = memberships.docs[0].tenant
