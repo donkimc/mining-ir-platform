@@ -149,66 +149,63 @@ async function seed() {
   const companyPassword = process.env.SEED_COMPANY_ADMIN_PASSWORD || 'ChangeMeLocal1!'
   const veylithraEmail = process.env.SEED_VEY_LITHRA_ADMIN_EMAIL || 'admin@veylithra.local'
 
-  const existingPlatform = await payload.find({
-    collection: 'users',
-    where: { email: { equals: platformEmail } },
-    limit: 1,
-    overrideAccess: true,
-  })
-
-  const platformAdmin =
-    existingPlatform.docs[0] ??
-    (await payload.create({
+  async function upsertSeedUser(args: {
+    email: string
+    password: string
+    name: string
+    platformRole?: 'platform_admin' | null
+  }) {
+    const existing = await payload.find({
+      collection: 'users',
+      where: { email: { equals: args.email } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (existing.docs[0]) {
+      // Always refresh password/status so re-seed after a failed run is usable.
+      return payload.update({
+        collection: 'users',
+        id: existing.docs[0].id,
+        data: {
+          password: args.password,
+          name: args.name,
+          status: 'active',
+          ...(args.platformRole !== undefined ? { platformRole: args.platformRole } : {}),
+        },
+        overrideAccess: true,
+      })
+    }
+    return payload.create({
       collection: 'users',
       data: {
-        email: platformEmail,
-        password: platformPassword,
-        name: 'Platform Admin',
-        platformRole: 'platform_admin',
+        email: args.email,
+        password: args.password,
+        name: args.name,
         status: 'active',
+        ...(args.platformRole ? { platformRole: args.platformRole } : {}),
       },
       overrideAccess: true,
-    }))
+    })
+  }
 
-  const existingCompanyAdmin = await payload.find({
-    collection: 'users',
-    where: { email: { equals: companyEmail } },
-    limit: 1,
-    overrideAccess: true,
+  const platformAdmin = await upsertSeedUser({
+    email: platformEmail,
+    password: platformPassword,
+    name: 'Platform Admin',
+    platformRole: 'platform_admin',
   })
 
-  const companyAdmin =
-    existingCompanyAdmin.docs[0] ??
-    (await payload.create({
-      collection: 'users',
-      data: {
-        email: companyEmail,
-        password: companyPassword,
-        name: 'Qelvarion Resource Admin',
-        status: 'active',
-      },
-      overrideAccess: true,
-    }))
-
-  const existingVeylithraAdmin = await payload.find({
-    collection: 'users',
-    where: { email: { equals: veylithraEmail } },
-    limit: 1,
-    overrideAccess: true,
+  const companyAdmin = await upsertSeedUser({
+    email: companyEmail,
+    password: companyPassword,
+    name: 'Qelvarion Resource Admin',
   })
 
-  const veylithraAdmin =
-    existingVeylithraAdmin.docs[0] ??
-    (await payload.create({
-      collection: 'users',
-      data: {
-        email: veylithraEmail,
-        password: companyPassword,
-        name: 'Veylithra Tungsten Admin',
-        status: 'active',
-      },
-      overrideAccess: true,
-    }))
+  const veylithraAdmin = await upsertSeedUser({
+    email: veylithraEmail,
+    password: companyPassword,
+    name: 'Veylithra Tungsten Admin',
+  })
 
   // --- Primary demo tenant: Qelvarion Resource Corp. ---
   const existingQelvarion = await payload.find({
